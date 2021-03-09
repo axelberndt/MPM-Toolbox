@@ -1,0 +1,169 @@
+package mpmToolbox.gui.msmTree;
+
+import com.alee.api.annotations.NotNull;
+import com.alee.api.annotations.Nullable;
+import com.alee.extended.tree.WebExTree;
+import mpmToolbox.gui.ProjectPane;
+import mpmToolbox.gui.mpmTree.MpmTreeNode;
+import mpmToolbox.gui.score.ScoreDisplayPanel;
+import nu.xom.Element;
+import nu.xom.Node;
+
+import javax.swing.event.TreeSelectionEvent;
+import javax.swing.event.TreeSelectionListener;
+import javax.swing.tree.TreePath;
+import javax.swing.tree.TreeSelectionModel;
+import java.util.ArrayList;
+import java.util.Enumeration;
+
+/**
+ * A custom WebAsncTree for MSM data.
+ * @author Axel Berndt
+ */
+public class MsmTree extends WebExTree<MsmTreeNode> implements /*MouseListener,*/ TreeSelectionListener {
+    @NotNull private final ProjectPane projectPane;                         // a link to the parent project pane to access its data, midi player etc.
+
+    /**
+     * constructor
+     * @param projectPane
+     */
+    public MsmTree(@NotNull ProjectPane projectPane) {
+        super(new MsmTreeDataProvider(projectPane.getMsm().getRootElement(), projectPane.getProjectData()));
+        this.projectPane = projectPane;
+
+        this.setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);     // this sets that only one node can be selected at a time
+        this.setCellRenderer(new MsmTreeCellRenderer());                     // a custom tree cell renderer
+        this.setToolTipProvider(new MsmTreeTooltipProvider());               // set a tooltip provider so we can print tooltips on mouse over of tree cells
+//        msmTree.setEditable(true);
+//        msmTree.setCellEditor(new MsmTreeCellEditor());
+//        msmTree.setStyleId(StyleId.treeTransparent);
+
+        this.addTreeSelectionListener(this);
+//        this.addMouseListener(this);
+    }
+
+//    /**
+//     * action on mouse click
+//     * @param mouseEvent
+//     */
+//    @Override
+//    public void mouseClicked(MouseEvent mouseEvent) {
+//        MsmTreeNode n = this.getNodeForLocation(mouseEvent.getX(), mouseEvent.getY());
+//        if (n != null) {
+//            n.play();
+//            System.out.println(n.getUserObject().toXML());
+//        }
+//    }
+
+    /**
+     * a getter to access the project pane that this tree belongs to
+     * @return
+     */
+    public ProjectPane getProjectPane() {
+        return this.projectPane;
+    }
+
+    /**
+     * find and open the path to the first node of type note
+     */
+    public void gotoFirstNoteNode() {
+        TreePath path = (this.getFirstNodeOfType(this.getRootNode(), MsmTreeNode.XmlNodeType.note).getTreePath());
+        this.setSelectionPath(path);
+        this.scrollPathToVisible(path);
+    }
+
+
+    /**
+     * find the first node of the specified type
+     * @param parent
+     * @param type
+     * @return
+     */
+    public MsmTreeNode getFirstNodeOfType(MsmTreeNode parent, MsmTreeNode.XmlNodeType type) {
+        Enumeration<MsmTreeNode> e = parent.depthFirstEnumeration();
+//        Enumeration<MsmTreeNode> e = parent.breadthFirstEnumeration();
+        while (e.hasMoreElements()) {
+            MsmTreeNode node = e.nextElement();
+            if (node.getType() == type) {
+                return node;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * find all nodes of the specified type
+     * @param parent
+     * @param type
+     * @return
+     */
+    public ArrayList<MsmTreeNode> getAllNodesOfType(MsmTreeNode parent, MsmTreeNode.XmlNodeType type) {
+        Enumeration<MsmTreeNode> e = parent.breadthFirstEnumeration();
+        ArrayList<MsmTreeNode> results = new ArrayList<>();
+
+        while (e.hasMoreElements()) {
+            MsmTreeNode node = e.nextElement();
+            if (node.getType() == type) {
+                results.add(node);
+            }
+        }
+
+        return results;
+    }
+
+    /**
+     * find the first MsmTreeNode with the specified userObject as user object
+     * @param userObject
+     * @param depthFirstStrategy true for depth first search, false for breath first search
+     * @return
+     */
+    public MsmTreeNode findNode(Node userObject, boolean depthFirstStrategy) {
+        if (userObject == null)
+            return null;
+
+        Enumeration<MsmTreeNode> e = depthFirstStrategy ? this.getRootNode().depthFirstEnumeration() : this.getRootNode().breadthFirstEnumeration();
+
+        while (e.hasMoreElements()) {
+            MsmTreeNode treeNode = e.nextElement();
+            Node userObj = treeNode.getUserObject();
+            if (userObj == userObject) {
+                return treeNode;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * The TreeSelectionListener is connected to the MSM tree and fires when something is selected there.
+     * So the score display can highlight notes if possible.
+     * @param treeSelectionEvent
+     */
+    @Override
+    public void valueChanged(TreeSelectionEvent treeSelectionEvent) {
+        TreePath path = treeSelectionEvent.getNewLeadSelectionPath();
+        if (path == null)
+            return;
+
+        MsmTreeNode n = this.getNodeForPath(path);
+        n.play(this.projectPane.getMidiPlayer());                                                       // the node might be a node and should play its note via MIDI when selected
+
+        // trigger the score frame's score panel to repaint so it highlights the selected note, if visible
+        if ((n.getType() == MsmTreeNode.XmlNodeType.note)                                               // if the currently selected node is of type note
+                && (this.projectPane.getScoreFrame().getScoreDisplay() != null)) {                      // and we have a score display
+
+            ScoreDisplayPanel scoreDisplayPanel = this.projectPane.getScoreFrame().getScoreDisplay();   // get the currently displayed score page
+            if (scoreDisplayPanel.getScorePage().contains((Element) n.getUserObject()))                 // if it contains the note we have just selected
+                scoreDisplayPanel.repaint();                                                            // let the score display repaint so the highlighted note gets displayed
+        }
+    }
+
+    /**
+     * this forsces the node to update itself and then updates the node's appearance in the tree
+     * @param node
+     */
+    @Override
+    public void updateNode(@Nullable final MsmTreeNode node) {
+        node.update();
+        super.updateNode(node);
+    }
+}

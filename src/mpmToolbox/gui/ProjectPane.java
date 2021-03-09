@@ -1,0 +1,408 @@
+package mpmToolbox.gui;
+
+import com.alee.api.data.CompassDirection;
+import com.alee.extended.dock.SidebarButtonVisibility;
+import com.alee.extended.dock.WebDockableFrame;
+import com.alee.extended.dock.WebDockablePane;
+import com.alee.extended.tab.DocumentData;
+import com.alee.extended.tab.WebDocumentPane;
+import com.alee.laf.button.WebButton;
+import com.alee.laf.panel.WebPanel;
+import com.alee.laf.scroll.WebScrollPane;
+import com.alee.laf.window.WebFrame;
+import com.alee.managers.icon.Icons;
+import com.alee.managers.style.StyleId;
+import meico.audio.Audio;
+import meico.mei.Helper;
+import meico.mei.Mei;
+import meico.midi.Midi;
+import meico.midi.MidiPlayer;
+import meico.mpm.Mpm;
+import meico.msm.Msm;
+import mpmToolbox.ProjectData;
+import mpmToolbox.gui.mpmTree.MpmTree;
+import mpmToolbox.gui.mpmTree.MpmTreePane;
+import mpmToolbox.gui.msmTree.MsmTree;
+import mpmToolbox.gui.audio.AudioDocumentData;
+import mpmToolbox.gui.score.Score;
+import mpmToolbox.gui.score.ScoreDocumentData;
+import mpmToolbox.gui.syncPlayer.SyncPlayer;
+import nu.xom.ParsingException;
+import org.xml.sax.SAXException;
+
+import javax.sound.midi.MidiUnavailableException;
+import javax.xml.parsers.ParserConfigurationException;
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
+
+/**
+ * A GUI pane wrapper class around ProjectData.
+ * @author Axel Berndt
+ */
+public class ProjectPane extends WebDockablePane {
+    private final WebFrame parentFrame;
+
+    private MidiPlayer midiPlayer = null;
+    private final ProjectData data;                                                         // the actual project data
+
+    private final WebDocumentPane<DocumentData<WebPanel>> tabs = new WebDocumentPane<>();   // this contains the components displayed in the center under certain tabs
+
+    private final WebDockableFrame msmDockFrame = new WebDockableFrame("msmFrame", "Musical Sequence Markup");
+    private final MsmTree msmTree;
+
+    private final WebDockableFrame mpmDockFrame = new WebDockableFrame("mpmFrame", "Music Performance Markup");
+    private MpmTreePane mpmTreePane;
+    private final WebButton newMpmButton = new WebButton("Create New MPM");                 // this button is displayed in the MPM tree pane when there is no MPM in the project, yet
+
+    private final WebDockableFrame playerFrame = new WebDockableFrame("playerFrame", "Sync Player");
+
+    private ScoreDocumentData scoreFrame = null;
+
+    /**
+     * constructor
+     * @param msm
+     */
+    public ProjectPane(Msm msm, WebFrame parent) {
+        super();
+        this.parentFrame = parent;
+        this.data = new ProjectData(msm);
+        this.msmTree = new MsmTree(this);
+        this.mpmTreePane = (this.getMpm() == null) ? null : new MpmTreePane(this);
+        this.initMidiPlayer();
+        this.makeGUI();
+    }
+
+    /**
+     * constructor, the MIDI input is converted to MSM
+     * @param midi
+     */
+    public ProjectPane(Midi midi, WebFrame parent) {
+        super();
+        this.parentFrame = parent;
+        this.data = new ProjectData(midi.exportMsm());
+        this.msmTree = new MsmTree(this);
+        this.mpmTreePane = (this.getMpm() == null) ? null : new MpmTreePane(this);
+        this.initMidiPlayer();
+        this.makeGUI();
+    }
+
+    /**
+     * constructor, the MEI input is converted to MSM and MPM;
+     * if the MEI has more than one mdiv, only the first is converted to MSM and MPM;
+     * use mei.exportMsmMpm() directly and choose the desired MSM from the output to instantiate a ProgramData object.
+     * @param mei
+     */
+    public ProjectPane(Mei mei, WebFrame parent) {
+        super();
+        this.parentFrame = parent;
+        this.data = new ProjectData(mei);
+        this.msmTree = new MsmTree(this);
+        this.mpmTreePane = (this.getMpm() == null) ? null : new MpmTreePane(this);
+        this.initMidiPlayer();
+        this.makeGUI();
+    }
+
+    /**
+     * constructor, instantiate a project from a project file
+     * @param file
+     */
+    public ProjectPane(File file, WebFrame parent) throws SAXException, ParsingException, ParserConfigurationException, IOException {
+        super();
+        this.parentFrame = parent;
+        this.data = new ProjectData(file);
+        this.msmTree = new MsmTree(this);
+        this.mpmTreePane = (this.getMpm() == null) ? null : new MpmTreePane(this);
+        this.initMidiPlayer();
+        this.makeGUI();
+    }
+
+    /**
+     * initialize MIDI player
+     * @return
+     */
+    private boolean initMidiPlayer() {
+        try {
+            this.midiPlayer = new MidiPlayer();
+        } catch (MidiUnavailableException e) {
+            e.printStackTrace();
+            return false;
+        }
+        return true;
+    }
+
+    /**
+     * a getter for the MIDI player
+     * @return
+     */
+    public MidiPlayer getMidiPlayer() {
+        return this.midiPlayer;
+    }
+
+    /**
+     * a helper method for the constructors to generate the GUI
+     */
+    private void makeGUI() {
+//        this.registerSettings(new Configuration("MyDockablePane", "state"));   // save (MyDockablePane.xml in user home directory if not set different) and reproduce the state on restart (https://github.com/mgarin/weblaf/wiki/How-to-use-WebDockablePane#saverestore-state)
+        this.setStyleId(StyleId.dockablepaneCompact);                          // a more compact styling of the dockable pane elements
+        this.setSidebarButtonVisibility(SidebarButtonVisibility.always);
+
+        this.makePlayerFrame();         // the Sync Player in a dockable pane
+        this.makeMsmDockFrame();        // the MSM tree is displayed in a dockable pane
+        this.makeMpmDockFrame();        // the MPM tree is displayed in a dockable pane
+
+        // fill the content pane in the center
+//        this.tabs.openDocument(new DocumentData<>("TestTab", "Test Tab", new WebButton("Test")));
+        this.tabs.openDocument(new AudioDocumentData("Audio", "Audio", this.getProjectData()));
+        this.tabs.openDocument(this.makeScoreFrame());
+
+        this.setContent(this.tabs);     // this will fill the free space of the docking pane that is not occupied by a WebDockableFrame, this can be anything JComponent-based
+    }
+
+    /**
+     * the MSM frame shows the XML tree of the MSM file
+     */
+    private void makeMsmDockFrame() {
+        this.msmDockFrame.setIcon(Icons.table);
+        this.msmDockFrame.setClosable(false);                                   // when closed the frame disappears and cannot be reopened by the user, thus, this is set false
+        this.msmDockFrame.setMaximizable(false);                                // it is also set to not maximizable
+        this.msmDockFrame.setPosition(CompassDirection.west);
+
+        WebScrollPane scrollPane = new WebScrollPane(this.msmTree);
+        scrollPane.setStyleId(StyleId.scrollpaneUndecoratedButtonless);
+        this.msmDockFrame.add(scrollPane);
+        this.addFrame(this.msmDockFrame);
+    }
+
+    /**
+     * the MPM frame displays the MPM XML tree
+     */
+    private void makeMpmDockFrame() {
+        this.mpmDockFrame.setIcon(Icons.table);
+        this.mpmDockFrame.setClosable(false);                                   // when closed the frame disappears and cannot be reopened by the user, thus, this is set false
+        this.mpmDockFrame.setMaximizable(false);                                // it is also set to not maximizable
+        this.mpmDockFrame.setPosition(CompassDirection.east);
+
+        if (this.getMpm() == null) {
+            this.mpmDockFrame.add(this.newMpmButton);
+            this.mpmDockFrame.minimize();
+        } else {
+            this.mpmDockFrame.add(this.mpmTreePane);                            // create the contents of the frame
+        }
+
+        // define the button for creating a new MPM document
+        this.newMpmButton.addActionListener(actionEvent -> {
+            Mpm mpm = Mpm.createMpm();
+            mpm.setFile(Helper.getFilenameWithoutExtension(this.getProjectData().getMsm().getFile().getAbsolutePath()) + ".mpm");
+            mpm.addPerformance("empty performance");    // a valid MPM document has to have at least one performance, even if it is empty; so we add one here
+            this.setMpm(mpm);
+        });
+
+        this.addFrame(this.mpmDockFrame);
+    }
+
+    /**
+     * the Sync Player frame
+     */
+    private void makePlayerFrame() {
+//        this.playerFrame.setIcon(Icons.table);
+        this.playerFrame.setClosable(false);                                   // when closed the frame disappears and cannot be reopened by the user, thus, this is set false
+        this.playerFrame.setMaximizable(false);                                // it is also set to not maximizable
+        this.playerFrame.setPosition(CompassDirection.south);
+
+        SyncPlayer syncPlayer;
+        try {
+            syncPlayer = new SyncPlayer(this);
+        } catch (MidiUnavailableException e) {
+            e.printStackTrace();
+            return;
+        }
+
+        this.playerFrame.add(syncPlayer);
+        this.addFrame(this.playerFrame);
+    }
+
+    /**
+     * this method sets up the scoreDockFrame
+     */
+    private ScoreDocumentData makeScoreFrame() {
+        this.scoreFrame = new ScoreDocumentData(this);
+        return this.scoreFrame;
+    }
+
+    /**
+     * access the project data
+     * @return
+     */
+    public ProjectData getProjectData() {
+        return this.data;
+    }
+
+    /**
+     * get the project file
+     * @return
+     */
+    public File getFile() {
+        return this.data.getFile();
+    }
+
+    /**
+     * access the Msm object
+     * @return
+     */
+    public Msm getMsm() {
+        return this.data.getMsm();
+    }
+
+    /**
+     * access the MSM tree
+     * @return
+     */
+    public MsmTree getMsmTree() {
+        return this.msmTree;
+    }
+
+    /**
+     * add an MPM to the Project
+     * @param mpm
+     */
+    public void setMpm(Mpm mpm) {
+        if (mpm == null)
+            return;
+        if (this.getMpm() != null) {
+            this.data.removeMpm();
+            this.mpmDockFrame.remove(this.mpmTreePane);
+        } else {
+            this.mpmDockFrame.remove(this.newMpmButton);
+        }
+        this.data.setMpm(mpm);
+        this.mpmTreePane = new MpmTreePane(this);
+        this.mpmDockFrame.add(this.mpmTreePane);
+        this.mpmDockFrame.restore();    // open the frame
+        this.mpmDockFrame.validate();   // this is necessary so the component display gets updated
+        this.mpmDockFrame.repaint();    // update the component display
+    }
+
+    /**
+     * delete the MPM from this project
+     */
+    public void removeMpm() {
+        if (this.getMpm() == null)
+            return;
+        this.data.removeMpm();
+//        this.mpmDockFrame.minimize();
+        this.mpmDockFrame.remove(this.mpmTreePane);
+        this.mpmDockFrame.add(this.newMpmButton);
+        this.mpmDockFrame.validate();   // this is necessary so the component display gets updated
+        this.mpmDockFrame.repaint();    // update the component display
+        this.repaintScoreDisplay();
+    }
+
+    /**
+     * access the Mpm object
+     * @return
+     */
+    public Mpm getMpm() {
+        return this.data.getMpm();
+    }
+
+    /**
+     * a getter for the MPM tree
+     * @return
+     */
+    public MpmTree getMpmTree() {
+        if (this.getMpm() == null)
+            return null;
+        return this.mpmTreePane.getMpmTree();
+    }
+
+    /**
+     * access the list of score pages
+     * @return
+     */
+    public Score getScore() {
+        return this.data.getScore();
+    }
+
+    /**
+     * access the score frame
+     * @return
+     */
+    public ScoreDocumentData getScoreFrame() {
+        return scoreFrame;
+    }
+
+    /**
+     * repaint the score display
+     */
+    public void repaintScoreDisplay() {
+        if (this.getScoreFrame().getScoreDisplay() != null)
+            this.getScoreFrame().getScoreDisplay().repaint();
+    }
+
+    /**
+     * add a file to the list of score pages
+     * @param file
+     */
+    public void addScorePage(File file) {
+        if (this.data.addScorePage(file) != null)
+            this.scoreFrame.addScorePage(file);
+    }
+
+    /**
+     * remove a score file from the project
+     * @param index
+     */
+    public void removeScorePage(int index) {
+        if (this.getScore().isEmpty())
+            return;
+
+        this.data.removeScorePage(index);                       // delete the page from the project data structure
+        this.scoreFrame.removeScorePage(index);
+    }
+
+    /**
+     * access the list of Audio objects
+     * @return
+     */
+    public ArrayList<Audio> getAudio() {
+        return this.data.getAudio();
+    }
+
+    /**
+     * add an Audio object to the list of audios
+     * @param audio
+     */
+    public void addAudio(Audio audio) {
+        if (this.data.addAudio(audio)) {
+            // TODO: display the audio data in the tab
+        }
+    }
+
+    /**
+     * remove an audio file from the project
+     * @param index
+     */
+    public void removeAudio(int index) {
+        this.data.removeAudio(index);
+        // TODO: empty the audio tab or display another audio object in it
+    }
+
+    /**
+     * Save the project under its already defined filename. If it is not defined (in this.xml) it returns false.
+     * @return
+     */
+    public boolean saveProject() {
+        return this.data.saveProject();
+    }
+
+    /**
+     * This saves the project in an .mpr file, basically an xml file which stores relative paths to all other project files.
+     * If the MSM or MPM file was not existent in the file system, they will be created in the directory.
+     * @param file
+     * @return
+     */
+    public boolean saveProjectAs(File file) {
+        return this.data.saveProjectAs(file);
+    }
+}
