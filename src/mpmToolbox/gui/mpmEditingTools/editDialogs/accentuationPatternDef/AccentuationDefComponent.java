@@ -104,6 +104,7 @@ public class AccentuationDefComponent extends WebPanel {
 
         // sliders
         WebSlider valueSlider = this.makeSlider(VALUE);
+        Tools.makeSliderSetToClickPosition(valueSlider);
         valueSlider.addMouseListener(new MouseListener() {
             @Override
             public void mouseClicked(MouseEvent e) {
@@ -125,6 +126,7 @@ public class AccentuationDefComponent extends WebPanel {
         });
 
         WebSlider transitionFromSlider = this.makeSlider(TRANSITION_FROM);
+        Tools.makeSliderSetToClickPosition(transitionFromSlider);
         transitionFromSlider.addMouseListener(new MouseListener() {
             @Override
             public void mouseClicked(MouseEvent e) {
@@ -146,6 +148,7 @@ public class AccentuationDefComponent extends WebPanel {
         });
 
         WebSlider transitionToSlider = this.makeSlider(TRANSITION_TO);
+        Tools.makeSliderSetToClickPosition(transitionToSlider);
         transitionToSlider.addMouseListener(new MouseListener() {
             @Override
             public void mouseClicked(MouseEvent e) {

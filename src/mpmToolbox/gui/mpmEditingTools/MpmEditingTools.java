@@ -603,6 +603,7 @@ public class MpmEditingTools {
      */
     private static void removeMpm(@NotNull ProjectPane projectPane) {
         projectPane.removeMpm();
+        projectPane.getSyncPlayer().updatePerformanceList();    // the SyncPlayer must update its performance chooser
     }
 
     /**
@@ -775,10 +776,11 @@ public class MpmEditingTools {
      * @param mpmTree
      */
     private static void addPerformance(@NotNull MpmTreeNode mpmNode, @NotNull MpmTree mpmTree) {
-        PerformanceEditor performanceEditor = new PerformanceEditor();  // create performance edit dialog
+        PerformanceEditor performanceEditor = new PerformanceEditor();          // create performance edit dialog
         Performance performance = performanceEditor.create();                   // open it to create a performance
         if (((Mpm) mpmNode.getUserObject()).addPerformance(performance))        // if the performance was successfully added to the MPM
             mpmTree.reloadNode(mpmNode);                                        // reload the MPM node to see the result
+        mpmTree.getProjectPane().getSyncPlayer().updatePerformanceList();       // the SyncPlayer must update its performance chooser
     }
 
     /**
@@ -787,9 +789,10 @@ public class MpmEditingTools {
      * @param mpmTree
      */
     private static void editPerformance(@NotNull MpmTreeNode performanceNode, @NotNull MpmTree mpmTree) {
-        PerformanceEditor performanceEditor = new PerformanceEditor();  // open performance edit dialog
+        PerformanceEditor performanceEditor = new PerformanceEditor();          // open performance edit dialog
         performanceEditor.edit((Performance) performanceNode.getUserObject());  // open it to edit the performance
         mpmTree.updateNode(performanceNode);
+        mpmTree.getProjectPane().getSyncPlayer().updatePerformanceList();       // the SyncPlayer must update its performance chooser
     }
 
     /**
@@ -801,6 +804,7 @@ public class MpmEditingTools {
         ((Mpm) performanceNode.getParent().getUserObject()).removePerformance((Performance) performanceNode.getUserObject()); // delete the performance from the MPM
         mpmTree.getProjectPane().getScore().cleanupDeadNodes();             // remove all entries in the score that are associated with elements in this performance
         mpmTree.reloadNode(performanceNode.getParent());                    // update the mpm tree
+        mpmTree.getProjectPane().getSyncPlayer().updatePerformanceList();   // the SyncPlayer must update its performance chooser
     }
 
     /**

@@ -97,6 +97,7 @@ public class DynamicsEditor extends EditDialog<DynamicsData> {
         this.addToContentPanel(this.curvatureLabel, 0, 4, 1, 1, 1.0, 1.0, 0, 0, GridBagConstraints.BOTH);
 
         this.curvatureSlider = new WebSlider(WebSlider.HORIZONTAL, 0, 100000, 0);
+        Tools.makeSliderSetToClickPosition(this.curvatureSlider);
 //        this.curvatureSlider.setPadding(Settings.paddingInDialogs);
         this.curvatureSlider.setToolTip("Increase to create a less linear transition that sounds\nmore pronounced and with stronger emphasis.");
         this.curvatureSlider.setMajorTickSpacing(100000);
@@ -156,6 +157,7 @@ public class DynamicsEditor extends EditDialog<DynamicsData> {
         this.addToContentPanel(this.protractionLabel, 0, 5, 1, 1, 1.0, 1.0, 0, 0, GridBagConstraints.BOTH);
 
         this.protractionSlider = new WebSlider(WebSlider.HORIZONTAL, -100000, 100000, 0);
+        Tools.makeSliderSetToClickPosition(this.protractionSlider);
 //        this.protractionSlider.setPadding(Settings.paddingInDialogs);
         this.protractionSlider.setToolTip("Shift the bulk of the transition to the front (negative value) or back (positive value).");
         this.protractionSlider.setMajorTickSpacing(100000);

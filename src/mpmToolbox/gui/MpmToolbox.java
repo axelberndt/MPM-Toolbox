@@ -33,7 +33,7 @@ import java.io.IOException;
  */
 public class MpmToolbox {
     private WebFrame frame = null;              // the main window frame
-    private ProjectPane project = null;         // the project data that is worked on here
+    private ProjectPane projectPane = null;     // the gui and project data that is worked on here
     private WebPanel welcomeMessage;
 
     /**
@@ -86,6 +86,18 @@ public class MpmToolbox {
         return this.frame;
     }
 
+    /**
+     * getter for the project pane holding the project data and all gui
+     * @return
+     */
+    public ProjectPane getProjectPane() {
+        return this.projectPane;
+    }
+
+    /**
+     * the startup window
+     * @return
+     */
     private WebPanel makeWelcomeMessage() {
         WebPanel welcomeMessage = new WebPanel();
         BoxLayout boxLayout = new BoxLayout(welcomeMessage, BoxLayout.Y_AXIS);
@@ -123,8 +135,8 @@ public class MpmToolbox {
         final JFileChooser fileChooser = new JFileChooser();
         fileChooser.setDialogTitle("Open File");
 
-        if (this.project != null)
-            fileChooser.setCurrentDirectory(this.project.getMsm().getFile());
+        if (this.projectPane != null)
+            fileChooser.setCurrentDirectory(this.projectPane.getMsm().getFile());
 
         if (fileChooser.showOpenDialog(this.frame) == 0) {                      // a file has been selected
             this.loadFile(fileChooser.getSelectedFile());
@@ -172,12 +184,12 @@ public class MpmToolbox {
                                 Tools.fileDrop(this, projectPane);
                             break;
                         case "mpm":                                                     // seems to be an mpm
-                            if (this.project == null)
+                            if (this.projectPane == null)
                                 System.err.println("No project loaded to add the MPM.");
                             else {
-                                this.project.setMpm(new Mpm(xml.getDocument()));
-                                this.project.getScore().cleanupDeadNodes();
-                                this.project.repaintScoreDisplay();
+                                this.projectPane.setMpm(new Mpm(xml.getDocument()));
+                                this.projectPane.getScore().cleanupDeadNodes();
+                                this.projectPane.repaintScoreDisplay();
                             }
                             break;
                         default:
@@ -200,12 +212,12 @@ public class MpmToolbox {
                         Tools.fileDrop(this, projectPane);
                     break;
                 case ".mpm":
-                    if (this.project == null)
+                    if (this.projectPane == null)
                         System.err.println("No project loaded to add the MPM.");
                     else {
-                        this.project.setMpm(new Mpm(file));
-                        this.project.getScore().cleanupDeadNodes();
-                        this.project.repaintScoreDisplay();
+                        this.projectPane.setMpm(new Mpm(file));
+                        this.projectPane.getScore().cleanupDeadNodes();
+                        this.projectPane.repaintScoreDisplay();
                     }
                     break;
                 case ".mid":
@@ -215,10 +227,10 @@ public class MpmToolbox {
                     break;
                 case ".wav":
                 case ".mp3":
-                    if (this.project == null)
+                    if (this.projectPane == null)
                         System.err.println("No project loaded to add the audio.");
                     else
-                        this.project.addAudio(new Audio(file));
+                        this.projectPane.addAudio(new Audio(file));
                     break;
                 case ".jpg":
                 case ".jpeg":
@@ -227,10 +239,10 @@ public class MpmToolbox {
                 case ".bmp":
 //                case ".tif":    // TODO: can I support this format?
 //                case ".svg":    // TODO: can I support this format?
-                    if (this.project == null)
+                    if (this.projectPane == null)
                         System.err.println("No project loaded to add the image.");
                     else
-                        this.project.addScorePage(file);
+                        this.projectPane.addScorePage(file);
                     break;
                 case ".dls":
                 case ".sf2":
@@ -252,8 +264,8 @@ public class MpmToolbox {
      * the closing procedure for an open project
      */
     public void closeProject() {
-        this.frame.remove(this.project);    // remove the ProjectPane component from this frame
-        this.project = null;
+        this.frame.remove(this.projectPane);    // remove the ProjectPane component from this frame
+        this.projectPane = null;
     }
 
     /**
@@ -263,7 +275,7 @@ public class MpmToolbox {
      */
     private boolean openProject(ProjectPane project) {
         // opening a new project requires to close the current one, ask for closing
-        if (this.project != null) {
+        if (this.projectPane != null) {
             Object[] options = {"Yes, close", "Yes, save first", "No"};
             switch (JOptionPane.showOptionDialog(this.frame, "Do want to close the current project and open a new one?", "Confirm to Close Current Project", JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE, null, options, options[2])) {
                 case 0:     // yes
@@ -280,11 +292,11 @@ public class MpmToolbox {
         }
 
         // open the new project
-        this.project = project;
+        this.projectPane = project;
         this.frame.remove(this.welcomeMessage);
-        this.frame.add(this.project);
-        if (this.project.getFile() != null)
-            Settings.recentOpened.add(this.project.getFile());
+        this.frame.add(this.projectPane);
+        if (this.projectPane.getFile() != null)
+            Settings.recentOpened.add(this.projectPane.getFile());
         return true;
 
         // here's a threaded alternative for the above code
@@ -322,13 +334,13 @@ public class MpmToolbox {
      * @return
      */
     public boolean saveProject() {
-        if (this.project == null)
+        if (this.projectPane == null)
             return false;
 
-        if (!this.project.saveProject()) {
+        if (!this.projectPane.saveProject()) {
             return this.saveProjectAs();
         } else {
-            Settings.recentOpened.add(this.project.getFile());
+            Settings.recentOpened.add(this.projectPane.getFile());
         }
         return true;
     }
@@ -347,10 +359,10 @@ public class MpmToolbox {
         fileChooser.setMultiSelectionEnabled(false);
         fileChooser.addChoosableFileFilter(new FileNameExtensionFilter("MPM Toolbox Project", "mpr"));
         fileChooser.addChoosableFileFilter(new FileNameExtensionFilter("XML", "xml"));
-        fileChooser.setCurrentDirectory(this.project.getMsm().getFile());
+        fileChooser.setCurrentDirectory(this.projectPane.getMsm().getFile());
         if (fileChooser.showSaveDialog(this.frame) == 0) {                      // a file has been selected
-            if (this.project.saveProjectAs(fileChooser.getSelectedFile())) {    // if save procedure succeeded
-                Settings.recentOpened.add(this.project.getFile());
+            if (this.projectPane.saveProjectAs(fileChooser.getSelectedFile())) {    // if save procedure succeeded
+                Settings.recentOpened.add(this.projectPane.getFile());
                 return true;
             }
         }

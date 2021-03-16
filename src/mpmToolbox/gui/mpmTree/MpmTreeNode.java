@@ -673,6 +673,70 @@ public class MpmTreeNode extends UniqueNode<MpmTreeNode, Object> implements Text
     }
 
     /**
+     * get the performance that this node belongs to
+     * @return the performance that this node belongs to, or null if it is not in a performance
+     */
+    public Performance getPerformance() {
+        switch (this.getType()) {
+            case mpm:
+            case metadata:
+            case author:
+            case comment:
+            case relatedResources:
+            case relatedResource:
+                return null;
+
+//            case performance:
+//            case global:
+//            case part:
+//            case header:
+//            case dated:
+//            case styleCollection:
+//            case articulationStyle:
+//            case metricalAccentuationStyle:
+//            case dynamicsStyle:
+//            case genericStyle:
+//            case rubatoStyle:
+//            case tempoStyle:
+//            case articulationMap:
+//            case asynchronyMap:
+//            case metricalAccentuationMap:
+//            case dynamicsMap:
+//            case genericMap:
+//            case imprecisionMap:
+//            case ornamentationMap:
+//            case rubatoMap:
+//            case tempoMap:
+//            case articulationDef:
+//            case accentuationPatternDef:
+//            case dynamicsDef:
+//            case rubatoDef:
+//            case tempoDef:
+//            case articulation:
+//            case accentuationPattern:
+//            case accentuation:
+//            case asynchrony:
+//            case dynamics:
+//            case distributionUniform:
+//            case distributionGaussian:
+//            case distributionTriangular:
+//            case distributionCorrelatedBrownianNoise:
+//            case distributionCorrelatedCompensatingTriangle:
+//            case rubato:
+//            case tempo:
+//            case style:
+//            case distributionList:
+//            case xmlElement:
+//            case unknown:
+            default:
+                for (MpmTreeNode parent = this; parent != null; parent = parent.getParent())
+                    if (parent.getType() == MpmNodeType.performance)
+                        return (Performance) parent.getUserObject();
+        }
+        return null;
+    }
+
+    /**
      * an enumeration of the node types
      */
     public enum MpmNodeType {

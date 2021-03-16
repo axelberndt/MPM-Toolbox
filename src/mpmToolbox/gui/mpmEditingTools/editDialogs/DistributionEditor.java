@@ -10,7 +10,6 @@ import com.alee.laf.panel.WebPanel;
 import com.alee.laf.scroll.WebScrollPane;
 import com.alee.laf.spinner.WebSpinner;
 import com.alee.managers.style.StyleId;
-import meico.mpm.elements.maps.ImprecisionMap;
 import meico.mpm.elements.maps.data.DistributionData;
 import mpmToolbox.gui.Settings;
 import mpmToolbox.gui.mpmEditingTools.editDialogs.supplementary.EditDialogToggleButton;

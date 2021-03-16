@@ -1,6 +1,15 @@
 ### Version History
 
 
+#### v0.0.2
+- Meico update to v0.8.22.
+- Updated behaviour of all sliders. When clicking on a slider, its thumb will jump to that position. Previous behaviour was that the thumb did a step towards the click position. Therefore, method `makeSliderSetToClickPosition()` was added to class `mpmToolbox.supplementary.Tools`.
+- The SyncPlayer's playback slider is now fully functional.
+- Added SyncPlayer input to set a certain milliseconds time to be skipped in audio playback. This is required because, while MIDI play starts immediately with the first note, music recordings usually start a bit later. Now we can synchronize audio and MIDI start.
+- Added keyboard shortcut `[SPACE]` to method `mpmToolbox.supplementary.Tools.initKeyboardShortcuts()` for triggering the SyncPlayer's playback.
+- Added Comboboxes to SyncPlayer to choose the performance and audio to be played back.
+
+
 #### v0.0.1
 - Initial commit.
 - This version has already most of its core features.

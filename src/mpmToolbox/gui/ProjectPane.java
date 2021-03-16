@@ -56,6 +56,7 @@ public class ProjectPane extends WebDockablePane {
     private final WebButton newMpmButton = new WebButton("Create New MPM");                 // this button is displayed in the MPM tree pane when there is no MPM in the project, yet
 
     private final WebDockableFrame playerFrame = new WebDockableFrame("playerFrame", "Sync Player");
+    private SyncPlayer syncPlayer = null;
 
     private ScoreDocumentData scoreFrame = null;
 
@@ -179,23 +180,24 @@ public class ProjectPane extends WebDockablePane {
      */
     private void makeMpmDockFrame() {
         this.mpmDockFrame.setIcon(Icons.table);
-        this.mpmDockFrame.setClosable(false);                                   // when closed the frame disappears and cannot be reopened by the user, thus, this is set false
-        this.mpmDockFrame.setMaximizable(false);                                // it is also set to not maximizable
+        this.mpmDockFrame.setClosable(false);                   // when closed the frame disappears and cannot be reopened by the user, thus, this is set false
+        this.mpmDockFrame.setMaximizable(false);                // it is also set to not maximizable
         this.mpmDockFrame.setPosition(CompassDirection.east);
 
         if (this.getMpm() == null) {
             this.mpmDockFrame.add(this.newMpmButton);
             this.mpmDockFrame.minimize();
         } else {
-            this.mpmDockFrame.add(this.mpmTreePane);                            // create the contents of the frame
+            this.mpmDockFrame.add(this.mpmTreePane);            // create the contents of the frame
         }
 
         // define the button for creating a new MPM document
         this.newMpmButton.addActionListener(actionEvent -> {
             Mpm mpm = Mpm.createMpm();
             mpm.setFile(Helper.getFilenameWithoutExtension(this.getProjectData().getMsm().getFile().getAbsolutePath()) + ".mpm");
-            mpm.addPerformance("empty performance");    // a valid MPM document has to have at least one performance, even if it is empty; so we add one here
+            mpm.addPerformance("empty performance");            // a valid MPM document has to have at least one performance, even if it is empty; so we add one here
             this.setMpm(mpm);
+            this.getSyncPlayer().updatePerformanceList();       // the SyncPlayer must update its performance chooser
         });
 
         this.addFrame(this.mpmDockFrame);
@@ -210,15 +212,14 @@ public class ProjectPane extends WebDockablePane {
         this.playerFrame.setMaximizable(false);                                // it is also set to not maximizable
         this.playerFrame.setPosition(CompassDirection.south);
 
-        SyncPlayer syncPlayer;
         try {
-            syncPlayer = new SyncPlayer(this);
+            this.syncPlayer = new SyncPlayer(this);
         } catch (MidiUnavailableException e) {
             e.printStackTrace();
             return;
         }
 
-        this.playerFrame.add(syncPlayer);
+        this.playerFrame.add(this.syncPlayer);
         this.addFrame(this.playerFrame);
     }
 
@@ -333,6 +334,14 @@ public class ProjectPane extends WebDockablePane {
     }
 
     /**
+     * access the sync player
+     * @return
+     */
+    public SyncPlayer getSyncPlayer() {
+        return this.syncPlayer;
+    }
+
+    /**
      * repaint the score display
      */
     public void repaintScoreDisplay() {
@@ -376,6 +385,7 @@ public class ProjectPane extends WebDockablePane {
     public void addAudio(Audio audio) {
         if (this.data.addAudio(audio)) {
             // TODO: display the audio data in the tab
+            this.syncPlayer.updateAudioList();
         }
     }
 
@@ -386,6 +396,7 @@ public class ProjectPane extends WebDockablePane {
     public void removeAudio(int index) {
         this.data.removeAudio(index);
         // TODO: empty the audio tab or display another audio object in it
+        this.syncPlayer.updateAudioList();
     }
 
     /**

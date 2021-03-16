@@ -1,7 +1,10 @@
 package mpmToolbox.supplementary;
 
+import com.alee.laf.slider.WebSlider;
+import com.alee.laf.slider.WebSliderUI;
 import meico.supplementary.KeyValue;
 import mpmToolbox.gui.MpmToolbox;
+import mpmToolbox.gui.ProjectPane;
 
 import javax.imageio.ImageIO;
 import javax.swing.*;
@@ -50,6 +53,16 @@ public class Tools {
             @Override
             public void actionPerformed(ActionEvent e) {
                 application.openFile();
+            }
+        });
+
+        inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, 0), "Trigger Playback");     // start/stop playback with SPACE
+        frame.getRootPane().getActionMap().put("Trigger Playback", new AbstractAction(){
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                if ((application.getProjectPane() == null) || (application.getProjectPane().getSyncPlayer() == null))
+                    return;
+                application.getProjectPane().getSyncPlayer().triggerPlayback();
             }
         });
     }
@@ -169,5 +182,24 @@ public class Tools {
     public static double round(double value, int decimalPoints) {
         double d = Math.pow(10, decimalPoints);
         return Math.round(value * d) / d;
+    }
+
+    /**
+     * When clicking the slider, the tick should be set to the click position
+     * instead of doing only a step in that direction (default behaviour).
+     * @param slider the slider to be changed
+     */
+    public static void makeSliderSetToClickPosition(WebSlider slider) {
+        slider.setUI(new WebSliderUI(slider) {
+            protected void scrollDueToClickInTrack(int direction) {
+                //scrollByBlock(direction); // this is the default behaviour, let's comment that out
+                int value = this.slider.getValue();
+                if (this.slider.getOrientation() == WebSlider.HORIZONTAL)
+                    value = this.valueForXPosition(this.slider.getMousePosition().x);
+                else if (this.slider.getOrientation() == WebSlider.VERTICAL)
+                    value = this.valueForYPosition(this.slider.getMousePosition().y);
+                this.slider.setValue(value);
+            }
+        });
     }
 }

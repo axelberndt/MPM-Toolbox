@@ -112,6 +112,7 @@ public class TempoEditor extends EditDialog<TempoData> {
         this.addToContentPanel(this.meanTempoAtLabel, 0, 5, 1, 1, 1.0, 1.0, 0, 0, GridBagConstraints.BOTH);
 
         this.meanTempoAtSlider = new WebSlider(WebSlider.HORIZONTAL, 0, 100000, 50000);
+        Tools.makeSliderSetToClickPosition(this.meanTempoAtSlider);
 //        this.meanTempoAtSlider.setPadding(Settings.paddingInDialogs);
         this.meanTempoAtSlider.setToolTip("This indicates the relative position between the start (0) and end (1)\nof the tempo transition where the mean tempo is reached.");
         this.meanTempoAtSlider.setMajorTickSpacing(100000);
