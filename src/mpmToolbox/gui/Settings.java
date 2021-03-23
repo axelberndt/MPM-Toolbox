@@ -6,6 +6,7 @@ import mpmToolbox.supplementary.RecentOpened;
 import java.awt.*;
 import java.io.*;
 import java.util.ArrayList;
+import java.util.Arrays;
 
 /**
  * This class helps reading, storing and accessing some general settings of the application.
@@ -17,7 +18,16 @@ public class Settings {
     public static String logfile = "mpmToolbox.log";                    // filename of log file
     public static String settingsFile = "mpmToolbox.cfg";               // filename of the settings file
 
-    public static final String icon = "/resources/icons/icon4.png";     // the app icon
+    public static final ArrayList<String> icons = new ArrayList<>(Arrays.asList("/resources/icons/icon5.png",
+                                                                                "/resources/icons/icon5-1.png",
+                                                                                "/resources/icons/icon5-2.png",
+                                                                                "/resources/icons/icon5-3.png",
+                                                                                "/resources/icons/icon5-4.png",
+                                                                                "/resources/icons/icon5-5.png",
+                                                                                "/resources/icons/icon5-6.png",
+                                                                                "/resources/icons/icon5-7.png",
+                                                                                "/resources/icons/icon5-8.png",
+                                                                                "/resources/icons/icon5-9.png"));     // the app icon in different resolutions
     protected static int windowWidth = 1200;                            // initial window width
     protected static int windowHeight = 800;                            // initial window height
     public static Color foregroundColor = SystemColor.text;             // the foreground/text color, this will be set during initialization according to the underlying style and can be accessed by other classes
@@ -148,6 +158,14 @@ public class Settings {
      */
     protected static synchronized void setSoundbank(File soundbank) {
         Settings.soundbank = soundbank;
+    }
+
+    /**
+     * a getter for the soundbank
+     * @return
+     */
+    public static synchronized File getSoundbank() {
+        return Settings.soundbank;
     }
 
     /**

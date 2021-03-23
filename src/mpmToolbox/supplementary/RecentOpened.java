@@ -55,6 +55,14 @@ public class RecentOpened {
     }
 
     /**
+     * get the whole list of recently opened project files
+     * @return
+     */
+    public ArrayList<File> getAll() {
+        return list;
+    }
+
+    /**
      * add a file to the list
      * @param file
      */

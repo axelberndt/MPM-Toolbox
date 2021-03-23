@@ -136,7 +136,7 @@ public class DistributionVisualizer extends WebPanel {
     private double scale(double lowerLimit, double upperLimit) {
         double scope = Math.max(Math.abs(upperLimit), Math.abs(lowerLimit));
         double halfHeight = ((double) this.getHeight()) / 2.0;
-        return halfHeight / scope;
+        return halfHeight / Math.max(scope, 0.1);   // prevent division by 0
     }
 
     /**

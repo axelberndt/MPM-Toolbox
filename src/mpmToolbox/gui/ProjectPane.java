@@ -9,7 +9,6 @@ import com.alee.extended.tab.WebDocumentPane;
 import com.alee.laf.button.WebButton;
 import com.alee.laf.panel.WebPanel;
 import com.alee.laf.scroll.WebScrollPane;
-import com.alee.laf.window.WebFrame;
 import com.alee.managers.icon.Icons;
 import com.alee.managers.style.StyleId;
 import meico.audio.Audio;
@@ -41,7 +40,7 @@ import java.util.ArrayList;
  * @author Axel Berndt
  */
 public class ProjectPane extends WebDockablePane {
-    private final WebFrame parentFrame;
+    private final MpmToolbox parent;
 
     private MidiPlayer midiPlayer = null;
     private final ProjectData data;                                                         // the actual project data
@@ -63,10 +62,11 @@ public class ProjectPane extends WebDockablePane {
     /**
      * constructor
      * @param msm
+     * @param parent
      */
-    public ProjectPane(Msm msm, WebFrame parent) {
+    public ProjectPane(Msm msm, MpmToolbox parent) {
         super();
-        this.parentFrame = parent;
+        this.parent = parent;
         this.data = new ProjectData(msm);
         this.msmTree = new MsmTree(this);
         this.mpmTreePane = (this.getMpm() == null) ? null : new MpmTreePane(this);
@@ -77,10 +77,11 @@ public class ProjectPane extends WebDockablePane {
     /**
      * constructor, the MIDI input is converted to MSM
      * @param midi
+     * @param parent
      */
-    public ProjectPane(Midi midi, WebFrame parent) {
+    public ProjectPane(Midi midi, MpmToolbox parent) {
         super();
-        this.parentFrame = parent;
+        this.parent = parent;
         this.data = new ProjectData(midi.exportMsm());
         this.msmTree = new MsmTree(this);
         this.mpmTreePane = (this.getMpm() == null) ? null : new MpmTreePane(this);
@@ -93,10 +94,11 @@ public class ProjectPane extends WebDockablePane {
      * if the MEI has more than one mdiv, only the first is converted to MSM and MPM;
      * use mei.exportMsmMpm() directly and choose the desired MSM from the output to instantiate a ProgramData object.
      * @param mei
+     * @param parent
      */
-    public ProjectPane(Mei mei, WebFrame parent) {
+    public ProjectPane(Mei mei, MpmToolbox parent) {
         super();
-        this.parentFrame = parent;
+        this.parent = parent;
         this.data = new ProjectData(mei);
         this.msmTree = new MsmTree(this);
         this.mpmTreePane = (this.getMpm() == null) ? null : new MpmTreePane(this);
@@ -107,10 +109,11 @@ public class ProjectPane extends WebDockablePane {
     /**
      * constructor, instantiate a project from a project file
      * @param file
+     * @param parent
      */
-    public ProjectPane(File file, WebFrame parent) throws SAXException, ParsingException, ParserConfigurationException, IOException {
+    public ProjectPane(File file, MpmToolbox parent) throws SAXException, ParsingException, ParserConfigurationException, IOException {
         super();
-        this.parentFrame = parent;
+        this.parent = parent;
         this.data = new ProjectData(file);
         this.msmTree = new MsmTree(this);
         this.mpmTreePane = (this.getMpm() == null) ? null : new MpmTreePane(this);
@@ -129,7 +132,21 @@ public class ProjectPane extends WebDockablePane {
             e.printStackTrace();
             return false;
         }
+
+        if (Settings.getSoundbank() != null)
+            this.midiPlayer.loadSoundbank(Settings.getSoundbank());
+        else
+            this.midiPlayer.loadDefaultSoundbank();
+
         return true;
+    }
+
+    /**
+     * a getter for the parent MPM Toolbox
+     * @return
+     */
+    public MpmToolbox getParentMpmToolbox() {
+        return this.parent;
     }
 
     /**

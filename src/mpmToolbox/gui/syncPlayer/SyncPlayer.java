@@ -24,6 +24,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
+import java.io.File;
 
 /**
  * This class implements the Audio and MIDI player for MPM Toolbox.
@@ -55,6 +56,12 @@ public class SyncPlayer extends WebPanel {
     public SyncPlayer(ProjectPane parent) throws MidiUnavailableException {
         super(new GridBagLayout());
         this.parent = parent;
+
+        if (Settings.getSoundbank() != null)
+            this.midiPlayer.loadSoundbank(Settings.getSoundbank());
+        else
+            this.midiPlayer.loadDefaultSoundbank();
+
         this.makeGui();
     }
 
@@ -80,10 +87,12 @@ public class SyncPlayer extends WebPanel {
     private void makeGui() {
         this.updatePerformanceList();
         this.performanceChooser.setPadding(Settings.paddingInDialogs / 4);
-        Tools.addComponentToGridBagLayout(this, (GridBagLayout) this.getLayout(), this.performanceChooser, 0, 0, 4, 1, 1.0, 1.0, 0, 0, GridBagConstraints.BOTH, GridBagConstraints.LINE_START);
+        this.performanceChooser.setToolTip("Select the performance rendering to be played.");
+        Tools.addComponentToGridBagLayout(this, (GridBagLayout) this.getLayout(), this.performanceChooser, 0, 0, 1, 1, 1.0, 1.0, 0, 0, GridBagConstraints.BOTH, GridBagConstraints.LINE_START);
 
         this.updateAudioList();
         this.audioChooser.setPadding(Settings.paddingInDialogs / 4);
+        this.audioChooser.setToolTip("Select the audio recording to be played.");
         Tools.addComponentToGridBagLayout(this, (GridBagLayout) this.getLayout(), this.audioChooser, 0, 1, 1, 1, 1.0, 1.0, 0, 0, GridBagConstraints.BOTH, GridBagConstraints.LINE_START);
 
         WebLabel skipLabel = new WebLabel("skip");
@@ -196,6 +205,17 @@ public class SyncPlayer extends WebPanel {
         // we want to start a new playback
         this.runnable = new PlaybackRunnable();
         this.runnable.start(((double) this.playbackSlider.getValue()) / sliderMax); // start the new runnable
+    }
+
+    /**
+     * query which performance is currently selected
+     * @return the performance or null
+     */
+    public synchronized Performance getSelectedPerformance() {
+        PerformanceChooserItem selectedItem = (PerformanceChooserItem) this.performanceChooser.getSelectedItem();
+        if (selectedItem == null)
+            return null;
+        return selectedItem.getValue();
     }
 
     /**
@@ -397,6 +417,39 @@ public class SyncPlayer extends WebPanel {
         /**
          * All combobox items require this method. The overwrite here makes sure that the string being returned
          * is the performance's name instead of some Java Object ID.
+         * @return
+         */
+        @Override
+        public String toString() {
+            return this.getKey();
+        }
+    }
+
+    /**
+     * This class represents an item in the soundfont chooser combobox of the SyncPlayer.
+     * @author Axel Berndt
+     */
+    private class SoundfontChooserItem extends KeyValue<String, File> {
+        /**
+         * This constructor creates a soundfont chooser item (String, File) pair out of a non-null file.
+         * @param soundfont
+         */
+        private SoundfontChooserItem(@NotNull File soundfont) {
+            super(soundfont.getName(), soundfont);
+        }
+
+        /**
+         * This constructor creates a soundfont chooser item with the specified name key but null soundfont.
+         * Basically, this is used to communicate to the SyncPlayer to use the default soundfont.
+         * @param string
+         */
+        private SoundfontChooserItem(String string) {
+            super(string, null);
+        }
+
+        /**
+         * All combobox items require this method. The overwrite here makes sure that the string being returned
+         * is the file name instead of some Java Object ID.
          * @return
          */
         @Override

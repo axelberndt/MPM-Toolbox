@@ -1,6 +1,17 @@
 ### Version History
 
 
+#### v0.1.0
+- Added menu bar.
+- Redefined keyboard shortcuts and integrated them into the menu bar.
+- Added some more tooltips to the SyncPlayer.
+- Added Soundfont support.
+- Added MIDI and audio export of performance renderings.
+- Reworked the application icon. Added several resolution variants.
+- Bugfix in method `mpmToolbox.gui.mpmEditingTools.editDialogs.visualizers.DistributionVisualizer.scale()` to prevent division by zero.
+- Redone the welcome message.
+
+
 #### v0.0.2
 - Meico update to v0.8.22.
 - Updated behaviour of all sliders. When clicking on a slider, its thumb will jump to that position. Previous behaviour was that the thumb did a step towards the click position. Therefore, method `makeSliderSetToClickPosition()` was added to class `mpmToolbox.supplementary.Tools`.
