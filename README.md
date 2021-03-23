@@ -1,4 +1,4 @@
-# ![](https://github.com/axelberndt/MPM-Toolbox/blob/master/src/resources/icons/icon5-1.png) MPM Toolbox
+# ![](https://github.com/axelberndt/MPM-Toolbox/blob/master/src/resources/icons/icon5-2.png) MPM Toolbox
 
 Author: [Axel Berndt](https://github.com/axelberndt) <br>
 [Center of Music and Film Informatics](http://www.cemfi.de/), Detmold
