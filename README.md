@@ -3,7 +3,7 @@
 Author: [Axel Berndt](https://github.com/axelberndt) <br>
 [Center of Music and Film Informatics](http://www.cemfi.de/), Detmold
 
-MPM Toolbox is the official graphical editor and analysis tool for the [Music Performance Markup](https://github.com/axelberndt/MPM) format. It is under active development. More information, release assets and documentation will follow.
+MPM Toolbox is the official graphical editor and analysis tool for the [Music Performance Markup](https://github.com/axelberndt/MPM) format. It is under active development. More information and documentation will follow.
 
 ![A screenshot of the MPM Toolbox main window.](https://github.com/axelberndt/MPM-Toolbox/blob/master/figures/screenshot01.png)
 
