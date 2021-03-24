@@ -25,6 +25,7 @@ import mpmToolbox.gui.msmTree.MsmTree;
 import mpmToolbox.gui.audio.AudioDocumentData;
 import mpmToolbox.gui.score.Score;
 import mpmToolbox.gui.score.ScoreDocumentData;
+import mpmToolbox.gui.score.ScorePage;
 import mpmToolbox.gui.syncPlayer.SyncPlayer;
 import nu.xom.ParsingException;
 import org.xml.sax.SAXException;
@@ -373,6 +374,15 @@ public class ProjectPane extends WebDockablePane {
     public void addScorePage(File file) {
         if (this.data.addScorePage(file) != null)
             this.scoreFrame.addScorePage(file);
+    }
+
+    /**
+     * add the contents of a PDF file to the score pages; the PDF's pages will be extracted and stored as PNGs
+     * @param pdf
+     */
+    public void addScorePdf(File pdf) {
+        for (ScorePage scorePage : this.data.addScorePdf(pdf))
+            this.scoreFrame.addScorePage(scorePage.getFile());
     }
 
     /**

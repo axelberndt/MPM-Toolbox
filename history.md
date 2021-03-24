@@ -1,6 +1,11 @@
 ### Version History
 
 
+#### v0.1.1
+- PDF score import added. The pages of a PDF file are extracted and stored as PNG files with 300dpi (following the [DFG Practical Guidelines on Digitisation](https://www.dfg.de/formulare/12_151/12_151_en.pdf)) in a subfolder of the source directory.
+- The window title will now print the title of the currently opened project.
+
+
 #### v0.1.0
 - Added menu bar.
 - Redefined keyboard shortcuts and integrated them into the menu bar.

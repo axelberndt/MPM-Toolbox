@@ -51,6 +51,7 @@ public class MpmToolbox {
     private WebMenuItem saveAs;
     private WebMenu export;
     private WebMenuItem playStop;
+    private final static String baseTitle = "MPM Toolbox v" + Main.version;
 
     /**
      * constructor
@@ -63,7 +64,7 @@ public class MpmToolbox {
 
                 WebLookAndFeel.install(WebDarkSkin.class);                                          // Install WebLaF as application L&F
 //                WebLookAndFeel.install(WebLightSkin.class);
-                self.frame = new WebFrame<>("MPM Toolbox v" + Main.version);
+                self.frame = new WebFrame<>(MpmToolbox.baseTitle);
 
                 // assign the icon set to the frame
 //                self.frame.setIconImage(Toolkit.getDefaultToolkit().getImage(this.getClass().getResource(Settings.icon)));
@@ -279,7 +280,7 @@ public class MpmToolbox {
                                         "<p style='margin-top:7'>an MEI, MSM or MIDI file. If you start with an MEI file, it should use expansions</p>" +
                                         "<p style='margin-top:7'>to encode repetitions, da capi etc.</p>" +
                                         "<p style='margin-top:28'>Once the project has started, you can create or import an MPM file and import audio</p>" +
-                                        "<p style='margin-top:7'>(WAV, MP3), score image (JPG, JPEG, PNG, GIF, BMP), and soundfont (DLS, SF2) data. </p></html>", WebLabel.LEFT);
+                                        "<p style='margin-top:7'>(WAV, MP3), score images (PDF, JPG, JPEG, PNG, GIF, BMP), and soundfonts (DLS, SF2). </p></html>", WebLabel.LEFT);
 //        message.setAlignmentX(Component.LEFT_ALIGNMENT);
         message.setPadding(0, 40, 0, 0);
         message.setFontSize(18);
@@ -306,7 +307,7 @@ public class MpmToolbox {
         fileChooser.addChoosableFileFilter(new FileNameExtensionFilter("XML", "xml"));
         fileChooser.addChoosableFileFilter(new FileNameExtensionFilter("MIDI", "mid"));
         fileChooser.addChoosableFileFilter(new FileNameExtensionFilter("Audio files", "wav", "mp3"));
-        fileChooser.addChoosableFileFilter(new FileNameExtensionFilter("Images", "jpg", "jpeg", "png", "gif", "bmp"));
+        fileChooser.addChoosableFileFilter(new FileNameExtensionFilter("Images", "pdf", "jpg", "jpeg", "png", "gif", "bmp"));
         fileChooser.addChoosableFileFilter(new FileNameExtensionFilter("Soundfonts", "dls", "sf2"));
 
         if (this.projectPane != null)
@@ -418,6 +419,13 @@ public class MpmToolbox {
                     else
                         this.projectPane.addScorePage(file);
                     break;
+                case ".pdf":
+                    if (this.projectPane == null)
+                        System.err.println("No project loaded to add the PDF pages.");
+                    else {
+                        this.projectPane.addScorePdf(file);
+                    }
+                    break;
                 case ".dls":
                 case ".sf2":
                     Settings.setSoundbank(file);
@@ -451,6 +459,7 @@ public class MpmToolbox {
         this.export.setEnabled(false);
         this.close.setEnabled(false);
         this.playStop.setEnabled(false);
+        this.frame.setTitle(MpmToolbox.baseTitle);
 
         this.frame.repaint();
     }
@@ -482,6 +491,7 @@ public class MpmToolbox {
         this.projectPane = project;
         this.frame.remove(this.welcomeMessage);
         this.frame.add(this.projectPane);
+        this.frame.setTitle(this.projectPane.getMsm().getTitle() + " - " + MpmToolbox.baseTitle);
         this.frame.repaint();
         if (this.projectPane.getFile() != null) {
             Settings.recentOpened.add(this.projectPane.getFile());

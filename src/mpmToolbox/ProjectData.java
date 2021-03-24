@@ -11,12 +11,17 @@ import meico.xml.XmlBase;
 import mpmToolbox.gui.score.Score;
 import mpmToolbox.gui.score.ScorePage;
 import nu.xom.*;
+import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.rendering.PDFRenderer;
 import org.xml.sax.SAXException;
 
+import javax.imageio.ImageIO;
 import javax.sound.sampled.UnsupportedAudioFileException;
 import javax.xml.parsers.ParserConfigurationException;
+import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -169,6 +174,61 @@ public class ProjectData {
      */
     public ScorePage addScorePage(File file) {
         return this.score.addPage(file);
+    }
+
+    /**
+     * This extracts each page of the input PDF file, stores them as PNG in the input file's directory
+     * and adds those PNGs to the score.
+     * @param pdf
+     * @return an arraylist of the score pages just added
+     */
+    public ArrayList<ScorePage> addScorePdf(File pdf) {
+        PDDocument document;
+        try {
+            document = PDDocument.load(pdf);
+        } catch (IOException e) {
+            e.printStackTrace();
+            return new ArrayList<>();
+        }
+
+        // create a subfolder with the filename that will contain the PNG files named page_000.png, page_001.png and so on
+        String directory = Helper.getFilenameWithoutExtension(pdf.getAbsolutePath()) + "\\";
+        if (!Files.exists(Paths.get(directory))) {                                      // if the path does not exist, yet
+            try {
+                Files.createDirectory(Paths.get(directory));                            // create it in the file system
+            } catch (IOException e) {                                                   // if creation failed
+                e.printStackTrace();
+                directory = Helper.getFilenameWithoutExtension(pdf.getAbsolutePath()) + "-";    // place the image files in the folder of the PDF file and name them accordingly
+            }
+        }
+        String imagePath = directory + "page";
+
+        ArrayList<ScorePage> pages = new ArrayList<>();
+        PDFRenderer renderer = new PDFRenderer(document);
+
+        for (int pageNumber = 0; pageNumber < document.getNumberOfPages(); ++pageNumber) {
+            String imageFilePath = imagePath + "_" +  String.format("%03d", pageNumber) + ".png";   // for the page numbering use number formatting with leading zeros
+            File image;
+            try {
+                BufferedImage bim = renderer.renderImageWithDPI(pageNumber, 300);   // with 300dpi we follow the DFG practical guidelines on digitisation (https://www.dfg.de/formulare/12_151/12_151_en.pdf)
+                image = new File(imageFilePath);
+                ImageIO.write(bim, "png", image);
+            } catch (IOException e) {
+                e.printStackTrace();
+                continue;
+            }
+            ScorePage page = this.score.addPage(image);
+            if (page != null)
+                pages.add(page);
+        }
+
+        try {
+            document.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        return pages;
     }
 
     /**
