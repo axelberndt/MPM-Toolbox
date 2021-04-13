@@ -1,6 +1,5 @@
 package mpmToolbox.gui.syncPlayer;
 
-import com.alee.api.annotations.NotNull;
 import com.alee.laf.button.WebButton;
 import com.alee.laf.combobox.WebComboBox;
 import com.alee.laf.label.WebLabel;
@@ -12,19 +11,18 @@ import meico.audio.AudioPlayer;
 import meico.midi.Midi;
 import meico.midi.MidiPlayer;
 import meico.mpm.elements.Performance;
-import meico.supplementary.KeyValue;
 import mpmToolbox.gui.ProjectPane;
 import mpmToolbox.gui.Settings;
 import mpmToolbox.supplementary.Tools;
 
-import javax.sound.midi.InvalidMidiDataException;
-import javax.sound.midi.MidiUnavailableException;
+import javax.sound.midi.*;
 import javax.sound.sampled.Clip;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
-import java.io.File;
+import java.util.ArrayList;
+import java.util.Arrays;
 
 /**
  * This class implements the Audio and MIDI player for MPM Toolbox.
@@ -44,6 +42,8 @@ public class SyncPlayer extends WebPanel {
 
     private final WebComboBox performanceChooser = new WebComboBox();
     private final PerformanceChooserItem rawPerformance = new PerformanceChooserItem(Performance.createPerformance("Play raw notes, no performance"));
+
+    private final WebComboBox midiPortChooser = new WebComboBox();
 
     private final WebComboBox audioChooser = new WebComboBox();
     private final WebSpinner skipMillisecondsInAudioPlayback = new WebSpinner(new SpinnerNumberModel(0L, 0L, 9999999999L, 1L));
@@ -90,14 +90,38 @@ public class SyncPlayer extends WebPanel {
         this.performanceChooser.setToolTip("Select the performance rendering to be played.");
         Tools.addComponentToGridBagLayout(this, (GridBagLayout) this.getLayout(), this.performanceChooser, 0, 0, 1, 1, 1.0, 1.0, 0, 0, GridBagConstraints.BOTH, GridBagConstraints.LINE_START);
 
+        WebLabel midiPortLabel = new WebLabel("MIDI Out:");
+        midiPortLabel.setToolTip("Select the MIDI port to output performance rendering. Default is \"Gervill\".");
+        midiPortLabel.setHorizontalAlignment(WebLabel.RIGHT);
+        midiPortLabel.setPadding(Settings.paddingInDialogs / 4);
+        Tools.addComponentToGridBagLayout(this, (GridBagLayout) this.getLayout(), midiPortLabel, 1, 0, 1, 1, 1.0, 1.0, 0, 0, GridBagConstraints.BOTH, GridBagConstraints.LINE_START);
+
+        this.updateMidiPortList();
+        this.midiPortChooser.setPadding(Settings.paddingInDialogs / 4);
+        this.midiPortChooser.setToolTip("Select the MIDI port to output performance rendering. Default is \"Gervill\".");
+        this.midiPortChooser.addActionListener(actionEvent -> {
+            MidiDevice.Info item = (MidiDevice.Info) this.midiPortChooser.getSelectedItem();// get the device info from the chooser; it is required to get the corresponding device from the MidiSystem
+            if (item == null)                                                               // if nothing meaningful is chosen
+                return;                                                                     // done
+            try {
+                if (item == this.midiPlayer.getSynthesizer().getDeviceInfo())               // ensure that we do not instantiate a new Gervill synth if that is chosen, but use the one that midiPlayer is already holding
+                    this.midiPlayer.setMidiOutputPort(this.midiPlayer.getSynthesizer());    // Gervill was chosen, hence, use the midiPlayer's native one instead of a new instance
+                else                                                                        // something else was chosen
+                    this.midiPlayer.setMidiOutputPort(MidiSystem.getMidiDevice(item));      // switch to it
+            } catch (MidiUnavailableException e) {
+                e.printStackTrace();
+            }
+        });
+        Tools.addComponentToGridBagLayout(this, (GridBagLayout) this.getLayout(), this.midiPortChooser, 2, 0, 1, 1, 1.0, 1.0, 0, 0, GridBagConstraints.BOTH, GridBagConstraints.LINE_START);
+
         this.updateAudioList();
         this.audioChooser.setPadding(Settings.paddingInDialogs / 4);
         this.audioChooser.setToolTip("Select the audio recording to be played.");
         Tools.addComponentToGridBagLayout(this, (GridBagLayout) this.getLayout(), this.audioChooser, 0, 1, 1, 1, 1.0, 1.0, 0, 0, GridBagConstraints.BOTH, GridBagConstraints.LINE_START);
 
-        WebLabel skipLabel = new WebLabel("skip");
+        WebLabel skipLabel = new WebLabel("skip:");
         skipLabel.setToolTip("Skip initial silence in the audio recording.");
-        skipLabel.setHorizontalAlignment(WebLabel.CENTER);
+        skipLabel.setHorizontalAlignment(WebLabel.RIGHT);
         skipLabel.setPadding(Settings.paddingInDialogs / 4);
         Tools.addComponentToGridBagLayout(this, (GridBagLayout) this.getLayout(), skipLabel, 1, 1, 1, 1, 1.0, 1.0, 0, 0, GridBagConstraints.BOTH, GridBagConstraints.LINE_START);
 
@@ -117,8 +141,8 @@ public class SyncPlayer extends WebPanel {
     }
 
     /**
-     * This fills the performance chooser list
-     * It method should be called when the the available performances have changed.
+     * This fills the performance chooser list.
+     * The method should be called when the the available performances have changed.
      */
     public void updatePerformanceList() {
         PerformanceChooserItem selectedItem = (PerformanceChooserItem) this.performanceChooser.getSelectedItem();   // store the previously selected item
@@ -134,6 +158,29 @@ public class SyncPlayer extends WebPanel {
                 if ((selectedItem != null) && item.toString().equals(selectedItem.toString()))  // if this is the item that was previously selected
                     this.performanceChooser.setSelectedItem(item);                              // keep this selection
             }
+        }
+    }
+
+    /**
+     * This fills the MIDI port chooser list.
+     * The method should be called to initialize and update the list.
+     * See: https://humanwritescode.wordpress.com/2017/11/22/java-midi-basics-how-to-access-a-midi-device-or-midi-port-in-java/
+     */
+    public void updateMidiPortList() {
+        this.midiPortChooser.removeAllItems();
+
+        for (MidiDevice.Info info : MidiSystem.getMidiDeviceInfo()) {   // iterate the info of each device
+            // get the corresponding device
+            MidiDevice device;
+            try {
+                device = MidiSystem.getMidiDevice(info);
+            } catch (MidiUnavailableException e) {
+                continue;
+            }
+
+            // the device should be a MIDI port with receiver or a synthesizer (Gervill)
+            if (!(device instanceof Sequencer) && (device.getMaxReceivers() != 0))
+                this.midiPortChooser.addItem(info);
         }
     }
 
@@ -388,107 +435,6 @@ public class SyncPlayer extends WebPanel {
 
                 playButton.setText("\u25B6");       //  ▶ "\u25B6"
             });
-        }
-    }
-
-    /**
-     * This class represents an item in the performance chooser combobox of the SyncPlayer.
-     * @author Axel Berndt
-     */
-    private class PerformanceChooserItem extends KeyValue<String, Performance> {
-        /**
-         * This constructor creates a performance chooser item (String, Performance) pair out of a non-null performance.
-         * @param performance
-         */
-        private PerformanceChooserItem(@NotNull Performance performance) {
-            super(performance.getName(), performance);
-        }
-
-        /**
-         * This constructor creates a performance chooser item with the specified name key but null performance.
-         * Basically, this is used to communicate to the SyncPlayer not to play a performance rendering.
-         * The string is typically something like "No performance rendering".
-         * @param string
-         */
-        private PerformanceChooserItem(String string) {
-            super(string, null);
-        }
-
-        /**
-         * All combobox items require this method. The overwrite here makes sure that the string being returned
-         * is the performance's name instead of some Java Object ID.
-         * @return
-         */
-        @Override
-        public String toString() {
-            return this.getKey();
-        }
-    }
-
-    /**
-     * This class represents an item in the soundfont chooser combobox of the SyncPlayer.
-     * @author Axel Berndt
-     */
-    private class SoundfontChooserItem extends KeyValue<String, File> {
-        /**
-         * This constructor creates a soundfont chooser item (String, File) pair out of a non-null file.
-         * @param soundfont
-         */
-        private SoundfontChooserItem(@NotNull File soundfont) {
-            super(soundfont.getName(), soundfont);
-        }
-
-        /**
-         * This constructor creates a soundfont chooser item with the specified name key but null soundfont.
-         * Basically, this is used to communicate to the SyncPlayer to use the default soundfont.
-         * @param string
-         */
-        private SoundfontChooserItem(String string) {
-            super(string, null);
-        }
-
-        /**
-         * All combobox items require this method. The overwrite here makes sure that the string being returned
-         * is the file name instead of some Java Object ID.
-         * @return
-         */
-        @Override
-        public String toString() {
-            return this.getKey();
-        }
-    }
-
-    /**
-     * This class represents an item in the audio chooser combobox of the SyncPlayer.
-     * @author Axel Berndt
-     */
-    private class AudioChooserItem extends KeyValue<String, Audio> {
-        /**
-         * This constructor creates a audio chooser item (String, Audio) pair out of a non-null audio object.
-         * @param audio
-         */
-        private AudioChooserItem(@NotNull Audio audio) {
-            super(audio.getFile().getName(), audio);
-        }
-
-        /**
-         * This constructor creates a audio chooser item with the specified name key but null audio object.
-         * Basically, this is used to communicate to the SyncPlayer not to play audio.
-         * The string is typically something like "No audio recording".
-         * @param string
-         */
-        private AudioChooserItem(String string) {
-            super(string, null);
-        }
-
-        /**
-         * All combobox items require this method. The overwrite here makes sure that the string being returned
-         * is the audio file's name instead of some Java Object ID.
-         * @return
-         */
-        @Override
-        public String toString() {
-            return this.getKey();
         }
     }
 }
