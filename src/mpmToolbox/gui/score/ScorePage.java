@@ -4,6 +4,7 @@ import meico.supplementary.KeyValue;
 import mpmToolbox.supplementary.Tools;
 import mpmToolbox.supplementary.orthantNeighborhoodGraph.ONGNode;
 import mpmToolbox.supplementary.orthantNeighborhoodGraph.OrthantNeighborhoodGraph;
+import nu.xom.Attribute;
 import nu.xom.Element;
 
 import java.awt.image.BufferedImage;
@@ -12,6 +13,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
 /**
  * This class represents one score page.
@@ -55,13 +57,23 @@ public class ScorePage extends OrthantNeighborhoodGraph {
      * @return the ONGNode added and associated with element
      */
     public ScoreNode addEntry(double x, double y, Element element) {
-        this.removeEntry(element);              // this just makes sure that there is not already an entry for element, and if there is one it has to be removed anyway
+        this.removeEntry(element);                              // this just makes sure that there is not already an entry for element, and if there is one it has to be removed anyway
+
+        // make sure that the element has an xml:id
+        Attribute id = element.getAttribute("id", "http://www.w3.org/XML/1998/namespace");  // get the element's XML ID
+        if (id == null) {                                       // if there is none
+            String uuid = "mpmToolbox_" + UUID.randomUUID().toString();                // generate new ids for them
+            Attribute a = new Attribute("id", uuid);                        // create an attribute
+            a.setNamespace("xml", "http://www.w3.org/XML/1998/namespace");  // set its namespace to xml
+            element.addAttribute(a);                                        // add attribute to the element
+        }
+
         ScoreNode node = new ScoreNode(x, y, element);
-        node = (ScoreNode) this.add(node);      // add the node to the graph, if there is already a node at the specified position we get that node
+        node = (ScoreNode) this.add(node);                      // add the node to the graph, if there is already a node at the specified position we get that node
         if (!node.getAssociatedElements().contains(element))
             node.addAssociatedElement(element);
-        this.object2Node.put(element, node);    // add the entry to the hashmap
-        return node;                            // return the node
+        this.object2Node.put(element, node);                    // add the entry to the hashmap
+        return node;                                            // return the node
     }
 
     /**

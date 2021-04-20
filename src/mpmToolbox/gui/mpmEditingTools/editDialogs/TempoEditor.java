@@ -212,10 +212,6 @@ public class TempoEditor extends EditDialog<TempoData> {
                 this.literalTransitionTo.setText(input.transitionToString);
                 this.transitionToButton.setSelected(true);
                 this.transitionToMode.setSelected(false);
-
-                if (input.meanTempoAt != null)
-                    this.meanTempoAt.setValue(input.meanTempoAt);
-
             } else {
                 this.transitionToMode.setSelected(true);
                 if (input.transitionTo != null) {
@@ -224,6 +220,10 @@ public class TempoEditor extends EditDialog<TempoData> {
                 } else {
                     this.transitionToButton.setSelected(false);
                 }
+            }
+
+            if (input.meanTempoAt != null) {
+                this.meanTempoAt.setValue(input.meanTempoAt);
             }
 
             this.id.setText(input.xmlId);

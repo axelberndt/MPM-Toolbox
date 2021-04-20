@@ -1,6 +1,16 @@
 ### Version History
 
 
+#### v0.1.3
+- Added new operations to map elements in the MPM tree widget. Maps can now be moved and copied from one `dated` environment to another - effectively to another `part` or `global` environment in the same or any other `performance`.
+  - When copied, the ID of each map element will be changed in the copy to ensure unique IDs throughout the MPM document.
+  - It is not valid to have two maps of the same type within one and the same `dated` environment. Hence, if the target environment has already a map of the same type as the origin map, the contents will be merged into it.
+- The same functionality is also added to individual MPM map entries.
+- Bugfix in method `mpmToolbox.gui.mpmEditingTools.editDialogs.TempoEditor.edit()`. When editing a tempo transition with a numeric value for `transition.to` the `meanTempoAt`was not initialized from the source.
+- Enhancement of method `mpmToolbox.gui.score.ScorePage.addEntry()`. If an element to be added has no `xml:id` attribute, which is required to be linked to a score position, the method generates a random ID and adds the attribute to the element.
+- Layout related fix in method `mpmToolbox.gui.mpmEditingTools.editDialogs.EditDialog.addIdInput()` to ensure that the ID input field has a fixed width and does not break the layout.
+
+
 #### v0.1.2
 - Some refactoring in package `mpmToolbox.gui.syncPlayer`.
 - The SyncPlayer's MIDI output can now be streamed to any other MIDI port available on the host system. Thus, users are no longer limited to the internal Gervill synthesizer and the soundbank loaded into it.

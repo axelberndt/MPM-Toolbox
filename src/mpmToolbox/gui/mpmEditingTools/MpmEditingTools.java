@@ -7,10 +7,7 @@ import com.alee.laf.menu.WebPopupMenu;
 import meico.audio.Audio;
 import meico.mei.Helper;
 import meico.mpm.Mpm;
-import meico.mpm.elements.Dated;
-import meico.mpm.elements.Header;
-import meico.mpm.elements.Part;
-import meico.mpm.elements.Performance;
+import meico.mpm.elements.*;
 import meico.mpm.elements.maps.*;
 import meico.mpm.elements.maps.data.*;
 import meico.mpm.elements.metadata.Author;
@@ -20,6 +17,7 @@ import meico.mpm.elements.metadata.RelatedResource;
 import meico.mpm.elements.styles.*;
 import meico.mpm.elements.styles.defs.*;
 import meico.msm.Msm;
+import meico.supplementary.KeyValue;
 import mpmToolbox.ProjectData;
 import mpmToolbox.gui.ProjectPane;
 import mpmToolbox.gui.mpmEditingTools.editDialogs.*;
@@ -35,9 +33,7 @@ import nu.xom.Attribute;
 import nu.xom.Element;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Helper class for MpmTreeNode. It generates the context menu that appears when right clicking
@@ -339,6 +335,12 @@ public class MpmEditingTools {
                 // add style switch
                 menu.add(MpmEditingTools.makeAddStyleSwitchMenuEntry(self, mpmTree));
 
+                // move/merge into another part or global
+                menu.add(MpmEditingTools.makeMoveMergeMapEntry(self, mpmTree));
+
+                // copy/merge into another part or global
+                menu.add(MpmEditingTools.makeCopyMergeMapEntry(self, mpmTree));
+
                 // delete map
                 menu.add(MpmEditingTools.makeDeleteMapMenuEntry(self, mpmTree));
                 break;
@@ -349,6 +351,11 @@ public class MpmEditingTools {
                 addAsynchrony.addActionListener(actionEvent -> MpmEditingTools.addAsynchrony(self, mpmTree));
                 menu.add(addAsynchrony);
 
+                // move/merge into another part or global
+                menu.add(MpmEditingTools.makeMoveMergeMapEntry(self, mpmTree));
+
+                // copy/merge into another part or global
+                menu.add(MpmEditingTools.makeCopyMergeMapEntry(self, mpmTree));
 
                 // delete map
                 menu.add(MpmEditingTools.makeDeleteMapMenuEntry(self, mpmTree));
@@ -363,6 +370,12 @@ public class MpmEditingTools {
                 // add style switch
                 menu.add(MpmEditingTools.makeAddStyleSwitchMenuEntry(self, mpmTree));
 
+                // move/merge into another part or global
+                menu.add(MpmEditingTools.makeMoveMergeMapEntry(self, mpmTree));
+
+                // copy/merge into another part or global
+                menu.add(MpmEditingTools.makeCopyMergeMapEntry(self, mpmTree));
+
                 // delete map
                 menu.add(MpmEditingTools.makeDeleteMapMenuEntry(self, mpmTree));
                 break;
@@ -376,12 +389,24 @@ public class MpmEditingTools {
                 // add style switch
                 menu.add(MpmEditingTools.makeAddStyleSwitchMenuEntry(self, mpmTree));
 
+                // move/merge into another part or global
+                menu.add(MpmEditingTools.makeMoveMergeMapEntry(self, mpmTree));
+
+                // copy/merge into another part or global
+                menu.add(MpmEditingTools.makeCopyMergeMapEntry(self, mpmTree));
+
                 // delete map
                 menu.add(MpmEditingTools.makeDeleteMapMenuEntry(self, mpmTree));
                 break;
 
             case ornamentationMap:
                 // TODO ...
+
+                // move/merge into another part or global
+                menu.add(MpmEditingTools.makeMoveMergeMapEntry(self, mpmTree));
+
+                // copy/merge into another part or global
+                menu.add(MpmEditingTools.makeCopyMergeMapEntry(self, mpmTree));
 
                 // delete map
                 menu.add(MpmEditingTools.makeDeleteMapMenuEntry(self, mpmTree));
@@ -396,6 +421,12 @@ public class MpmEditingTools {
                 // add style switch
                 menu.add(MpmEditingTools.makeAddStyleSwitchMenuEntry(self, mpmTree));
 
+                // move/merge into another part or global
+                menu.add(MpmEditingTools.makeMoveMergeMapEntry(self, mpmTree));
+
+                // copy/merge into another part or global
+                menu.add(MpmEditingTools.makeCopyMergeMapEntry(self, mpmTree));
+
                 // delete map
                 menu.add(MpmEditingTools.makeDeleteMapMenuEntry(self, mpmTree));
                 break;
@@ -409,6 +440,12 @@ public class MpmEditingTools {
                 // add style switch
                 menu.add(MpmEditingTools.makeAddStyleSwitchMenuEntry(self, mpmTree));
 
+                // move/merge into another part or global
+                menu.add(MpmEditingTools.makeMoveMergeMapEntry(self, mpmTree));
+
+                // copy/merge into another part or global
+                menu.add(MpmEditingTools.makeCopyMergeMapEntry(self, mpmTree));
+
                 // delete map
                 menu.add(MpmEditingTools.makeDeleteMapMenuEntry(self, mpmTree));
                 break;
@@ -416,6 +453,12 @@ public class MpmEditingTools {
             case genericMap:
                 // add style switch
                 menu.add(MpmEditingTools.makeAddStyleSwitchMenuEntry(self, mpmTree));
+
+                // move/merge into another part or global
+                menu.add(MpmEditingTools.makeMoveMergeMapEntry(self, mpmTree));
+
+                // copy/merge into another part or global
+                menu.add(MpmEditingTools.makeCopyMergeMapEntry(self, mpmTree));
 
                 // delete map
                 menu.add(MpmEditingTools.makeDeleteMapMenuEntry(self, mpmTree));
@@ -444,6 +487,12 @@ public class MpmEditingTools {
                     }
                 }
 
+                // move/merge into another part or global
+                menu.add(MpmEditingTools.makeMoveMergeMapEntry(self, mpmTree));
+
+                // copy/merge into another part or global
+                menu.add(MpmEditingTools.makeCopyMergeMapEntry(self, mpmTree));
+
                 // delete map
                 menu.add(MpmEditingTools.makeDeleteMapMenuEntry(self, mpmTree));
                 break;
@@ -470,6 +519,12 @@ public class MpmEditingTools {
                 editArticulation.addActionListener(actionEvent -> MpmEditingTools.editArticulation(self, mpmTree));
                 menu.add(editArticulation);
 
+                // move entry
+                menu.add(MpmEditingTools.makeMoveMapEntry(self, mpmTree));
+
+                // copy entry
+                menu.add(MpmEditingTools.makeCopyMapEntry(self, mpmTree));
+
                 // delete entry
                 menu.add(MpmEditingTools.makeDeleteMapEntryMenuItem(self, mpmTree));
                 break;
@@ -479,6 +534,12 @@ public class MpmEditingTools {
                 WebMenuItem editAccentuationPattern = new WebMenuItem("Edit Accentuation Pattern");
                 editAccentuationPattern.addActionListener(actionEvent -> MpmEditingTools.editAccentuationPattern(self, mpmTree));
                 menu.add(editAccentuationPattern);
+
+                // move entry
+                menu.add(MpmEditingTools.makeMoveMapEntry(self, mpmTree));
+
+                // copy entry
+                menu.add(MpmEditingTools.makeCopyMapEntry(self, mpmTree));
 
                 // delete entry
                 menu.add(MpmEditingTools.makeDeleteMapEntryMenuItem(self, mpmTree));
@@ -494,6 +555,11 @@ public class MpmEditingTools {
                 editAsyncrony.addActionListener(actionEvent -> MpmEditingTools.editAsynchrony(self, mpmTree));
                 menu.add(editAsyncrony);
 
+                // move entry
+                menu.add(MpmEditingTools.makeMoveMapEntry(self, mpmTree));
+
+                // copy entry
+                menu.add(MpmEditingTools.makeCopyMapEntry(self, mpmTree));
 
                 // delete entry
                 menu.add(MpmEditingTools.makeDeleteMapEntryMenuItem(self, mpmTree));
@@ -504,6 +570,12 @@ public class MpmEditingTools {
                 WebMenuItem editDynamics = new WebMenuItem("Edit Dynamics");
                 editDynamics.addActionListener(actionEvent -> MpmEditingTools.editDynamics(self, mpmTree));
                 menu.add(editDynamics);
+
+                // move entry
+                menu.add(MpmEditingTools.makeMoveMapEntry(self, mpmTree));
+
+                // copy entry
+                menu.add(MpmEditingTools.makeCopyMapEntry(self, mpmTree));
 
                 // delete entry
                 menu.add(MpmEditingTools.makeDeleteMapEntryMenuItem(self, mpmTree));
@@ -520,6 +592,12 @@ public class MpmEditingTools {
                 editDistribution.addActionListener(actionEvent -> MpmEditingTools.editDistribution(self, mpmTree));
                 menu.add(editDistribution);
 
+                // move entry
+                menu.add(MpmEditingTools.makeMoveMapEntry(self, mpmTree));
+
+                // copy entry
+                menu.add(MpmEditingTools.makeCopyMapEntry(self, mpmTree));
+
                 // delete entry
                 menu.add(MpmEditingTools.makeDeleteMapEntryMenuItem(self, mpmTree));
                 break;
@@ -529,6 +607,12 @@ public class MpmEditingTools {
                 WebMenuItem editRubato = new WebMenuItem("Edit Rubato");
                 editRubato.addActionListener(actionEvent -> MpmEditingTools.editRubato(self, mpmTree));
                 menu.add(editRubato);
+
+                // move entry
+                menu.add(MpmEditingTools.makeMoveMapEntry(self, mpmTree));
+
+                // copy entry
+                menu.add(MpmEditingTools.makeCopyMapEntry(self, mpmTree));
 
                 // delete entry
                 menu.add(MpmEditingTools.makeDeleteMapEntryMenuItem(self, mpmTree));
@@ -540,6 +624,12 @@ public class MpmEditingTools {
                 editTempo.addActionListener(actionEvent -> MpmEditingTools.editTempo(self, mpmTree));
                 menu.add(editTempo);
 
+                // move entry
+                menu.add(MpmEditingTools.makeMoveMapEntry(self, mpmTree));
+
+                // copy entry
+                menu.add(MpmEditingTools.makeCopyMapEntry(self, mpmTree));
+
                 // delete entry
                 menu.add(MpmEditingTools.makeDeleteMapEntryMenuItem(self, mpmTree));
                 break;
@@ -550,6 +640,12 @@ public class MpmEditingTools {
                 WebMenuItem editStyleSwitch = new WebMenuItem("Edit Style Switch");
                 editStyleSwitch.addActionListener(actionEvent -> MpmEditingTools.editStyleSwitch(self, mpmTree));
                 menu.add(editStyleSwitch);
+
+                // move entry
+                menu.add(MpmEditingTools.makeMoveMapEntry(self, mpmTree));
+
+                // copy entry
+                menu.add(MpmEditingTools.makeCopyMapEntry(self, mpmTree));
 
                 // delete style switch
                 menu.add(MpmEditingTools.makeDeleteMapEntryMenuItem(self, mpmTree));
@@ -610,7 +706,6 @@ public class MpmEditingTools {
      * the procedure to add Metadata to an mpm node
      * @param mpmNode
      * @param mpmTree
-     * @return
      */
     private static void addMetadata(@NotNull MpmTreeNode mpmNode, @NotNull MpmTree mpmTree) {
         ProjectData project = mpmTree.getProjectPane().getProjectData();
@@ -1087,6 +1182,267 @@ public class MpmEditingTools {
         });
 
         return deleteMap;
+    }
+
+    /**
+     * The context menu entry for moving/merging an MPM map into another part's or the global dated environment.
+     * @param mapNode
+     * @param mpmTree
+     * @return
+     */
+    private static WebMenu makeMoveMergeMapEntry(MpmTreeNode mapNode, MpmTree mpmTree) {
+        WebMenu moveMergeMap = new WebMenu("Move Map & Merge into");                                // the context menu sub menu
+
+        // if there is no other place to move/merge this map to, disable this context menu entry
+        if ((mapNode.getParent().getParent().getParent().getChildCount() < 2)                       // no other part or global
+                && (mpmTree.getProjectPane().getMpm().getAllPerformances().size() < 2)) {           // no other performance
+            moveMergeMap.setEnabled(false);
+            moveMergeMap.setToolTipText("No other performance, part or global element to move to.");
+            return moveMergeMap;
+        }
+
+        GenericMap map = (GenericMap) mapNode.getUserObject();                                      // get the handle to the MPM map
+
+        for (Performance performance : mpmTree.getProjectPane().getMpm().getAllPerformances()) {
+            WebMenu performanceMenu = new WebMenu(performance.getName());                           // the performance choice submenu
+            MpmTreeNode performanceNode = mpmTree.findNode(performance, false);                     // get the performance's corresponding tree node
+            Enumeration<MpmTreeNode> partNodes = performanceNode.children();                        // get all the performance node's children (global and parts)
+            ArrayList<WebMenuItem> items = new ArrayList<>();
+
+            while (partNodes.hasMoreElements()) {                                                   // iterate through global and all parts
+                MpmTreeNode partNode = partNodes.nextElement();                                     // get the part or global node
+                if (partNode == mapNode.getParent().getParent())                                    // if the part/global element is the environment of the input map
+                    continue;                                                                       // done, we do not intend to move and merge the map into itself
+
+                WebMenuItem item = new WebMenuItem(partNode.getText(null));                         // create a context menu item for this part/global from the node's text
+                item.addActionListener(actionEvent -> {                                             // define the action
+                    Dated dated = (partNode.getUserObject() instanceof Global) ? ((Global) partNode.getUserObject()).getDated() : ((Part) partNode.getUserObject()).getDated(); // get the global/part's dated environment
+                    GenericMap targetMap = dated.getMap(map.getType());                             // if there is already a map of the input map's type, get it; that is the target map into which we merge the contents
+                    if (targetMap == null)                                                          // if there is no such map
+                        targetMap = dated.addMap(map.getType());                                    // create it
+
+                    for (KeyValue<Double, Element> e : map.getAllElements()) {                      // for each element in the input map
+                        Element copy = e.getValue().copy();                                         // copy it
+                        targetMap.addElement(copy);                                                 // add it to the target map
+                        MpmEditingTools.handOverScorePosition(e.getValue(), copy, mpmTree.getProjectPane().getScore()); // if the origin element is linked in the score, we have to associate the new one now with that score position
+                    }
+
+                    ((Dated) mapNode.getParent().getUserObject()).removeMap(map.getType());         // remove the input map from its dated environment
+
+                    mpmTree.reloadNode(performanceNode.findChildNode(dated, false));                // update the dated node in the target environment so the new map contents are displayed
+                    mpmTree.reloadNode(mapNode.getParent());                                        // update the dated node where we removed the map
+                });
+                items.add(item);
+            }
+
+            if (items.isEmpty())                                                                    // if there is no place in this performance where the map can be moved
+                continue;                                                                           // done, do not add the performance to the context menu
+
+            for (WebMenuItem item : items)                                                          // for each menu item we created
+                performanceMenu.add(item);                                                          // add it to the performance submenu
+
+            moveMergeMap.add(performanceMenu);                                                      // add the performance submenu to the context menu
+        }
+
+        return moveMergeMap;                                                                        // return the context sub-menu
+    }
+
+    /**
+     * The context menu entry for copying/merging an MPM map into another part's or the global dated environment.
+     * @param mapNode
+     * @param mpmTree
+     * @return
+     */
+    private static WebMenu makeCopyMergeMapEntry(MpmTreeNode mapNode, MpmTree mpmTree) {
+        WebMenu copyMergeMap = new WebMenu("Copy Map & Merge into");                                // the context menu sub menu
+
+        // if there is no other place to copy/merge this map to, disable this context menu entry
+        if ((mapNode.getParent().getParent().getParent().getChildCount() < 2)                       // no other part or global
+                && (mpmTree.getProjectPane().getMpm().getAllPerformances().size() < 2)) {           // no other performance
+            copyMergeMap.setEnabled(false);
+            copyMergeMap.setToolTipText("No other part or global element available to copy into.");
+            return copyMergeMap;
+        }
+
+        copyMergeMap.setToolTipText("The copies will get unique IDs.");                             // set a tooltip text
+
+        GenericMap map = (GenericMap) mapNode.getUserObject();                                      // get the handle to the MPM map
+
+        for (Performance performance : mpmTree.getProjectPane().getMpm().getAllPerformances()) {
+            WebMenu performanceMenu = new WebMenu(performance.getName());                           // the performance choice submenu
+            MpmTreeNode performanceNode = mpmTree.findNode(performance, false);                     // get the performance's corresponding tree node
+            Enumeration<MpmTreeNode> partNodes = performanceNode.children();                        // get all the performance node's children (global and parts)
+            ArrayList<WebMenuItem> items = new ArrayList<>();
+
+            while (partNodes.hasMoreElements()) {                                                   // iterate through global and all parts
+                MpmTreeNode partNode = partNodes.nextElement();                                     // get the part or global node
+                if (partNode == mapNode.getParent().getParent())                                    // if the part/global element is the environment of the input map
+                    continue;                                                                       // done, we do not intend to copy and merge the map into itself
+
+                WebMenuItem item = new WebMenuItem(partNode.getText(null));                         // create a context menu item for this part/global from the node's text
+                item.addActionListener(actionEvent -> {                                             // define the action
+                    Dated dated = (partNode.getUserObject() instanceof Global) ? ((Global) partNode.getUserObject()).getDated() : ((Part) partNode.getUserObject()).getDated(); // get the global/part's dated environment
+                    GenericMap targetMap = dated.getMap(map.getType());                             // if there is already a map of the input map's type, get it; that is the target map into which we merge the contents
+                    if (targetMap == null)                                                          // if there is no such map
+                        targetMap = dated.addMap(map.getType());                                    // create it
+
+                    for (KeyValue<Double, Element> e : map.getAllElements()) {                      // for each element in the input map
+                        Element elt = e.getValue().copy();                                          // copy it
+                        Attribute id = elt.getAttribute("id", "http://www.w3.org/XML/1998/namespace");  // get its XML ID
+                        if (id != null)                                                             // if it has one, we have to change it to ensure that it is unique
+                            id.setValue(id.getValue() + "_mpmToolbox-copy_" + UUID.randomUUID());   // create and set a unique ID
+                        targetMap.addElement(elt);                                                  // add the copied element to the target map
+                    }
+
+                    mpmTree.reloadNode(performanceNode.findChildNode(dated, false));                // update the dated node in the target environment so the new map contents are displayed
+                });
+                items.add(item);                                                                    // add the menu item to the context menu
+            }
+
+            if (items.isEmpty())                                                                    // if there is no place in this performance where the map can be moved
+                continue;                                                                           // done, do not add the performance to the context menu
+
+            for (WebMenuItem item : items)                                                          // for each menu item we created
+                performanceMenu.add(item);                                                          // add it to the performance submenu
+
+            copyMergeMap.add(performanceMenu);                                                      // add the performance submenu to the context menu
+        }
+
+        return copyMergeMap;                                                                        // return the context sub-menu
+    }
+
+    /**
+     * move the map entry to a map in another global or part environment
+     * @param mapEntryNode
+     * @param mpmTree
+     * @return
+     */
+    private static WebMenu makeMoveMapEntry(MpmTreeNode mapEntryNode, MpmTree mpmTree) {
+        WebMenu moveMapEntry = new WebMenu("Move to");                                              // the context menu sub menu
+
+        // if there is no other place to move this entry to, disable this context menu entry
+        if ((mapEntryNode.getParent().getParent().getParent().getParent().getChildCount() < 2)      // no other part or global
+                && (mpmTree.getProjectPane().getMpm().getAllPerformances().size() < 2)) {           // no other performance
+            moveMapEntry.setEnabled(false);
+            moveMapEntry.setToolTipText("No other performance, part or global element to move to.");
+            return moveMapEntry;
+        }
+
+        MpmTreeNode mapNode = mapEntryNode.getParent();                                             // get a handle to the map node
+        GenericMap map = (GenericMap) mapNode.getUserObject();                                      // get the handle to the MPM map
+
+        for (Performance performance : mpmTree.getProjectPane().getMpm().getAllPerformances()) {
+            WebMenu performanceMenu = new WebMenu(performance.getName());                           // the performance choice submenu
+            MpmTreeNode performanceNode = mpmTree.findNode(performance, false);                     // get the performance's corresponding tree node
+            Enumeration<MpmTreeNode> partNodes = performanceNode.children();                        // get all the performance node's children (global and parts)
+            ArrayList<WebMenuItem> items = new ArrayList<>();
+
+            while (partNodes.hasMoreElements()) {                                                   // iterate through global and all parts
+                MpmTreeNode partNode = partNodes.nextElement();                                     // get the part or global node
+                if (partNode == mapNode.getParent().getParent())                                    // if the part/global element is the environment of the input map
+                    continue;                                                                       // done, we do not intend to move and merge the map into itself
+
+                WebMenuItem item = new WebMenuItem(partNode.getText(null));                         // create a context menu item for this part/global from the node's text
+                item.addActionListener(actionEvent -> {                                             // define the action
+                    Dated dated = (partNode.getUserObject() instanceof Global) ? ((Global) partNode.getUserObject()).getDated() : ((Part) partNode.getUserObject()).getDated(); // get the global/part's dated environment
+                    MpmTreeNode datedNode = partNode.findChildNode(dated, false);
+                    GenericMap targetMap = dated.getMap(map.getType());                             // if there is already a map of the input map's type, get it; that is the target map into which we merge the contents
+                    if (targetMap == null) {                                                        // if there is no such map
+                        targetMap = dated.addMap(map.getType());                                    // create it
+                        mpmTree.reloadNode(datedNode);                                              // update the dated node in the target environment so the new map gets displayed
+                    }
+
+                    Element entry = (Element) mapEntryNode.getUserObject();                         // get the original entry data
+                    Element copy = entry.copy();                                                    // make a copy
+                    targetMap.addElement(copy);                                                     // add the copy to the target map
+                    MpmEditingTools.handOverScorePosition(entry, copy, mpmTree.getProjectPane().getScore());    // if the origin element is linked in the score, we have to associate the new one now with that score position
+                    map.removeElement(entry);                                                       // remove the original entry
+
+                    mpmTree.reloadNode(datedNode.findChildNode(targetMap, false));                  // update the target map node so the new entry is displayed
+                    mpmTree.reloadNode(mapNode);                                                    // update the map node where we removed the entry
+                });
+                items.add(item);
+            }
+
+            if (items.isEmpty())                                                                    // if there is no place in this performance where the entry can be moved
+                continue;                                                                           // done, do not add the performance to the context menu
+
+            for (WebMenuItem item : items)                                                          // for each menu item we created
+                performanceMenu.add(item);                                                          // add it to the performance submenu
+
+            moveMapEntry.add(performanceMenu);                                                      // add the performance submenu to the context menu
+        }
+
+        return moveMapEntry;                                                                        // return the context sub-menu
+    }
+
+    /**
+     * copy the map entry to a map in another global or part environment
+     * @param mapEntryNode
+     * @param mpmTree
+     * @return
+     */
+    private static WebMenu makeCopyMapEntry(MpmTreeNode mapEntryNode, MpmTree mpmTree) {
+        WebMenu copyMapEntry = new WebMenu("Copy to");                                              // the context menu sub menu
+
+        // if there is no other place to copy this entry to, disable this context menu entry
+        if ((mapEntryNode.getParent().getParent().getParent().getParent().getChildCount() < 2)      // no other part or global
+                && (mpmTree.getProjectPane().getMpm().getAllPerformances().size() < 2)) {           // no other performance
+            copyMapEntry.setEnabled(false);
+            copyMapEntry.setToolTipText("No other performance, part or global element to copy to.");
+            return copyMapEntry;
+        }
+
+        copyMapEntry.setToolTipText("The copy will get a unique ID.");                              // set a tooltip text
+
+        MpmTreeNode mapNode = mapEntryNode.getParent();                                             // get a handle to the map node
+        GenericMap map = (GenericMap) mapNode.getUserObject();                                      // get the handle to the MPM map
+
+        for (Performance performance : mpmTree.getProjectPane().getMpm().getAllPerformances()) {
+            WebMenu performanceMenu = new WebMenu(performance.getName());                           // the performance choice submenu
+            MpmTreeNode performanceNode = mpmTree.findNode(performance, false);                     // get the performance's corresponding tree node
+            Enumeration<MpmTreeNode> partNodes = performanceNode.children();                        // get all the performance node's children (global and parts)
+            ArrayList<WebMenuItem> items = new ArrayList<>();
+
+            while (partNodes.hasMoreElements()) {                                                   // iterate through global and all parts
+                MpmTreeNode partNode = partNodes.nextElement();                                     // get the part or global node
+                if (partNode == mapNode.getParent().getParent())                                    // if the part/global element is the environment of the input map
+                    continue;                                                                       // done, we do not intend to move and merge the map into itself
+
+                WebMenuItem item = new WebMenuItem(partNode.getText(null));                         // create a context menu item for this part/global from the node's text
+                item.addActionListener(actionEvent -> {                                             // define the action
+                    Dated dated = (partNode.getUserObject() instanceof Global) ? ((Global) partNode.getUserObject()).getDated() : ((Part) partNode.getUserObject()).getDated(); // get the global/part's dated environment
+                    MpmTreeNode datedNode = partNode.findChildNode(dated, false);
+                    GenericMap targetMap = dated.getMap(map.getType());                             // if there is already a map of the input map's type, get it; that is the target map into which we merge the contents
+                    if (targetMap == null) {                                                        // if there is no such map
+                        targetMap = dated.addMap(map.getType());                                    // create it
+                        mpmTree.reloadNode(datedNode);                                              // update the dated node in the target environment so the new map gets displayed
+                    }
+
+                    Element entry = (Element) mapEntryNode.getUserObject();                         // get the original entry data
+                    Element copy = entry.copy();                                                    // make a copy
+
+                    Attribute id = copy.getAttribute("id", "http://www.w3.org/XML/1998/namespace"); // get its XML ID
+                    if (id != null)                                                                 // if it has one, we have to change it to ensure that it is unique
+                        id.setValue(id.getValue() + "_mpmToolbox-copy_" + UUID.randomUUID());       // create and set a unique ID
+
+                    targetMap.addElement(copy);                                                     // add the copy to the target map
+
+                    mpmTree.reloadNode(datedNode.findChildNode(targetMap, false));                  // update the target map node so the new entry is displayed
+                });
+                items.add(item);
+            }
+
+            if (items.isEmpty())                                                                    // if there is no place in this performance where the entry can be copied
+                continue;                                                                           // done, do not add the performance to the context menu
+
+            for (WebMenuItem item : items)                                                          // for each menu item we created
+                performanceMenu.add(item);                                                          // add it to the performance submenu
+
+            copyMapEntry.add(performanceMenu);                                                      // add the performance submenu to the context menu
+        }
+
+        return copyMapEntry;                                                                        // return the context sub-menu
     }
 
     /**

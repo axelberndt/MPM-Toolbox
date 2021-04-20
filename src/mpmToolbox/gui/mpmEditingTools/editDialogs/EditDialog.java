@@ -187,6 +187,7 @@ public abstract class EditDialog<E> extends WebDialog<EditDialog<E>> {
 
         this.id = new WebTextField();
         this.id.setMinimumWidth(getFontMetrics(this.id.getFont()).stringWidth("wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww"));
+        this.id.setMaximumWidth(this.id.getMinimumWidth());
         this.id.setHorizontalAlignment(WebTextField.LEFT);
         this.id.setPadding(Settings.paddingInDialogs);
         this.addToContentPanel(this.id, 1, gridBagRow, 2, 1, 1.0, 1.0, 0, 0, GridBagConstraints.BOTH);
