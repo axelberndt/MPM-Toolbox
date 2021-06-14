@@ -204,9 +204,16 @@ public class MpmTree extends WebExTree<MpmTreeNode> implements MouseListener, Tr
     @Override
     public void mouseClicked(MouseEvent mouseEvent) {
         // right click opens the context menu of the clicked node
-        if (SwingUtilities.isRightMouseButton(mouseEvent)) {
+        if (SwingUtilities.isRightMouseButton(mouseEvent)) {    // if right click
             MpmTreeNode node = this.getNodeForRow(this.getClosestRowForLocation(mouseEvent.getX(), mouseEvent.getY()));   // get the node that has been clicked
             node.getContextMenu(this).show(this, mouseEvent.getX() - 25, mouseEvent.getY()); // trigger its context menu
+            return;
+        }
+        if (SwingUtilities.isLeftMouseButton(mouseEvent)) {     // if left click
+            if (mouseEvent.getClickCount() > 1) {               // if double (or more) click -> open editor dialog
+                MpmTreeNode node = this.getSelectedNode();      // get the node that has been double-clicked
+                node.openEditorDialog(this);
+            }
         }
     }
 

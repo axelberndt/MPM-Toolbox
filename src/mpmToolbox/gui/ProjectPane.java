@@ -59,6 +59,7 @@ public class ProjectPane extends WebDockablePane {
     private SyncPlayer syncPlayer = null;
 
     private ScoreDocumentData scoreFrame = null;
+    private AudioDocumentData audioFrame = null;
 
     /**
      * constructor
@@ -172,7 +173,7 @@ public class ProjectPane extends WebDockablePane {
 
         // fill the content pane in the center
 //        this.tabs.openDocument(new DocumentData<>("TestTab", "Test Tab", new WebButton("Test")));
-        this.tabs.openDocument(new AudioDocumentData("Audio", "Audio", this.getProjectData()));
+        this.tabs.openDocument(this.makeAudioFrame());
         this.tabs.openDocument(this.makeScoreFrame());
 
         this.setContent(this.tabs);     // this will fill the free space of the docking pane that is not occupied by a WebDockableFrame, this can be anything JComponent-based
@@ -243,10 +244,20 @@ public class ProjectPane extends WebDockablePane {
 
     /**
      * this method sets up the scoreDockFrame
+     * @return
      */
     private ScoreDocumentData makeScoreFrame() {
         this.scoreFrame = new ScoreDocumentData(this);
         return this.scoreFrame;
+    }
+
+    /**
+     * this method sets up the audioDockFrame
+     * @return
+     */
+    private AudioDocumentData makeAudioFrame() {
+        this.audioFrame = new AudioDocumentData(this);
+        return this.audioFrame;
     }
 
     /**
@@ -300,6 +311,7 @@ public class ProjectPane extends WebDockablePane {
         this.mpmDockFrame.restore();    // open the frame
         this.mpmDockFrame.validate();   // this is necessary so the component display gets updated
         this.mpmDockFrame.repaint();    // update the component display
+        this.syncPlayer.updatePerformanceList();
     }
 
     /**

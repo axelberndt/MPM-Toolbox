@@ -661,6 +661,113 @@ public class MpmEditingTools {
     }
 
     /**
+     * Invoke this method to immediately open the editor dialog of MPM nodes ... at least those that have
+     * an editor dialog and are leaf nodes in the MPM tree. Non-leaf nodes expand on double click and that
+     * is what this method is meant to be used for, open the editor on double click.
+     * @param forThisNode
+     * @param inThisMpmTree
+     */
+    public static void quickOpenEditor(@NotNull MpmTreeNode forThisNode, @NotNull MpmTree inThisMpmTree) {
+        MpmTreeNode self = forThisNode;
+        MpmTree mpmTree = inThisMpmTree;
+
+        switch (self.getType()) {
+            case mpm:
+                break;
+            case metadata:
+                break;
+            case author:
+                MpmEditingTools.editAuthor(self, mpmTree);
+                break;
+            case comment:
+                MpmEditingTools.editComment(self, mpmTree);
+                break;
+            case relatedResources:
+                break;
+            case relatedResource:
+                MpmEditingTools.editResource(self, mpmTree);
+                break;
+            case performance:
+//                MpmEditingTools.editPerformance(self, mpmTree);
+                break;
+            case global:
+                break;
+            case part:
+//                MpmEditingTools.editPart(self, mpmTree);
+                break;
+            case header:
+                break;
+            case dated:
+                break;
+            case styleCollection:
+                break;
+            case articulationStyle:
+            case metricalAccentuationStyle:
+            case dynamicsStyle:
+            case genericStyle:
+            case rubatoStyle:
+            case tempoStyle:
+//                MpmEditingTools.editStyleDef(self, mpmTree);
+                break;
+            case articulationMap:
+            case asynchronyMap:
+            case metricalAccentuationMap:
+            case dynamicsMap:
+            case ornamentationMap:
+            case rubatoMap:
+            case tempoMap:
+            case genericMap:
+            case imprecisionMap:
+                break;
+            case accentuationPatternDef:
+//                MpmEditingTools.editDef(self, mpmTree);
+                break;
+            case articulationDef:
+            case dynamicsDef:
+            case rubatoDef:
+            case tempoDef:
+                MpmEditingTools.editDef(self, mpmTree);
+                break;
+            case articulation:
+                MpmEditingTools.editArticulation(self, mpmTree);
+                break;
+            case accentuationPattern:
+                MpmEditingTools.editAccentuationPattern(self, mpmTree);
+                break;
+            case accentuation:
+                // edit the accentuationPatternDef instead of this element
+                break;
+            case asynchrony:
+                MpmEditingTools.editAsynchrony(self, mpmTree);
+                break;
+            case dynamics:
+                MpmEditingTools.editDynamics(self, mpmTree);
+                break;
+            case distributionUniform:
+            case distributionGaussian:
+            case distributionTriangular:
+            case distributionCorrelatedBrownianNoise:
+            case distributionCorrelatedCompensatingTriangle:
+            case distributionList:
+                MpmEditingTools.editDistribution(self, mpmTree);
+                break;
+            case rubato:
+                MpmEditingTools.editRubato(self, mpmTree);
+                break;
+            case tempo:
+                MpmEditingTools.editTempo(self, mpmTree);
+                break;
+            case style:
+                MpmEditingTools.editStyleSwitch(self, mpmTree);
+                break;
+            case xmlElement:
+            case unknown:
+            default:
+                break;
+        }
+    }
+
+    /**
      * This creates the context menu in the ScoreDisplayPanel when an MPM object is right-clicked.
      * @return
      */

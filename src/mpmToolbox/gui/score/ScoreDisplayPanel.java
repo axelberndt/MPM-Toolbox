@@ -41,7 +41,7 @@ public class ScoreDisplayPanel extends WebPanel implements MouseWheelListener, M
     // variables for pan and zoom
     private final AffineTransform affineTransform = new AffineTransform();  // the pan and zoom transformation of the image is stored in here
     private AffineTransform inverseAffineTransform = new AffineTransform(); // this holds the inverse of the affine transform, it is computed together with the affine transform so it is quickly available for paint operations
-    private double zoomFactor = 1.0;                                        // the zoom factor of the displayed score page image
+    private Double zoomFactor = null;                                       // the zoom factor of the displayed score page image it is initialized the first time the panel is drawn, see paintComponent()
     private Point dragStartPoint = null;                                    // the start point of a drag gesture
     private final Point diff = new Point(0, 0);                             // this keeps track of drag gestures
     private final Point2D.Double offset = new Point2D.Double(0.0, 0.0);     // this stores the offset after all transforms so the image does not jump back to its initial position
@@ -108,6 +108,9 @@ public class ScoreDisplayPanel extends WebPanel implements MouseWheelListener, M
     @Override
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);                                    // this ensures that the background is filled with the standard background color
+
+        if (this.zoomFactor == null)
+            this.reset();
 
         Graphics2D g2 = (Graphics2D)g;                              // make g a Graphics2D object so we can use its extended drawing features
         g2.transform(this.affineTransform);                         // do the transform on the graphics
@@ -272,6 +275,23 @@ public class ScoreDisplayPanel extends WebPanel implements MouseWheelListener, M
     }
 
     /**
+     * invoke this method to reset the image zoom to match the panel size and translate the image to the initial position
+     */
+    private void reset() {
+        this.affineTransform.setToIdentity();
+        this.zoomFactor = ((double) this.getHeight()) / this.scorePage.getImage().getHeight();
+        this.affineTransform.scale(this.zoomFactor, this.zoomFactor);
+
+        try {
+            this.inverseAffineTransform = this.affineTransform.createInverse();
+        } catch (NoninvertibleTransformException e) {
+            e.printStackTrace();
+        }
+
+        this.repaint();
+    }
+
+    /**
      * This method checks if two input objects have the same parent performance.
      * This is a helper method for paintComponent() to determine which ONGNodes from the MPM should be painted.
      * We want to paint only performance overlays from the performance in which the MpmTree cursor currently is. We do not want to mix elements from different performances.
@@ -431,7 +451,12 @@ public class ScoreDisplayPanel extends WebPanel implements MouseWheelListener, M
         this.diff.setLocation(mousePosition.x - this.dragStartPoint.x, mousePosition.y - this.dragStartPoint.y);        // get difference to start position (when mouse press began)
         this.affineTransform.setToIdentity();                                                                           // initialize the new transform
         this.affineTransform.translate(this.offset.getX() + this.diff.getX(), this.offset.getY() + this.diff.getY());   // add translation to the transform
-        this.affineTransform.scale(this.zoomFactor, this.zoomFactor);                                                   // add scaling to the transform
+
+        // add scaling to the transform
+        if (this.zoomFactor == null)
+            this.affineTransform.scale(1.0, 1.0);
+        else
+            this.affineTransform.scale(this.zoomFactor, this.zoomFactor);
 
         try {
             this.inverseAffineTransform = this.affineTransform.createInverse();
@@ -501,6 +526,8 @@ public class ScoreDisplayPanel extends WebPanel implements MouseWheelListener, M
 
                 switch (mouseEvent.getButton()) {
                     case MouseEvent.BUTTON1:                                    // left click
+                        if (mouseEvent.getClickCount() > 1)                     // if double (or more) click
+                            MpmEditingTools.quickOpenEditor(mpmTreeNode, mpmTree);  // open editor dialog
                         break;
                     case MouseEvent.BUTTON3:                                    // right click = context menu
                         WebPopupMenu menu = MpmEditingTools.makeScoreContextMenu(mpmTreeNode, mpmTree, scorePage);
@@ -881,6 +908,9 @@ public class ScoreDisplayPanel extends WebPanel implements MouseWheelListener, M
     @Override
     public void mouseWheelMoved(MouseWheelEvent mouseWheelEvent) {
         if (!((this.parent.currentInteractionMode == ScoreDocumentData.InteractionMode.markNotes) || (this.parent.currentInteractionMode == ScoreDocumentData.InteractionMode.editPerformance)) || mouseWheelEvent.isControlDown()) {     // we are in pan and zoom mode
+            if (this.zoomFactor == null)                        // make sure zoomFactor is initialized
+                this.zoomFactor = 1.0;
+
             double prevZoomFactor = this.zoomFactor;            // store the zoom factor so far, needed later
 
             if (mouseWheelEvent.getWheelRotation() < 0)         // zoom in

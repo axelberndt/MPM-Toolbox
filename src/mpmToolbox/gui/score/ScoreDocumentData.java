@@ -31,7 +31,7 @@ import java.util.ArrayList;
 public class ScoreDocumentData extends DocumentData<WebPanel> implements ActionListener {
     protected final ProjectPane parent;
     private final WebPanel scorePanel = new WebPanel();
-    private ScoreDisplayPanel scoreDisplay = null;                                                               // this displays the score
+    private ScoreDisplayPanel scoreDisplay = null;                                                              // this displays the score
     private final WebLabel placeholder = new WebLabel("Place score images here.", WebLabel.CENTER);
     private final WebPopupMenu scorePagesPopupMenu = new WebPopupMenu();                                        // this is filled with the file names of the score pages, then used by the WebSplitButton for pages selection
     private final WebSplitButton interactionMode = new WebSplitButton();                                        // with this button we switch between interaction modes
@@ -41,6 +41,7 @@ public class ScoreDocumentData extends DocumentData<WebPanel> implements ActionL
 
     /**
      * constructor
+     * @param parent
      */
     public ScoreDocumentData(@NotNull ProjectPane parent) {
         super("Score", "Score", null);

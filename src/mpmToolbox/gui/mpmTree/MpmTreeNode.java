@@ -636,6 +636,15 @@ public class MpmTreeNode extends UniqueNode<MpmTreeNode, Object> implements Text
     }
 
     /**
+     * This method will trigger the editor dialog for the node, provided it has one.
+     * It is meant to be invoked by a double click event in class MpmTree.
+     * @param mpmTree
+     */
+    public void openEditorDialog(@NotNull MpmTree mpmTree) {
+        MpmEditingTools.quickOpenEditor(this, mpmTree);
+    }
+
+    /**
      * Access the data behind this node.
      * @return
      */

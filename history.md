@@ -1,6 +1,14 @@
 ### Version History
 
 
+#### v0.1.4
+- Double-click on MPM elements ...
+    - in the MPM tree widget will immediately open its editor dialog, provided it has one. This function is added to leaf nodes only and not to nodes that expand by double click. Element `distribution.list` is an exception to this rule, so this functionality can also be used in the score display, see next bullet point.
+    - in the score display widget does the same as the above. It immediately opens the corresponding editor dialog.
+- Bugfix: The SyncPlayer's performance chooser did not update when the MPM file is changes. This is fixed.
+- Enhancement in the score display: The zoom factor of the score image now initializes so that it matches the size of the panel.
+
+
 #### v0.1.3
 - Added new operations to map elements in the MPM tree widget. Maps can now be moved and copied from one `dated` environment to another - effectively to another `part` or `global` environment in the same or any other `performance`.
   - When copied, the ID of each map element will be changed in the copy to ensure unique IDs throughout the MPM document.
