@@ -1,6 +1,11 @@
 ### Version History
 
 
+#### v0.1.5
+- Code simplification in class `mpmToolbox.gui.syncPlayer`.
+- Updated meico to v0.8.25.
+
+
 #### v0.1.4
 - Double-click on MPM elements ...
     - in the MPM tree widget will immediately open its editor dialog, provided it has one. This function is added to leaf nodes only and not to nodes that expand by double click. Element `distribution.list` is an exception to this rule, so this functionality can also be used in the score display, see next bullet point.

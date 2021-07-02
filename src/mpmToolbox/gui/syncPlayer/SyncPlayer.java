@@ -21,8 +21,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
-import java.util.ArrayList;
-import java.util.Arrays;
 
 /**
  * This class implements the Audio and MIDI player for MPM Toolbox.
@@ -35,7 +33,6 @@ public class SyncPlayer extends WebPanel {
     private final WebButton playButton = new WebButton("\u25B6");       //  ◼ "\u25FC", ▶ "\u25B6"
     private static final int sliderMax = 1000000;
     private final WebSlider playbackSlider = new WebSlider(WebSlider.HORIZONTAL, 0, sliderMax, 0);  // the slider that indicates playback position
-    private boolean sliderBlocked = false;
 
     private final AudioPlayer audioPlayer = new AudioPlayer();
     private final MidiPlayer midiPlayer = new MidiPlayer();
@@ -218,14 +215,12 @@ public class SyncPlayer extends WebPanel {
             }
             @Override
             public void mousePressed(MouseEvent mouseEvent) {
-                sliderBlocked = true;   // don't allow the runnable to change the slider position while the user interacts with it
             }
             @Override
             public void mouseReleased(MouseEvent mouseEvent) {
                 if (runnable != null) {                             // if music is already playing
                     runnable.jumpTo(((double) playbackSlider.getValue()) / sliderMax);
                 }
-                sliderBlocked = false;  // now the runnable is allowed again to change the slider position
             }
             @Override
             public void mouseEntered(MouseEvent mouseEvent) {
@@ -418,7 +413,7 @@ public class SyncPlayer extends WebPanel {
                     break;
                 }
 
-                if (!sliderBlocked)
+                if (!playbackSlider.getValueIsAdjusting())
                     playbackSlider.setValue((int) (relativePlaybackPosition * sliderMax));
 
                 try {
@@ -430,7 +425,7 @@ public class SyncPlayer extends WebPanel {
 
             // playback stops, this thread must terminate, but before that, do some housekeeping
             SwingUtilities.invokeLater(() -> {      // GUI operations must be done on the Event Dispatch Thread
-                if (!terminate && !sliderBlocked)   // if we reached the end of the music, i.e. playback was not terminated by interaction
+                if (!terminate && !playbackSlider.getValueIsAdjusting())   // if we reached the end of the music, i.e. playback was not terminated by interaction
                     playbackSlider.setValue(0);     // set slider to start position ... in any other case just keep the slider position
 
                 playButton.setText("\u25B6");       //  ▶ "\u25B6"
