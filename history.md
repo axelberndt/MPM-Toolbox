@@ -4,6 +4,9 @@
 #### v0.1.5
 - Code simplification in class `mpmToolbox.gui.syncPlayer`.
 - Updated meico to v0.8.25.
+- Removed `rsyntaxtextarea-3.1.1.jar` from the externals. It was never used so far.
+- Class `mpmToolbox.gui.msmTree.MsmTree` has been expanded. It now provides its own instance of a `WebDockableFrame`. A simple getter method makes it easier to be used in class `mpmToolbox.gui.ProjectPane`. Thus, some code optimizations have been applied there.
+- New class `mpmToolbox.gui.mpmTree.MpmDockableFrame` has been added. This simplifies some code in class `mpmToolbox.gui.ProjectPane`.
 
 
 #### v0.1.4

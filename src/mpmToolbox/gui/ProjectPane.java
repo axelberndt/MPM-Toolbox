@@ -6,23 +6,19 @@ import com.alee.extended.dock.WebDockableFrame;
 import com.alee.extended.dock.WebDockablePane;
 import com.alee.extended.tab.DocumentData;
 import com.alee.extended.tab.WebDocumentPane;
-import com.alee.laf.button.WebButton;
 import com.alee.laf.panel.WebPanel;
-import com.alee.laf.scroll.WebScrollPane;
-import com.alee.managers.icon.Icons;
 import com.alee.managers.style.StyleId;
 import meico.audio.Audio;
-import meico.mei.Helper;
 import meico.mei.Mei;
 import meico.midi.Midi;
 import meico.midi.MidiPlayer;
 import meico.mpm.Mpm;
 import meico.msm.Msm;
 import mpmToolbox.ProjectData;
-import mpmToolbox.gui.mpmTree.MpmTree;
-import mpmToolbox.gui.mpmTree.MpmTreePane;
-import mpmToolbox.gui.msmTree.MsmTree;
 import mpmToolbox.gui.audio.AudioDocumentData;
+import mpmToolbox.gui.mpmTree.MpmDockableFrame;
+import mpmToolbox.gui.mpmTree.MpmTree;
+import mpmToolbox.gui.msmTree.MsmTree;
 import mpmToolbox.gui.score.Score;
 import mpmToolbox.gui.score.ScoreDocumentData;
 import mpmToolbox.gui.score.ScorePage;
@@ -48,16 +44,10 @@ public class ProjectPane extends WebDockablePane {
 
     private final WebDocumentPane<DocumentData<WebPanel>> tabs = new WebDocumentPane<>();   // this contains the components displayed in the center under certain tabs
 
-    private final WebDockableFrame msmDockFrame = new WebDockableFrame("msmFrame", "Musical Sequence Markup");
     private final MsmTree msmTree;
-
-    private final WebDockableFrame mpmDockFrame = new WebDockableFrame("mpmFrame", "Music Performance Markup");
-    private MpmTreePane mpmTreePane;
-    private final WebButton newMpmButton = new WebButton("Create New MPM");                 // this button is displayed in the MPM tree pane when there is no MPM in the project, yet
-
+    private final MpmDockableFrame mpmDockableFrame;
     private final WebDockableFrame playerFrame = new WebDockableFrame("playerFrame", "Sync Player");
     private SyncPlayer syncPlayer = null;
-
     private ScoreDocumentData scoreFrame = null;
     private AudioDocumentData audioFrame = null;
 
@@ -71,7 +61,7 @@ public class ProjectPane extends WebDockablePane {
         this.parent = parent;
         this.data = new ProjectData(msm);
         this.msmTree = new MsmTree(this);
-        this.mpmTreePane = (this.getMpm() == null) ? null : new MpmTreePane(this);
+        this.mpmDockableFrame = new MpmDockableFrame(this);
         this.initMidiPlayer();
         this.makeGUI();
     }
@@ -86,7 +76,7 @@ public class ProjectPane extends WebDockablePane {
         this.parent = parent;
         this.data = new ProjectData(midi.exportMsm());
         this.msmTree = new MsmTree(this);
-        this.mpmTreePane = (this.getMpm() == null) ? null : new MpmTreePane(this);
+        this.mpmDockableFrame = new MpmDockableFrame(this);
         this.initMidiPlayer();
         this.makeGUI();
     }
@@ -103,7 +93,7 @@ public class ProjectPane extends WebDockablePane {
         this.parent = parent;
         this.data = new ProjectData(mei);
         this.msmTree = new MsmTree(this);
-        this.mpmTreePane = (this.getMpm() == null) ? null : new MpmTreePane(this);
+        this.mpmDockableFrame = new MpmDockableFrame(this);
         this.initMidiPlayer();
         this.makeGUI();
     }
@@ -118,7 +108,7 @@ public class ProjectPane extends WebDockablePane {
         this.parent = parent;
         this.data = new ProjectData(file);
         this.msmTree = new MsmTree(this);
-        this.mpmTreePane = (this.getMpm() == null) ? null : new MpmTreePane(this);
+        this.mpmDockableFrame = new MpmDockableFrame(this);
         this.initMidiPlayer();
         this.makeGUI();
     }
@@ -168,8 +158,9 @@ public class ProjectPane extends WebDockablePane {
         this.setSidebarButtonVisibility(SidebarButtonVisibility.always);
 
         this.makePlayerFrame();         // the Sync Player in a dockable pane
-        this.makeMsmDockFrame();        // the MSM tree is displayed in a dockable pane
-        this.makeMpmDockFrame();        // the MPM tree is displayed in a dockable pane
+
+        this.addFrame(this.msmTree.getDockableFrame()); // add the MSM tree to the UI
+        this.addFrame(this.mpmDockableFrame);   // the MPM tree is displayed in a dockable pane
 
         // fill the content pane in the center
 //        this.tabs.openDocument(new DocumentData<>("TestTab", "Test Tab", new WebButton("Test")));
@@ -177,49 +168,6 @@ public class ProjectPane extends WebDockablePane {
         this.tabs.openDocument(this.makeScoreFrame());
 
         this.setContent(this.tabs);     // this will fill the free space of the docking pane that is not occupied by a WebDockableFrame, this can be anything JComponent-based
-    }
-
-    /**
-     * the MSM frame shows the XML tree of the MSM file
-     */
-    private void makeMsmDockFrame() {
-        this.msmDockFrame.setIcon(Icons.table);
-        this.msmDockFrame.setClosable(false);                                   // when closed the frame disappears and cannot be reopened by the user, thus, this is set false
-        this.msmDockFrame.setMaximizable(false);                                // it is also set to not maximizable
-        this.msmDockFrame.setPosition(CompassDirection.west);
-
-        WebScrollPane scrollPane = new WebScrollPane(this.msmTree);
-        scrollPane.setStyleId(StyleId.scrollpaneUndecoratedButtonless);
-        this.msmDockFrame.add(scrollPane);
-        this.addFrame(this.msmDockFrame);
-    }
-
-    /**
-     * the MPM frame displays the MPM XML tree
-     */
-    private void makeMpmDockFrame() {
-        this.mpmDockFrame.setIcon(Icons.table);
-        this.mpmDockFrame.setClosable(false);                   // when closed the frame disappears and cannot be reopened by the user, thus, this is set false
-        this.mpmDockFrame.setMaximizable(false);                // it is also set to not maximizable
-        this.mpmDockFrame.setPosition(CompassDirection.east);
-
-        if (this.getMpm() == null) {
-            this.mpmDockFrame.add(this.newMpmButton);
-            this.mpmDockFrame.minimize();
-        } else {
-            this.mpmDockFrame.add(this.mpmTreePane);            // create the contents of the frame
-        }
-
-        // define the button for creating a new MPM document
-        this.newMpmButton.addActionListener(actionEvent -> {
-            Mpm mpm = Mpm.createMpm();
-            mpm.setFile(Helper.getFilenameWithoutExtension(this.getProjectData().getMsm().getFile().getAbsolutePath()) + ".mpm");
-            mpm.addPerformance("empty performance");            // a valid MPM document has to have at least one performance, even if it is empty; so we add one here
-            this.setMpm(mpm);
-            this.getSyncPlayer().updatePerformanceList();       // the SyncPlayer must update its performance chooser
-        });
-
-        this.addFrame(this.mpmDockFrame);
     }
 
     /**
@@ -297,20 +245,8 @@ public class ProjectPane extends WebDockablePane {
      * @param mpm
      */
     public void setMpm(Mpm mpm) {
-        if (mpm == null)
-            return;
-        if (this.getMpm() != null) {
-            this.data.removeMpm();
-            this.mpmDockFrame.remove(this.mpmTreePane);
-        } else {
-            this.mpmDockFrame.remove(this.newMpmButton);
-        }
-        this.data.setMpm(mpm);
-        this.mpmTreePane = new MpmTreePane(this);
-        this.mpmDockFrame.add(this.mpmTreePane);
-        this.mpmDockFrame.restore();    // open the frame
-        this.mpmDockFrame.validate();   // this is necessary so the component display gets updated
-        this.mpmDockFrame.repaint();    // update the component display
+        this.getProjectData().setMpm(mpm);
+        this.mpmDockableFrame.setMpm(mpm);
         this.syncPlayer.updatePerformanceList();
     }
 
@@ -320,12 +256,8 @@ public class ProjectPane extends WebDockablePane {
     public void removeMpm() {
         if (this.getMpm() == null)
             return;
+        this.mpmDockableFrame.removeMpm();
         this.data.removeMpm();
-//        this.mpmDockFrame.minimize();
-        this.mpmDockFrame.remove(this.mpmTreePane);
-        this.mpmDockFrame.add(this.newMpmButton);
-        this.mpmDockFrame.validate();   // this is necessary so the component display gets updated
-        this.mpmDockFrame.repaint();    // update the component display
         this.repaintScoreDisplay();
     }
 
@@ -342,9 +274,7 @@ public class ProjectPane extends WebDockablePane {
      * @return
      */
     public MpmTree getMpmTree() {
-        if (this.getMpm() == null)
-            return null;
-        return this.mpmTreePane.getMpmTree();
+        return this.mpmDockableFrame.getMpmTree();
     }
 
     /**

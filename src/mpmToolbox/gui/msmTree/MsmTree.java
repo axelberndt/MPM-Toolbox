@@ -2,9 +2,13 @@ package mpmToolbox.gui.msmTree;
 
 import com.alee.api.annotations.NotNull;
 import com.alee.api.annotations.Nullable;
+import com.alee.api.data.CompassDirection;
+import com.alee.extended.dock.WebDockableFrame;
 import com.alee.extended.tree.WebExTree;
+import com.alee.laf.scroll.WebScrollPane;
+import com.alee.managers.icon.Icons;
+import com.alee.managers.style.StyleId;
 import mpmToolbox.gui.ProjectPane;
-import mpmToolbox.gui.mpmTree.MpmTreeNode;
 import mpmToolbox.gui.score.ScoreDisplayPanel;
 import nu.xom.Element;
 import nu.xom.Node;
@@ -22,6 +26,8 @@ import java.util.Enumeration;
  */
 public class MsmTree extends WebExTree<MsmTreeNode> implements /*MouseListener,*/ TreeSelectionListener {
     @NotNull private final ProjectPane projectPane;                         // a link to the parent project pane to access its data, midi player etc.
+    private WebDockableFrame dockableFrame = null;                          // a WebDockableFrame instance that displays this MSM tree, to be used in class ProjectPane
+
 
     /**
      * constructor
@@ -158,12 +164,29 @@ public class MsmTree extends WebExTree<MsmTreeNode> implements /*MouseListener,*
     }
 
     /**
-     * this forsces the node to update itself and then updates the node's appearance in the tree
+     * this forces the node to update itself and then updates the node's appearance in the tree
      * @param node
      */
     @Override
     public void updateNode(@Nullable final MsmTreeNode node) {
         node.update();
         super.updateNode(node);
+    }
+
+    public WebDockableFrame getDockableFrame() {
+        if (this.dockableFrame != null)
+            return this.dockableFrame;
+
+        this.dockableFrame = new WebDockableFrame("msmFrame", "Musical Sequence Markup");
+        this.dockableFrame.setIcon(Icons.table);
+        this.dockableFrame.setClosable(false);                                   // when closed the frame disappears and cannot be reopened by the user, thus, this is set false
+        this.dockableFrame.setMaximizable(false);                                // it is also set to not maximizable
+        this.dockableFrame.setPosition(CompassDirection.west);
+
+        WebScrollPane scrollPane = new WebScrollPane(this);
+        scrollPane.setStyleId(StyleId.scrollpaneUndecoratedButtonless);
+        this.dockableFrame.add(scrollPane);
+
+        return this.dockableFrame;
     }
 }

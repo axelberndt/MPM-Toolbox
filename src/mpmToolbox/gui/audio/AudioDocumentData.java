@@ -1,6 +1,7 @@
 package mpmToolbox.gui.audio;
 
 import com.alee.api.annotations.NotNull;
+import com.alee.extended.split.WebMultiSplitPane;
 import com.alee.extended.tab.DocumentData;
 import com.alee.laf.panel.WebPanel;
 import mpmToolbox.gui.ProjectPane;
@@ -12,6 +13,7 @@ import mpmToolbox.gui.ProjectPane;
 public class AudioDocumentData extends DocumentData<WebPanel> {
     protected final ProjectPane parent;
     private final WebPanel audioPanel = new WebPanel();
+    private final WebMultiSplitPane splitPane = new WebMultiSplitPane();
 
     /**
      * constructor

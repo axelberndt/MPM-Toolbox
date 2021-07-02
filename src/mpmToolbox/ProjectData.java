@@ -132,7 +132,7 @@ public class ProjectData {
      * access the Msm object
      * @return
      */
-    public Msm getMsm() {
+    public synchronized Msm getMsm() {
         return msm;
     }
 
@@ -140,15 +140,19 @@ public class ProjectData {
      * add an MPM to the Project
      * @param mpm
      */
-    public void setMpm(Mpm mpm) {
+    public synchronized void setMpm(Mpm mpm) {
+        if (this.mpm != null) {
+            this.mpm = null;
+            this.score.cleanupDeadNodes();
+        }
         this.mpm = mpm;
     }
 
     /**
      * delete the MPM from this project
      */
-    public void removeMpm() {
-        this.setMpm(null);
+    public synchronized void removeMpm() {
+        this.mpm = null;
         this.score.cleanupDeadNodes();
     }
 
@@ -156,7 +160,7 @@ public class ProjectData {
      * access the Mpm object
      * @return
      */
-    public Mpm getMpm() {
+    public synchronized Mpm getMpm() {
         return this.mpm;
     }
 
@@ -164,7 +168,7 @@ public class ProjectData {
      * access the list of score pages
      * @return
      */
-    public Score getScore() {
+    public synchronized Score getScore() {
         return score;
     }
 
@@ -172,7 +176,7 @@ public class ProjectData {
      * add a file to the list of score pages
      * @param file
      */
-    public ScorePage addScorePage(File file) {
+    public synchronized ScorePage addScorePage(File file) {
         return this.score.addPage(file);
     }
 
@@ -235,7 +239,7 @@ public class ProjectData {
      * remove a score file from the project
      * @param index
      */
-    public void removeScorePage(int index) {
+    public synchronized void removeScorePage(int index) {
         this.score.removePage(index);
     }
 
@@ -243,7 +247,7 @@ public class ProjectData {
      * access the list of Audio objects
      * @return
      */
-    public ArrayList<Audio> getAudio() {
+    public synchronized ArrayList<Audio> getAudio() {
         return audio;
     }
 
@@ -251,7 +255,7 @@ public class ProjectData {
      * add an Audio object to the list of audios
      * @param audio
      */
-    public boolean addAudio(Audio audio) {
+    public synchronized boolean addAudio(Audio audio) {
         if (this.audio.contains(audio))
             return false;
         return this.audio.add(audio);
@@ -261,7 +265,7 @@ public class ProjectData {
      * remove an audio file from the project
      * @param index
      */
-    public void removeAudio(int index) {
+    public synchronized void removeAudio(int index) {
         this.audio.remove(index);
     }
 
