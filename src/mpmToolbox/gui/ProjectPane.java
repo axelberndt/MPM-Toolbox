@@ -209,6 +209,14 @@ public class ProjectPane extends WebDockablePane {
     }
 
     /**
+     * provides access to the audio analysis frame
+     * @return
+     */
+    public AudioDocumentData getAudioFrame() {
+        return this.audioFrame;
+    }
+
+    /**
      * access the project data
      * @return
      */

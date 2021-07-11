@@ -21,6 +21,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
+import java.util.Objects;
 
 /**
  * This class implements the Audio and MIDI player for MPM Toolbox.
@@ -114,6 +115,10 @@ public class SyncPlayer extends WebPanel {
         this.updateAudioList();
         this.audioChooser.setPadding(Settings.paddingInDialogs / 4);
         this.audioChooser.setToolTip("Select the audio recording to be played.");
+        this.audioChooser.addActionListener(actionEvent -> {    // when an audio recording is selected
+            if (this.audioChooser.getSelectedItem() != null)
+                this.parent.getAudioFrame().setAudio(((AudioChooserItem) this.audioChooser.getSelectedItem()).getValue());  // communicate the selection to the audio analysis frame as this should also display it
+        });
         Tools.addComponentToGridBagLayout(this, (GridBagLayout) this.getLayout(), this.audioChooser, 0, 1, 1, 1, 1.0, 1.0, 0, 0, GridBagConstraints.BOTH, GridBagConstraints.LINE_START);
 
         WebLabel skipLabel = new WebLabel("skip:");
@@ -258,6 +263,16 @@ public class SyncPlayer extends WebPanel {
         if (selectedItem == null)
             return null;
         return selectedItem.getValue();
+    }
+
+    /**
+     * query the Audio instance that is currently selected
+     * @return the Audio instance or null
+     */
+    public synchronized Audio getSelectedAudio() {
+        if (audioChooser.getSelectedItem() == null)
+            return null;
+        return ((AudioChooserItem) audioChooser.getSelectedItem()).getValue();
     }
 
     /**
