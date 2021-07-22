@@ -11,7 +11,6 @@ import nu.xom.Nodes;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -62,39 +61,14 @@ public class Score {
         HashMap<String, KeyValue<ScorePage, KeyValue<Double, Double>>> performanceAnnotations = new HashMap<>();
         String basePath = this.parentProject.getXml().getFile().getParent() + "\\";     // the project directory is required to resolve relative paths
         for (Element pageElement : e.getChildElements("page")) {                        // for each score page
-            File file = new File(basePath + pageElement.getAttributeValue("file"));     // get the image file
-            ScorePage page = this.addPage(file);                                        // while adding the image file it is also checked if it exists, thus, if the file cannot be added
-            if (page == null)                                                           // if that went wrong
-                continue;                                                               // all its entries are skipped
-
-            for (Element entry : pageElement.getChildElements()) {                      // for each entry on the score page make an entry in the ScorePage
-                double x = Double.parseDouble(entry.getAttributeValue("x"));            // get its x coordinate
-                double y = Double.parseDouble(entry.getAttributeValue("y"));            // get its y coordinate
-                String id = entry.getAttributeValue("ref");                             // get its reference string
-
-                // make appropriate entries in the ScorePage depending on the local name of the XML entry
-                switch (entry.getLocalName()) {
-                    case "note":                                                        // store the note
-                        noteAnnotations.put(id, new KeyValue<>(page, new KeyValue<>(x, y)));
-                        break;
-                    case "accentuationPattern":
-                    case "articulation":
-                    case "asynchrony":
-                    case "distribution.correlated.brownianNoise":
-                    case "distribution.correlated.compensatingTriangle":
-                    case "distribution.gaussian":
-                    case "distribution.list":
-                    case "distribution.triangular":
-                    case "distribution.uniform":
-                    case "dynamics":
-                    case "rubato":
-                    case "style":
-                    case "tempo":
-                    default:                                                            // store the performance instruction
-                        performanceAnnotations.put(id, new KeyValue<>(page, new KeyValue<>(x, y)));
-                        break;
-                }
+            ScorePage page;
+            try {
+                page = new ScorePage(pageElement, basePath, noteAnnotations, performanceAnnotations);
+            } catch (IOException ioException) {
+                ioException.printStackTrace();
+                continue;
             }
+            this.pages.add(page);
         }
 
         // find the MSM note elements that correspond to the above ID strings
@@ -325,22 +299,9 @@ public class Score {
         scores.addAttribute(new Attribute("overlayElementSize", Integer.toString(this.overlayElementSize)));
 
         for (ScorePage page : this.pages) {         // for each page
-            // make an XML element for this page
-            Element pageElt = new Element("page");
-            Path relativeScorePath = Paths.get(this.parentProject.getFile().getParent()).relativize(page.getFile().toPath());
-            pageElt.addAttribute(new Attribute("file", relativeScorePath.toString()));
-            scores.appendChild(pageElt);
-
-            // add the entry on this page to the XML
-            for (Map.Entry<Element, ScoreNode> entry : page.getAllEntries().entrySet()) {
-                Element element = entry.getKey();
-                String id = Helper.getAttributeValue("id", element);
-                Element elementAssociation = new Element(element.getLocalName());
-                elementAssociation.addAttribute(new Attribute("ref", id));
-                elementAssociation.addAttribute(new Attribute("x", "" + entry.getValue().getX()));
-                elementAssociation.addAttribute(new Attribute("y", "" + entry.getValue().getY()));
-                pageElt.appendChild(elementAssociation);
-            }
+            Element pageElt = page.toXml();         // make an XML element for this page
+            Helper.getAttribute("file", pageElt).setValue(Paths.get(this.parentProject.getFile().getParent()).relativize(page.getFile().toPath()).toString());  // replace the absolute file path attribute by a relative path
+            scores.appendChild(pageElt);            // add it to the score element
         }
 
         return scores;

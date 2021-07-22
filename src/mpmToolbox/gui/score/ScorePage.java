@@ -1,5 +1,6 @@
 package mpmToolbox.gui.score;
 
+import meico.mei.Helper;
 import meico.supplementary.KeyValue;
 import mpmToolbox.supplementary.Tools;
 import mpmToolbox.supplementary.orthantNeighborhoodGraph.ONGNode;
@@ -10,6 +11,7 @@ import nu.xom.Element;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
@@ -31,6 +33,61 @@ public class ScorePage extends OrthantNeighborhoodGraph {
     public ScorePage(File file) throws IOException {
         this.file = file;
         this.image = Tools.readImageFile(this.file);
+    }
+
+    /**
+     * constructor to be used in class Score in the constructor that reads project data
+     * @param pageElement
+     * @param basePath
+     * @param noteAnnotations
+     * @param performanceAnnotations
+     * @throws IOException
+     */
+    protected ScorePage(Element pageElement, String basePath, HashMap<String, KeyValue<ScorePage, KeyValue<Double, Double>>> noteAnnotations, HashMap<String, KeyValue<ScorePage, KeyValue<Double, Double>>> performanceAnnotations) throws IOException {
+        this.file = new File(basePath + pageElement.getAttributeValue("file"));     // get the image file
+        if (!file.exists())
+            throw new IOException("Score image file " + this.file.getAbsolutePath() + " does not exist.");
+
+        this.image = Tools.readImageFile(this.file);
+
+        // see if the image resolution matches the data in the project
+        Attribute widthPixels = Helper.getAttribute("width.pixels", pageElement);                           // get the width.pixels attribute from the project file
+        int widthImage = this.image.getWidth();                                                             // get the actual image width
+        int widthData = (widthPixels == null) ? widthImage : Integer.parseInt(widthPixels.getValue());      // if we had no attribute, we assume that the widths match, otherwise we read the attribute value
+        Attribute heightPixels = Helper.getAttribute("height.pixels", pageElement);                         // get the height.pixels attribute from the project file
+        int heightImage = this.image.getHeight();                                                           // get the actual image height
+        int heightData = (heightPixels == null) ? heightImage : Integer.parseInt(heightPixels.getValue());  // if we had no attribute, we assume that the heights match, otherwise we read the attribute value
+        double scaleX = ((double) widthImage) / widthData;                                                  // compute the scale factor for all x coordinates
+        double scaleY = ((double) heightImage) / heightData;                                                // compute the scale factor for all y coordinates
+
+        for (Element entry : pageElement.getChildElements()) {                      // for each entry on the score page make an entry in the ScorePage
+            double x = scaleX * Double.parseDouble(entry.getAttributeValue("x"));   // get its x coordinate
+            double y = scaleY * Double.parseDouble(entry.getAttributeValue("y"));   // get its y coordinate
+            String id = entry.getAttributeValue("ref");                             // get its reference string
+
+            // make appropriate entries in the ScorePage depending on the local name of the XML entry
+            switch (entry.getLocalName()) {
+                case "note":                                                        // store the note
+                    noteAnnotations.put(id, new KeyValue<>(this, new KeyValue<>(x, y)));
+                    break;
+                case "accentuationPattern":
+                case "articulation":
+                case "asynchrony":
+                case "distribution.correlated.brownianNoise":
+                case "distribution.correlated.compensatingTriangle":
+                case "distribution.gaussian":
+                case "distribution.list":
+                case "distribution.triangular":
+                case "distribution.uniform":
+                case "dynamics":
+                case "rubato":
+                case "style":
+                case "tempo":
+                default:                                                            // store the performance instruction
+                    performanceAnnotations.put(id, new KeyValue<>(this, new KeyValue<>(x, y)));
+                    break;
+            }
+        }
     }
 
     /**
@@ -132,5 +189,35 @@ public class ScorePage extends OrthantNeighborhoodGraph {
      */
     public HashMap<Element, ScoreNode> getAllEntries() {
         return this.object2Node;
+    }
+
+    /**
+     * Export the score page's data as XML data to be stored in an MPM Toolbox project file (.mpr).
+     * Be aware that the image file is linked via an absolute path! Edit the file attribute of the
+     * output element to set a relative path.
+     * @return
+     */
+    public Element toXml() {
+        // make an XML element for this page
+        Element pageElt = new Element("page");
+        Path absolutePath = this.getFile().toPath();
+        pageElt.addAttribute(new Attribute("file", absolutePath.toString()));
+
+        // store the measurements of the image, so if the resolution changes, we can still scale the pixel positions
+        pageElt.addAttribute(new Attribute("width.pixels", String.valueOf(this.getImage().getWidth())));
+        pageElt.addAttribute(new Attribute("height.pixels", String.valueOf(this.getImage().getHeight())));
+
+        // add the entry on this page to the XML
+        for (Map.Entry<Element, ScoreNode> entry : this.getAllEntries().entrySet()) {
+            Element element = entry.getKey();
+            String id = Helper.getAttributeValue("id", element);
+            Element elementAssociation = new Element(element.getLocalName());
+            elementAssociation.addAttribute(new Attribute("ref", id));
+            elementAssociation.addAttribute(new Attribute("x", "" + entry.getValue().getX()));
+            elementAssociation.addAttribute(new Attribute("y", "" + entry.getValue().getY()));
+            pageElt.appendChild(elementAssociation);
+        }
+
+        return pageElt;
     }
 }

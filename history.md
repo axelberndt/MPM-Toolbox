@@ -3,11 +3,21 @@
 
 #### v0.1.5
 - Code simplification in class `mpmToolbox.gui.syncPlayer`.
-- Updated meico to v0.8.25.
+- Updated meico to v0.8.26.
 - Removed `rsyntaxtextarea-3.1.1.jar` from the externals. It was never used so far.
 - Class `mpmToolbox.gui.msmTree.MsmTree` has been expanded. It now provides its own instance of a `WebDockableFrame`. A simple getter method makes it easier to be used in class `mpmToolbox.gui.ProjectPane`. Thus, some code optimizations have been applied there.
 - New class `mpmToolbox.gui.mpmTree.MpmDockableFrame` has been added. This simplifies some code in class `mpmToolbox.gui.ProjectPane`.
+- New method `toXml()` in class `mpmToolbox.gui.score.ScorePage`. It exports the image data and concordances that are stored in MPM Toolbox's project files (`.mpr`).
+    - The same code was previously performed by method `mpmToolbox.gui.score.Score.toXml()`. It has been simplified accordingly and invokes the `ScorePage`'s `toXml()` now instead.
+    - Two new attributes were added to the generated `page` element, `width.pixels` and `height.pixels`. If the page image gets replaced by another with a different resolution, the coordinates of the concordances can be scaled on this basis.
+- Added another constructor to class `mpmToolbox.gui.score.ScorePage` to be used by the constructor of class `mpmToolbox.gui.score.Score` that reads the data from a project file (`.mpr`). The new `ScorePage` constructor checks if the image resolution changed and, if so, scales the concordance coordinates accordingly.
 - Some first preparations for the audio analysis component.
+    - Interactive waveform display, incl. 
+        - resize, 
+        - zoom with mouse wheel,
+        - pan by mouse drag,
+        - precise mouse click to sample index mapping, 
+        - context menu to switch between displaying all audio channels or only one.
 
 
 #### v0.1.4
