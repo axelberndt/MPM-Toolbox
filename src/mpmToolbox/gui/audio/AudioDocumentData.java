@@ -10,8 +10,6 @@ import meico.audio.Audio;
 import mpmToolbox.gui.ProjectPane;
 import mpmToolbox.supplementary.Tools;
 
-import javax.swing.border.Border;
-import javax.swing.plaf.basic.BasicBorders;
 import java.awt.*;
 
 /**
@@ -41,6 +39,7 @@ public class AudioDocumentData extends DocumentData<WebPanel> {
         this.parent = parent;
         this.audio = this.parent.getSyncPlayer().getSelectedAudio();
         this.waveform.setAudio(this.audio);
+        // TODO: ...
 
         this.draw();
     }

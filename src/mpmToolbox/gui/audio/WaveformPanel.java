@@ -116,8 +116,6 @@ public class WaveformPanel extends WebPanel implements ComponentListener, MouseL
             this.channels = Audio.convertByteArray2DoubleArray(audio.getAudio(), audio.getFormat());
             this.leftmostSample = 0;
             this.rightmostSample = this.channels.get(0).length - 1;
-//            this.leftmostSample = this.channels.get(0).length - 100000;
-//            this.rightmostSample = this.channels.get(0).length - 99000;
         }
 
         this.waveform = null;

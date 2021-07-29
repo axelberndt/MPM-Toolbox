@@ -180,7 +180,7 @@ public class RubatoEditor extends EditDialog<RubatoData> {
         this.rangeSlider.setOpaque(false);
         this.rangeSlider.setColors(this.rangeSlider.getForeground(), Color.GRAY, Color.GRAY);
         this.rangeSlider.setMajorTickSpacing(500);
-        this.rangeSlider.setMajorTickSpacing(250);
+        this.rangeSlider.setMinorTickSpacing(250);
         this.rangeSlider.setPaintTicks(true);
         Hashtable<Integer, WebLabel> rangeSliderLabels = new Hashtable<>();
         rangeSliderLabels.put(0, new WebLabel("0"));
