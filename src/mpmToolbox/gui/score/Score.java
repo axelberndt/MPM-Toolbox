@@ -59,8 +59,8 @@ public class Score {
         // parse the score data
         HashMap<String, KeyValue<ScorePage, KeyValue<Double, Double>>> noteAnnotations = new HashMap<>();
         HashMap<String, KeyValue<ScorePage, KeyValue<Double, Double>>> performanceAnnotations = new HashMap<>();
-        String basePath = this.parentProject.getXml().getFile().getParent() + "\\";     // the project directory is required to resolve relative paths
-        for (Element pageElement : e.getChildElements("page")) {                        // for each score page
+        String basePath = this.parentProject.getXml().getFile().getParent() + File.separator;   // the project directory is required to resolve relative paths
+        for (Element pageElement : e.getChildElements("page")) {                                    // for each score page
             ScorePage page;
             try {
                 page = new ScorePage(pageElement, basePath, noteAnnotations, performanceAnnotations);

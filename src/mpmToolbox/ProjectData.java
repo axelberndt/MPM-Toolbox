@@ -76,14 +76,17 @@ public class ProjectData {
      */
     public ProjectData(File file) throws SAXException, ParsingException, ParserConfigurationException, IOException {
         this.xml = new XmlBase(file);
-        String basePath = this.xml.getFile().getParent() + "\\";
+        String basePath = this.xml.getFile().getParent() + File.separator;
 
-        this.msm = new Msm(new File(basePath + this.xml.getRootElement().getFirstChildElement("msm").getAttributeValue("file")));
+        String localMsmPath = this.xml.getRootElement().getFirstChildElement("msm").getAttributeValue("file").replaceAll("[\\\\/]", File.separator);    // adapt the filepath separators to the current OS (\, /)
+        this.msm = new Msm(new File(basePath + localMsmPath));
         this.msmPreprocessing();
 
         Element e = this.xml.getRootElement().getFirstChildElement("mpm");
-        if (e != null)
-            this.setMpm(new Mpm(new File(basePath + e.getAttributeValue("file"))));
+        if (e != null) {
+            String localMpmPath = e.getAttributeValue("file").replaceAll("[\\\\/]", File.separator);    // adapt the filepath separators to the current OS (\, /)
+            this.setMpm(new Mpm(new File(basePath + localMpmPath)));
+        }
 
         this.score = new Score(this);
 
@@ -91,8 +94,9 @@ public class ProjectData {
         if (e != null) {
             Elements audios = e.getChildElements("audio");
             for (int i=0; i < audios.size(); ++i) {
+                String localAudioPath = audios.get(i).getAttributeValue("file").replaceAll("\\\\/", File.separator);    // adapt the filepath separators to the current OS (\, /)
                 try {
-                    this.addAudio(new Audio(new File(basePath + audios.get(i).getAttributeValue("file"))));
+                    this.addAudio(new Audio(new File(basePath + localAudioPath)));
                 } catch (UnsupportedAudioFileException | IOException ex) {
                     ex.printStackTrace();
                 }
@@ -196,7 +200,7 @@ public class ProjectData {
         }
 
         // create a subfolder with the filename that will contain the PNG files named page_000.png, page_001.png and so on
-        String directory = Helper.getFilenameWithoutExtension(pdf.getAbsolutePath()) + "\\";
+        String directory = Helper.getFilenameWithoutExtension(pdf.getAbsolutePath()) + File.separator;
         if (!Files.exists(Paths.get(directory))) {                                      // if the path does not exist, yet
             try {
                 Files.createDirectory(Paths.get(directory));                            // create it in the file system
@@ -289,7 +293,7 @@ public class ProjectData {
 
         this.xml = new XmlBase();
         this.xml.setFile(file);
-        String basePath = file.getAbsoluteFile().getParent() + "\\";
+        String basePath = file.getAbsoluteFile().getParent() + File.separator;
 
         Element root = new Element("mpmToolkitProject");
         Document xml = new Document(root);

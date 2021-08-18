@@ -11,19 +11,20 @@ import mpmToolbox.gui.ProjectPane;
 import mpmToolbox.supplementary.Tools;
 
 import java.awt.*;
+import java.awt.event.*;
 
 /**
  * A custom DocumentData object for the audio analysis component.
  * @author Axel Berndt
  */
-public class AudioDocumentData extends DocumentData<WebPanel> {
+public class AudioDocumentData extends DocumentData<WebPanel> implements MouseListener, MouseMotionListener, MouseWheelListener {
     protected final ProjectPane parent;
-    private final WebPanel audioPanel = new WebPanel(new GridBagLayout());                      // the panel that contains everything in this tab
+    private final WebPanel audioPanel = new WebPanel(new GridBagLayout());      // the panel that contains everything in this tab
 
     private Audio audio;
 
     private final WaveformPanel waveform = new WaveformPanel();
-// TODO   private final SpectrogramPanel spectrogram = new SpectrogramPanel();
+    private final SpectrogramPanel spectrogram = new SpectrogramPanel();
 // TODO   private final TimingCurvePanel timingCurve = new TimingCurvePanel();
 // TODO   private final SymbolicMusicPanel symbolicMusic = new SymbolicMusicPanel();
 
@@ -38,8 +39,13 @@ public class AudioDocumentData extends DocumentData<WebPanel> {
         this.setClosable(false);
         this.parent = parent;
         this.audio = this.parent.getSyncPlayer().getSelectedAudio();
-        this.waveform.setAudio(this.audio);
+        this.setAudio(this.audio);
         // TODO: ...
+
+        this.audioPanel.addMouseListener(this);
+        this.audioPanel.addMouseMotionListener(this);
+        this.audioPanel.addMouseWheelListener(this);
+
 
         this.draw();
     }
@@ -54,7 +60,7 @@ public class AudioDocumentData extends DocumentData<WebPanel> {
         splitPane.setOneTouchExpandable(true);                                      // dividers have buttons for maximizing a component
         splitPane.setContinuousLayout(true);                                        // when the divider is moved the content is continuously redrawn
         splitPane.add(this.waveform);
-        splitPane.add(new WebLabel("Spectrogram", WebLabel.CENTER));
+        splitPane.add(this.spectrogram);
         splitPane.add(new WebLabel("Symbolic Music", WebLabel.CENTER));
 
         GridBagLayout gridBagLayout = (GridBagLayout) this.audioPanel.getLayout();
@@ -79,6 +85,86 @@ public class AudioDocumentData extends DocumentData<WebPanel> {
             return;
 
         this.audio = audio;
-        this.waveform.setAudio(audio);
+
+        this.getParent().getRootPane().setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+        this.waveform.setAudio(this.audio);
+        this.spectrogram.setAudio(this.audio);
+        this.getParent().getRootPane().setCursor(Cursor.getDefaultCursor());
+    }
+
+    /**
+     * on mouse click event
+     * @param e
+     */
+    @Override
+    public void mouseClicked(MouseEvent e) {
+        if (this.waveform.contains(e.getPoint()))
+            this.waveform.mouseClicked(e);
+        else if (this.spectrogram.contains(e.getPoint()))
+            this.spectrogram.mouseClicked(e);
+    }
+
+    /**
+     * on mouse press event
+     * @param e
+     */
+    @Override
+    public void mousePressed(MouseEvent e) {
+    }
+
+    /**
+     * on mouse release event
+     * @param e
+     */
+    @Override
+    public void mouseReleased(MouseEvent e) {
+    }
+
+    /**
+     * on mouse enter event
+     * @param e
+     */
+    @Override
+    public void mouseEntered(MouseEvent e) {
+        this.waveform.mouseEntered(e);
+        this.spectrogram.mouseEntered(e);
+    }
+
+    /**
+     * on mouse exit event
+     * @param e
+     */
+    @Override
+    public void mouseExited(MouseEvent e) {
+        this.waveform.mouseExited(e);
+        this.spectrogram.mouseExited(e);
+    }
+
+    /**
+     * on mouse drag event
+     * @param e
+     */
+    @Override
+    public void mouseDragged(MouseEvent e) {
+        this.spectrogram.mouseDragged(e, this.waveform.mouseDragged(e));
+    }
+
+    /**
+     * on mouse move event
+     * @param e
+     */
+    @Override
+    public void mouseMoved(MouseEvent e) {
+        this.waveform.mouseMoved(e);
+        this.spectrogram.mouseMoved(e);
+    }
+
+    /**
+     * on mouse wheel event
+     * @param e
+     */
+    @Override
+    public void mouseWheelMoved(MouseWheelEvent e) {
+        this.spectrogram.mouseWheelMoved(e, this.waveform.mouseWheelMoved(e));
     }
 }

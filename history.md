@@ -12,12 +12,14 @@
     - Two new attributes were added to the generated `page` element, `width.pixels` and `height.pixels`. If the page image gets replaced by another with a different resolution, the coordinates of the concordances can be scaled on this basis.
 - Added another constructor to class `mpmToolbox.gui.score.ScorePage` to be used by the constructor of class `mpmToolbox.gui.score.Score` that reads the data from a project file (`.mpr`). The new `ScorePage` constructor checks if the image resolution changed and, if so, scales the concordance coordinates accordingly.
 - Some first preparations for the audio analysis component.
-    - Interactive waveform display, incl. 
+    - Interactive waveform and CQT spectrogram display, incl. 
         - resize, 
         - zoom with mouse wheel,
         - pan by mouse drag,
         - precise mouse click to sample index mapping, 
         - context menu to switch between displaying all audio channels or only one.
+    - All interactions are performed synchronous on both, waveform and spectrogram. However, the spectrogram display is not yet properly aligned with the waveform!
+- Bugfix in classes `mpmToolbox.ProjectData`, `mpmToolbox.score.Score`: Path separators encoded as `"\\"` were replaced by `File.separator` to function on all operating systems. Thanks to [pfeffernield](https://github.com/pfefferniels) for this bug report! The same "inter-OS-operability" has been added to the parsing of the `.mpr` project files in class `ProjectData`.
 
 
 #### v0.1.4
