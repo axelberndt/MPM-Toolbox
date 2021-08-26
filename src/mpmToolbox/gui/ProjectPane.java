@@ -8,13 +8,12 @@ import com.alee.extended.tab.DocumentData;
 import com.alee.extended.tab.WebDocumentPane;
 import com.alee.laf.panel.WebPanel;
 import com.alee.managers.style.StyleId;
-import meico.audio.Audio;
 import meico.mei.Mei;
 import meico.midi.Midi;
 import meico.midi.MidiPlayer;
 import meico.mpm.Mpm;
 import meico.msm.Msm;
-import mpmToolbox.ProjectData;
+import mpmToolbox.projectData.ProjectData;
 import mpmToolbox.gui.audio.AudioDocumentData;
 import mpmToolbox.gui.mpmTree.MpmDockableFrame;
 import mpmToolbox.gui.mpmTree.MpmTree;
@@ -351,7 +350,7 @@ public class ProjectPane extends WebDockablePane {
      * access the list of Audio objects
      * @return
      */
-    public ArrayList<Audio> getAudio() {
+    public ArrayList<mpmToolbox.projectData.Audio> getAudio() {
         return this.data.getAudio();
     }
 
@@ -359,7 +358,7 @@ public class ProjectPane extends WebDockablePane {
      * add an Audio object to the list of audios
      * @param audio
      */
-    public void addAudio(Audio audio) {
+    public void addAudio(mpmToolbox.projectData.Audio audio) {
         if (this.data.addAudio(audio)) {
             // TODO: display the audio data in the tab
             this.syncPlayer.updateAudioList();

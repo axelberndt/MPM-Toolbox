@@ -6,27 +6,30 @@ import com.alee.extended.split.WebMultiSplitPane;
 import com.alee.extended.tab.DocumentData;
 import com.alee.laf.label.WebLabel;
 import com.alee.laf.panel.WebPanel;
-import meico.audio.Audio;
 import mpmToolbox.gui.ProjectPane;
+import mpmToolbox.projectData.Audio;
 import mpmToolbox.supplementary.Tools;
 
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.MouseEvent;
 
 /**
  * A custom DocumentData object for the audio analysis component.
  * @author Axel Berndt
  */
-public class AudioDocumentData extends DocumentData<WebPanel> implements MouseListener, MouseMotionListener, MouseWheelListener {
+public class AudioDocumentData extends DocumentData<WebPanel> {
     protected final ProjectPane parent;
-    private final WebPanel audioPanel = new WebPanel(new GridBagLayout());      // the panel that contains everything in this tab
+    private final WebPanel audioPanel = new WebPanel(new GridBagLayout());  // the panel that contains everything in this tab
+
+    private final WaveformPanel waveform;
+    private final SpectrogramPanel spectrogram;
+    // TODO: private final TimingCurvePanel timingCurve = new TimingCurvePanel();
+    // TODO: private final PianoRollPanel pianoRoll = new PianoRollPanel();
 
     private Audio audio;
-
-    private final WaveformPanel waveform = new WaveformPanel();
-    private final SpectrogramPanel spectrogram = new SpectrogramPanel();
-// TODO   private final TimingCurvePanel timingCurve = new TimingCurvePanel();
-// TODO   private final SymbolicMusicPanel symbolicMusic = new SymbolicMusicPanel();
+    private int channelNumber = -1;                             // index of the waveform/channel to be rendered to image; -1 means all channels
+    private int leftmostSample = -1;                            // index of the first sample to be rendered to image
+    private int rightmostSample = -1;                           // index of the last sample to be rendered to image
 
     /**
      * constructor
@@ -35,17 +38,15 @@ public class AudioDocumentData extends DocumentData<WebPanel> implements MouseLi
     public AudioDocumentData(@NotNull ProjectPane parent) {
         super("Audio", "Audio", null);
 
+        this.waveform = new WaveformPanel(this);
+        this.spectrogram = new SpectrogramPanel(this);
+        // TODO: piano roll panel
+
         this.setComponent(this.audioPanel);
         this.setClosable(false);
         this.parent = parent;
         this.audio = this.parent.getSyncPlayer().getSelectedAudio();
         this.setAudio(this.audio);
-        // TODO: ...
-
-        this.audioPanel.addMouseListener(this);
-        this.audioPanel.addMouseMotionListener(this);
-        this.audioPanel.addMouseWheelListener(this);
-
 
         this.draw();
     }
@@ -61,11 +62,41 @@ public class AudioDocumentData extends DocumentData<WebPanel> implements MouseLi
         splitPane.setContinuousLayout(true);                                        // when the divider is moved the content is continuously redrawn
         splitPane.add(this.waveform);
         splitPane.add(this.spectrogram);
-        splitPane.add(new WebLabel("Symbolic Music", WebLabel.CENTER));
+        splitPane.add(new WebLabel("Piano roll of selected MSM part", WebLabel.CENTER));
 
         GridBagLayout gridBagLayout = (GridBagLayout) this.audioPanel.getLayout();
         Tools.addComponentToGridBagLayout(this.audioPanel, gridBagLayout, new WebLabel("Buttons go here"), 0, 1, 1, 1, 1.0, 0.0, 0, 0, GridBagConstraints.NONE, GridBagConstraints.SOUTH);
         Tools.addComponentToGridBagLayout(this.audioPanel, gridBagLayout, splitPane, 0, 0, 1, 1, 1.0, 1.0, 0, 0, GridBagConstraints.BOTH, GridBagConstraints.CENTER);
+    }
+
+    /**
+     * getter for the waveform panel
+     * @return
+     */
+    protected WaveformPanel getWaveformPanel() {
+        return this.waveform;
+    }
+
+    protected SpectrogramPanel getSpectrogramPanel() {
+        return this.spectrogram;
+    }
+
+    /**
+     * The sequence at which the child components update their visualizations is important.
+     * This method takes care of it.
+     */
+    protected void repaintAllComponents() {
+        this.waveform.repaint();
+        this.spectrogram.repaint();
+    }
+
+    /**
+     * this communicates the mouse event/position to all child components
+     * @param e
+     */
+    protected void communicateMouseEventToAllComponents(MouseEvent e) {
+        this.waveform.setMousePosition(e);
+        this.spectrogram.setMousePosition(e);
     }
 
     /**
@@ -84,87 +115,147 @@ public class AudioDocumentData extends DocumentData<WebPanel> implements MouseLi
         if (this.audio == audio)
             return;
 
-        this.audio = audio;
+        this.audio = audio;                 // set the audio data to be displayed
 
-        this.getParent().getRootPane().setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-        this.waveform.setAudio(this.audio);
-        this.spectrogram.setAudio(this.audio);
-        this.getParent().getRootPane().setCursor(Cursor.getDefaultCursor());
+        if (audio != null) {
+            this.channelNumber = -1;                                // all channels
+            this.leftmostSample = 0;                                // first sample
+            this.rightmostSample = audio.getNumberOfSamples() - 1;  // sample count
+        }
+
+        this.waveform.setAudio();
+        this.spectrogram.setAudio();
+        this.repaintAllComponents();    // repaint of all components
     }
 
     /**
-     * on mouse click event
-     * @param e
+     * a getter for the audio data that are currently displayed in the audio tab
+     * @return
      */
-    @Override
-    public void mouseClicked(MouseEvent e) {
-        if (this.waveform.contains(e.getPoint()))
-            this.waveform.mouseClicked(e);
-        else if (this.spectrogram.contains(e.getPoint()))
-            this.spectrogram.mouseClicked(e);
+    protected Audio getAudio() {
+        return this.audio;
     }
 
     /**
-     * on mouse press event
-     * @param e
+     * return the audio's waveform image
+     * @param width
+     * @param height
+     * @return
      */
-    @Override
-    public void mousePressed(MouseEvent e) {
+    protected Audio.WaveformImage getWaveformImage(int width, int height) {
+        if (this.getAudio() == null)
+            return null;
+        this.audio.computeWaveformImage(this.channelNumber, this.leftmostSample, this.rightmostSample, width, height);
+        return this.audio.getWaveformImage();
     }
 
     /**
-     * on mouse release event
-     * @param e
+     * return the audio's spectrogram image
+     * @return
      */
-    @Override
-    public void mouseReleased(MouseEvent e) {
+    protected Audio.SpectrogramImage getSpectrogramImage() {
+        if (this.getAudio() == null)
+            return null;
+        return this.audio.getSpectrogramImage();
     }
 
     /**
-     * on mouse enter event
-     * @param e
+     * a getter for the index of the channel to be displayed; -1 means all channels
+     * @return
      */
-    @Override
-    public void mouseEntered(MouseEvent e) {
-        this.waveform.mouseEntered(e);
-        this.spectrogram.mouseEntered(e);
+    protected int getChannelNumber() {
+        return this.channelNumber;
     }
 
     /**
-     * on mouse exit event
-     * @param e
+     * sets the number of the channel to be displayed; -1 means all channels
+     * @param channelNumber
      */
-    @Override
-    public void mouseExited(MouseEvent e) {
-        this.waveform.mouseExited(e);
-        this.spectrogram.mouseExited(e);
+    protected void setChannelNumber(int channelNumber) {
+        this.channelNumber = channelNumber;
     }
 
     /**
-     * on mouse drag event
-     * @param e
+     * a getter for the leftmost sample index to be displayed
+     * @return
      */
-    @Override
-    public void mouseDragged(MouseEvent e) {
-        this.spectrogram.mouseDragged(e, this.waveform.mouseDragged(e));
+    protected int getLeftmostSample() {
+        return this.leftmostSample;
     }
 
     /**
-     * on mouse move event
-     * @param e
+     * sets the index of the leftmost sample to be displayed
+     * @param leftmostSample
      */
-    @Override
-    public void mouseMoved(MouseEvent e) {
-        this.waveform.mouseMoved(e);
-        this.spectrogram.mouseMoved(e);
+    protected void setLeftmostSample(int leftmostSample) {
+        this.leftmostSample = leftmostSample;
     }
 
     /**
-     * on mouse wheel event
-     * @param e
+     * a getter for the rightmost sample index to be displayed
+     * @return
      */
-    @Override
-    public void mouseWheelMoved(MouseWheelEvent e) {
-        this.spectrogram.mouseWheelMoved(e, this.waveform.mouseWheelMoved(e));
+    protected int getRightmostSample() {
+        return this.rightmostSample;
+    }
+
+    /**
+     * sets the index of the rightmost sample to be displayed
+     * @param rightmostSample
+     */
+    protected void setRightmostSample(int rightmostSample) {
+        this.rightmostSample = rightmostSample;
+    }
+
+    /**
+     * this shifts the visualisations left or right by the specified offset
+     * @param sampleOffset offset in samples
+     */
+    protected void scroll(double sampleOffset) {
+        if (this.parent.getAudio() == null)
+            return;
+
+        sampleOffset = (sampleOffset > 0) ? Math.min(this.getAudio().getNumberOfSamples() - 1 - this.rightmostSample, Math.round(sampleOffset)) : Math.max(-this.leftmostSample, Math.round(sampleOffset));  // we have to check that we don't go beyond the first and last sample; as we move those indices only in integer steps there is a certain numeric error causing the samples moving with a bit different speed than the mouse was moved, but it is not problematic
+
+        if (sampleOffset == 0.0)            // if no change
+            return;                         // done, we don't update the mouse position so we can check next time if in sum the mouse moved far enough
+
+        // move the sample indices
+        this.setLeftmostSample((int) (this.leftmostSample + sampleOffset));
+        this.setRightmostSample((int) (this.rightmostSample + sampleOffset));
+        this.spectrogram.updateScroll();
+
+        this.repaintAllComponents();        // triggers repaint for all components
+    }
+
+    /**
+     * this is used when the visualisations are zoomed
+     * @param pivotSample
+     * @param zoomFactor
+     */
+    protected void zoom(int pivotSample, double zoomFactor) {
+        if (zoomFactor == 0.0)
+            return;
+
+        if (zoomFactor < 0.0) {             // zoom in
+            int leftmostSample = pivotSample - (int) ((pivotSample - this.leftmostSample) * zoomFactor);
+            int rightmostSample = (int) ((this.rightmostSample - pivotSample) * zoomFactor) + pivotSample;
+            if ((rightmostSample - leftmostSample) > 1) {                  // make sure there are at least two samples to be drawn, if we zoom too far in, left==right, we cannot zoom out again
+                this.setLeftmostSample(leftmostSample);
+                this.setRightmostSample(rightmostSample);
+            }
+        }
+        else if (zoomFactor > 0.0) {        // zoom out
+            this.setLeftmostSample(pivotSample - (int) Math.ceil((pivotSample - this.leftmostSample) * zoomFactor));
+            if (this.leftmostSample < 0)
+                this.setLeftmostSample(0);
+            this.setRightmostSample((int) Math.ceil((this.rightmostSample - pivotSample) * zoomFactor) + pivotSample);
+            if (this.rightmostSample >= this.getAudio().getNumberOfSamples())
+                this.setRightmostSample(this.getAudio().getNumberOfSamples() - 1);
+        }
+
+        this.spectrogram.updateZoom();
+
+        this.repaintAllComponents();        // triggers repaint for all components
     }
 }

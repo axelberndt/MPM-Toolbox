@@ -8,13 +8,12 @@ import com.alee.laf.tree.UniqueNode;
 import meico.mei.Helper;
 import meico.midi.EventMaker;
 import meico.midi.MidiPlayer;
-import mpmToolbox.ProjectData;
+import mpmToolbox.projectData.ProjectData;
 import nu.xom.Attribute;
 import nu.xom.Element;
 import nu.xom.Node;
 
 import javax.sound.midi.InvalidMidiDataException;
-import javax.sound.midi.MidiUnavailableException;
 import javax.sound.midi.Sequence;
 import javax.sound.midi.Track;
 import javax.swing.*;

@@ -16,7 +16,7 @@ import meico.mpm.elements.metadata.Metadata;
 import meico.mpm.elements.metadata.RelatedResource;
 import meico.mpm.elements.styles.*;
 import meico.mpm.elements.styles.defs.*;
-import mpmToolbox.ProjectData;
+import mpmToolbox.projectData.ProjectData;
 import mpmToolbox.gui.mpmEditingTools.MpmEditingTools;
 import nu.xom.Attribute;
 import nu.xom.Element;

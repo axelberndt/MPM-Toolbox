@@ -6,7 +6,6 @@ import com.alee.laf.label.WebLabel;
 import com.alee.laf.panel.WebPanel;
 import com.alee.laf.slider.WebSlider;
 import com.alee.laf.spinner.WebSpinner;
-import meico.audio.Audio;
 import meico.audio.AudioPlayer;
 import meico.midi.Midi;
 import meico.midi.MidiPlayer;
@@ -194,7 +193,7 @@ public class SyncPlayer extends WebPanel {
 
         this.audioChooser.removeAllItems();
         this.audioChooser.addItem(new AudioChooserItem("No audio recording"));
-        for (Audio audio : this.parent.getAudio()) {
+        for (mpmToolbox.projectData.Audio audio : this.parent.getAudio()) {
             AudioChooserItem item = new AudioChooserItem(audio);
             this.audioChooser.addItem(item);
 
@@ -241,16 +240,56 @@ public class SyncPlayer extends WebPanel {
      * start/stop playback
      */
     public synchronized void triggerPlayback() {
-        if ((this.runnable != null) && (this.runnable.isPlaying())) {   // if music is already playing, we only want to stop it
+        if ((this.runnable != null) && this.runnable.isPlaying()) {     // if music is already playing, we only want to stop it
             this.playButton.setText("\u25B6");                          // set the playButton's symbol to ▶
             this.runnable.stop();                                       // terminate the current runnable/thread, this will also stop the players
             this.runnable = null;
             return;
         }
 
-        // we want to start a new playback
-        this.runnable = new PlaybackRunnable();
-        this.runnable.start(((double) this.playbackSlider.getValue()) / sliderMax); // start the new runnable
+        this.triggerPlayback(((double) this.playbackSlider.getValue()) / sliderMax);
+    }
+
+    /**
+     * start/stop playback
+     * @param relativePosition the relative start position
+     */
+    public synchronized void triggerPlayback(double relativePosition) {
+        if ((this.runnable != null) && this.runnable.isPlaying()) {     // if playback is already running
+            this.runnable.jumpTo(relativePosition);                     // jump to indicated position
+        }
+        else {
+            this.runnable = new PlaybackRunnable();
+            this.runnable.start(relativePosition);                      // start the new runnable
+        }
+    }
+
+    /**
+     * start/stop playback;
+     * works only if an audio file is selected for playback because its sample rate is required
+     * to relate the sample position to a relative playtime position
+     * @param samplePosition the sample position to start playback
+     */
+    public synchronized void triggerPlayback(int samplePosition) {
+        mpmToolbox.projectData.Audio audio = this.getSelectedAudio();
+        if (audio == null)
+            return;
+
+        if (this.runnable == null)
+            this.runnable = new PlaybackRunnable();
+
+        // compute relative position
+        double timePosition = ((double) samplePosition / audio.getSampleRate()) * 1000000.0;    // sample position in microseconds
+        double relativePosition = timePosition - this.runnable.microsecAudioOffset;
+        if (this.runnable.midiIsLonger)                                 // we have to relate the sample position to the MIDI length
+            relativePosition /= this.runnable.midi.getMicrosecondLength();
+        else                                                            // we relate the sample position to the audio length
+            relativePosition /= (getAudioPlayer().getMicrosecondLength() - this.runnable.microsecAudioOffset);
+
+        if (this.runnable.isPlaying())
+            this.runnable.jumpTo(relativePosition);
+        else
+            this.runnable.start(relativePosition);                      // start the new runnable
     }
 
     /**
@@ -268,10 +307,10 @@ public class SyncPlayer extends WebPanel {
      * query the Audio instance that is currently selected
      * @return the Audio instance or null
      */
-    public synchronized Audio getSelectedAudio() {
-        if (audioChooser.getSelectedItem() == null)
+    public synchronized mpmToolbox.projectData.Audio getSelectedAudio() {
+        if (this.audioChooser.getSelectedItem() == null)
             return null;
-        return ((AudioChooserItem) audioChooser.getSelectedItem()).getValue();
+        return ((AudioChooserItem) this.audioChooser.getSelectedItem()).getValue();
     }
 
     /**

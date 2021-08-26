@@ -18,7 +18,7 @@ import meico.mpm.elements.styles.*;
 import meico.mpm.elements.styles.defs.*;
 import meico.msm.Msm;
 import meico.supplementary.KeyValue;
-import mpmToolbox.ProjectData;
+import mpmToolbox.projectData.ProjectData;
 import mpmToolbox.gui.ProjectPane;
 import mpmToolbox.gui.mpmEditingTools.editDialogs.*;
 import mpmToolbox.gui.mpmTree.MpmStyleCollection;

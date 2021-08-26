@@ -3,7 +3,7 @@ package mpmToolbox.gui.score;
 import com.alee.api.annotations.NotNull;
 import meico.mei.Helper;
 import meico.supplementary.KeyValue;
-import mpmToolbox.ProjectData;
+import mpmToolbox.projectData.ProjectData;
 import nu.xom.Attribute;
 import nu.xom.Element;
 import nu.xom.Node;

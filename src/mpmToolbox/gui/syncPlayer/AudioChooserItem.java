@@ -8,12 +8,12 @@ import meico.supplementary.KeyValue;
  * This class represents an item in the audio chooser combobox of the SyncPlayer.
  * @author Axel Berndt
  */
-class AudioChooserItem extends KeyValue<String, Audio> {
+class AudioChooserItem extends KeyValue<String, mpmToolbox.projectData.Audio> {
     /**
      * This constructor creates a audio chooser item (String, Audio) pair out of a non-null audio object.
      * @param audio
      */
-    public AudioChooserItem(@NotNull Audio audio) {
+    public AudioChooserItem(@NotNull mpmToolbox.projectData.Audio audio) {
         super(audio.getFile().getName(), audio);
     }
 

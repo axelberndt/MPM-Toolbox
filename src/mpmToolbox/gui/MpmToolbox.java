@@ -8,7 +8,6 @@ import com.alee.laf.menu.WebMenuItem;
 import com.alee.laf.panel.WebPanel;
 import com.alee.laf.window.WebFrame;
 import com.alee.skin.dark.WebDarkSkin;
-import meico.audio.Audio;
 import meico.mei.Mei;
 import meico.midi.Midi;
 import meico.mpm.Mpm;
@@ -403,7 +402,7 @@ public class MpmToolbox {
                     if (this.projectPane == null)
                         System.err.println("No project loaded to add the audio.");
                     else
-                        this.projectPane.addAudio(new Audio(file));
+                        this.projectPane.addAudio(new mpmToolbox.projectData.Audio(file));
                     break;
                 case ".jpg":
                 case ".jpeg":

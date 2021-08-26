@@ -2,7 +2,7 @@ package mpmToolbox.gui.msmTree;
 
 import com.alee.api.annotations.NotNull;
 import com.alee.extended.tree.AbstractExTreeDataProvider;
-import mpmToolbox.ProjectData;
+import mpmToolbox.projectData.ProjectData;
 import nu.xom.Element;
 import nu.xom.Elements;
 

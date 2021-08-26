@@ -1,6 +1,15 @@
 ### Version History
 
 
+#### v0.1.6
+- Class `mpmToolbox.ProjectData` moved into the newly added package `mpmToolbox.projectData`.
+- New Class `mpmToolbox.projectData.Audio`. It extends the eponymous class from meico and replaces all its occurrences in the code.
+- Communication of classes `mpmToolbox.gui.audio.AudioDocumentData`, `WaveformPanel` and `SpectrogramPanel` has been redone. 
+- The spectrogram display is now properly synchronized to the waveform display and optimized.
+- Added a GUI in the spectrogram panel to specify the parameters for the spectrogram computation.
+- Expanded the SyncPlayer's `triggeredPlayback()` methods to jump to specific playback positions. With this we can start playback from within the waveform and spectrogram panel (via right click).
+
+
 #### v0.1.5
 - Code simplification in class `mpmToolbox.gui.syncPlayer`.
 - Updated meico to v0.8.26.
@@ -19,7 +28,7 @@
         - precise mouse click to sample index mapping, 
         - context menu to switch between displaying all audio channels or only one.
     - All interactions are performed synchronous on both, waveform and spectrogram. However, the spectrogram display is not yet properly aligned with the waveform!
-- Bugfix in classes `mpmToolbox.ProjectData`, `mpmToolbox.score.Score`: Path separators encoded as `"\\"` were replaced by `File.separator` to function on all operating systems. Thanks to [pfeffernield](https://github.com/pfefferniels) for this bug report! The same "inter-OS-operability" has been added to the parsing of the `.mpr` project files in class `ProjectData`.
+- Bugfix in classes `mpmToolbox.ProjectData`, `mpmToolbox.score.Score`: Path separators encoded as `"\\"` were replaced by `File.separator` to function on all operating systems. Thanks to [pfefferniels](https://github.com/pfefferniels) for this bug report! The same "inter-OS-operability" has been added to the parsing of the `.mpr` project files in class `ProjectData`.
 
 
 #### v0.1.4

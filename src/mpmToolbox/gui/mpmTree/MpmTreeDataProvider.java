@@ -11,7 +11,7 @@ import meico.mpm.elements.metadata.Metadata;
 import meico.mpm.elements.metadata.RelatedResource;
 import meico.mpm.elements.styles.*;
 import meico.mpm.elements.styles.defs.*;
-import mpmToolbox.ProjectData;
+import mpmToolbox.projectData.ProjectData;
 import nu.xom.Element;
 
 import java.util.ArrayList;

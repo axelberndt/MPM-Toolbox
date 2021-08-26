@@ -127,19 +127,19 @@ public class Tools {
         KeyValue<Point, Double> result = new KeyValue<>(null, Double.MAX_VALUE);   // at first the value will hold the square distance, later the square root will be applied to it
 
         // check all points in pointCloud and keep the nearest in result
-        for (Point entry : pointCloud) { // for each point in the point cloud
-            double distance = pivot.distanceSq(entry);       // compute distance to pivot point
+        for (Point entry : pointCloud) {                    // for each point in the point cloud
+            double distance = pivot.distanceSq(entry);      // compute distance to pivot point
             if (distance >= result.getValue())
                 continue;
 
-            result.setKey(entry);                                           // write key to result
-            result.setValue(distance);                                  // write distance to result
+            result.setKey(entry);                           // write key to result
+            result.setValue(distance);                      // write distance to result
         }
 
-        if (result.getKey() == null)                                    // if we found nothing useful
-            return null;                                                // we return nothing useful
+        if (result.getKey() == null)                        // if we found nothing useful
+            return null;                                    // we return nothing useful
 
-        result.setValue(Math.sqrt(result.getValue()));                  // apply square root to get the actual distance
+        result.setValue(Math.sqrt(result.getValue()));      // apply square root to get the actual distance
         return result;
     }
 
