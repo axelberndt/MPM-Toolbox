@@ -10,7 +10,6 @@ import nu.xom.Elements;
 
 import java.awt.*;
 import java.awt.event.*;
-import java.awt.image.BufferedImage;
 
 /**
  * This implements the piano roll display of MSM data.
@@ -22,13 +21,9 @@ public class PianoRollPanel extends WebPanel implements ComponentListener, Mouse
     protected final WebLabel noData;
     protected Point mousePosition = null;                 // this is to keep track of the mouse position and draw a cursor on the panel
     protected boolean mouseInThisPanel = false;           // this is set true when the mouse enters this panel and false if the mouse exits
-//    protected BufferedImage pianoRoll = null;
 
     protected PianoRollPanel(AudioDocumentData parent) {
         this(parent, "Select a part in the Musical Sequence Markup tree.");
-
-//        if (this.parent.getAudio() != null)
-//            this.pianoRoll = new BufferedImage(this.parent.getAudio().getNumberOfSamples(), 128, BufferedImage.TYPE_INT_ARGB);
     }
 
     /**
