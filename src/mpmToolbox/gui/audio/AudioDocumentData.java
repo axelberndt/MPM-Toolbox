@@ -4,7 +4,6 @@ import com.alee.api.annotations.NotNull;
 import com.alee.api.data.Orientation;
 import com.alee.extended.split.WebMultiSplitPane;
 import com.alee.extended.tab.DocumentData;
-import com.alee.laf.label.WebLabel;
 import com.alee.laf.panel.WebPanel;
 import mpmToolbox.gui.ProjectPane;
 import mpmToolbox.projectData.Audio;
@@ -12,6 +11,7 @@ import mpmToolbox.supplementary.Tools;
 
 import java.awt.*;
 import java.awt.event.MouseEvent;
+import java.awt.event.MouseWheelEvent;
 
 /**
  * A custom DocumentData object for the audio analysis component.
@@ -23,8 +23,7 @@ public class AudioDocumentData extends DocumentData<WebPanel> {
 
     private final WaveformPanel waveform;
     private final SpectrogramPanel spectrogram;
-    // TODO: private final TimingCurvePanel timingCurve = new TimingCurvePanel();
-    // TODO: private final PianoRollPanel pianoRoll = new PianoRollPanel();
+    private final PianoRollPanel pianoRoll;
 
     private Audio audio;
     private int channelNumber = -1;                             // index of the waveform/channel to be rendered to image; -1 means all channels
@@ -40,7 +39,7 @@ public class AudioDocumentData extends DocumentData<WebPanel> {
 
         this.waveform = new WaveformPanel(this);
         this.spectrogram = new SpectrogramPanel(this);
-        // TODO: piano roll panel
+        this.pianoRoll = new PianoRollPanel(this);
 
         this.setComponent(this.audioPanel);
         this.setClosable(false);
@@ -55,18 +54,16 @@ public class AudioDocumentData extends DocumentData<WebPanel> {
      * this draws the content of the audio analysis frame
      */
     private void draw() {
-        // TODO ...
-
         WebMultiSplitPane splitPane = new WebMultiSplitPane(Orientation.vertical);  // the vertical split pane contains the different visualizations that are going to be aligned (waveform, spectrogram etc.)
         splitPane.setOneTouchExpandable(true);                                      // dividers have buttons for maximizing a component
         splitPane.setContinuousLayout(true);                                        // when the divider is moved the content is continuously redrawn
         splitPane.add(this.waveform);
         splitPane.add(this.spectrogram);
-        splitPane.add(new WebLabel("Piano roll of selected MSM part", WebLabel.CENTER));
+        splitPane.add(this.pianoRoll);
 
         GridBagLayout gridBagLayout = (GridBagLayout) this.audioPanel.getLayout();
-        Tools.addComponentToGridBagLayout(this.audioPanel, gridBagLayout, new WebLabel("Buttons go here"), 0, 1, 1, 1, 1.0, 0.0, 0, 0, GridBagConstraints.NONE, GridBagConstraints.SOUTH);
         Tools.addComponentToGridBagLayout(this.audioPanel, gridBagLayout, splitPane, 0, 0, 1, 1, 1.0, 1.0, 0, 0, GridBagConstraints.BOTH, GridBagConstraints.CENTER);
+//        Tools.addComponentToGridBagLayout(this.audioPanel, gridBagLayout, new WebLabel("Buttons go here"), 0, 1, 1, 1, 1.0, 0.0, 0, 0, GridBagConstraints.NONE, GridBagConstraints.SOUTH);
     }
 
     /**
@@ -77,8 +74,20 @@ public class AudioDocumentData extends DocumentData<WebPanel> {
         return this.waveform;
     }
 
+    /**
+     * a getter for the spectrogram panel
+     * @return
+     */
     protected SpectrogramPanel getSpectrogramPanel() {
         return this.spectrogram;
+    }
+
+    /**
+     * a getter for the piano roll panel
+     * @return
+     */
+    protected PianoRollPanel getPianoRollPanel() {
+        return this.pianoRoll;
     }
 
     /**
@@ -88,6 +97,7 @@ public class AudioDocumentData extends DocumentData<WebPanel> {
     protected void repaintAllComponents() {
         this.waveform.repaint();
         this.spectrogram.repaint();
+        this.pianoRoll.repaint();
     }
 
     /**
@@ -97,6 +107,7 @@ public class AudioDocumentData extends DocumentData<WebPanel> {
     protected void communicateMouseEventToAllComponents(MouseEvent e) {
         this.waveform.setMousePosition(e);
         this.spectrogram.setMousePosition(e);
+        this.pianoRoll.setMousePosition(e);
     }
 
     /**
@@ -257,5 +268,39 @@ public class AudioDocumentData extends DocumentData<WebPanel> {
         this.spectrogram.updateZoom();
 
         this.repaintAllComponents();        // triggers repaint for all components
+    }
+
+    /**
+     * process a mouse drag event; to be invoked by sub-panels WaveformPanel, SpectrogramPanel
+     * @param e
+     */
+    protected void mouseDragged(MouseEvent e) {
+        if (this.getWaveformPanel().mousePosition == null) {
+            this.getWaveformPanel().setMousePosition(e);
+            return;
+        }
+
+        int leftmost = this.getLeftmostSample();
+        int rightmost = this.getRightmostSample();
+        double sampleOffset = (double)((rightmost - leftmost) * (this.getWaveformPanel().mousePosition.x - e.getPoint().x)) / this.getWaveformPanel().getWidth();   // this computes how many horizontal pixels the mouse has moved, than scales it by the amount of samples per horizontal pixel so we know how many pixels we want to move the leftmost and rightmost sample index
+
+        this.communicateMouseEventToAllComponents(e);
+        this.scroll(sampleOffset);
+
+    }
+
+    /**
+     * process a mouse wheel moved event; to be invoked by sub-panels WaveformPanel, SpectrogramPanel
+     * @param e
+     */
+    protected void mouseWheelMoved(MouseWheelEvent e){
+        if ((this.getAudio() == null) || (e.getWheelRotation() == 0))
+            return;
+
+        int pivotSample = this.getWaveformPanel().getSampleIndex(e.getPoint());
+        double zoomFactor = (e.getWheelRotation() < 0) ? 0.9 : 1.1;
+
+        this.communicateMouseEventToAllComponents(e);
+        this.zoom(pivotSample, zoomFactor);
     }
 }

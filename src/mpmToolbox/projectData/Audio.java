@@ -2,6 +2,7 @@ package mpmToolbox.projectData;
 
 import com.tagtraum.jipes.audio.LogFrequencySpectrum;
 import com.tagtraum.jipes.math.WindowFunction;
+import meico.supplementary.ColorCoding;
 
 import javax.sound.sampled.AudioFormat;
 import javax.sound.sampled.AudioInputStream;
@@ -160,13 +161,20 @@ public class Audio extends meico.audio.Audio {
      * @param minFrequency
      * @param maxFrequency
      * @param binsPerSemitone
+     * @param normalize
      * @return true if image has changed
      */
-    public boolean computeSpectrogram(WindowFunction windowFunction, int hopSize, float minFrequency, float maxFrequency, int binsPerSemitone) {
+    public boolean computeSpectrogram(WindowFunction windowFunction, int hopSize, float minFrequency, float maxFrequency, int binsPerSemitone, boolean normalize) {
         // if the arguments are equal to those from the last time, we do not need to compute a new spectrogram
         if ((this.spectrogramImage != null)
-                && this.spectrogramImage.sameMetrics(windowFunction, hopSize, minFrequency, maxFrequency, binsPerSemitone))
+                && this.spectrogramImage.sameMetrics(windowFunction, hopSize, minFrequency, maxFrequency, binsPerSemitone)) {
+
+            // if the normalization flag changed we can reuse the spectrogram and need to rerender the image
+            if (this.spectrogramImage.normalize != normalize)
+                this.spectrogramImage = new SpectrogramImage(this.spectrogramImage.spectrogram, windowFunction, hopSize, minFrequency, maxFrequency, binsPerSemitone, normalize);
+
             return false;
+        }
 
         ArrayList<LogFrequencySpectrum> spectrogram;
         try {
@@ -176,7 +184,7 @@ public class Audio extends meico.audio.Audio {
             return false;
         }
 
-        this.spectrogramImage = new SpectrogramImage(spectrogram, windowFunction, hopSize, minFrequency, maxFrequency, binsPerSemitone);
+        this.spectrogramImage = new SpectrogramImage(spectrogram, windowFunction, hopSize, minFrequency, maxFrequency, binsPerSemitone, normalize);
         return true;
     }
 
@@ -229,9 +237,10 @@ public class Audio extends meico.audio.Audio {
         private final float minFrequency;
         private final float maxFrequency;
         private final int binsPerSemitone;
+        private final boolean normalize;
         private final int[] sampleLookup;
 
-        private SpectrogramImage(BufferedImage bi, WindowFunction windowFunction, int hopSize, float minFrequency, float maxFrequency, int binsPerSemitone) {
+        private SpectrogramImage(BufferedImage bi, WindowFunction windowFunction, int hopSize, float minFrequency, float maxFrequency, int binsPerSemitone, boolean normalize) {
             super(bi.getColorModel(), bi.getRaster(), bi.getColorModel().isAlphaPremultiplied(), null);
 
             this.windowFunction = windowFunction;
@@ -239,19 +248,24 @@ public class Audio extends meico.audio.Audio {
             this.minFrequency = minFrequency;
             this.maxFrequency = maxFrequency;
             this.binsPerSemitone = binsPerSemitone;
+            this.normalize = normalize;
 
             this.sampleLookup = new int[this.getWidth()];
             for (int i = 0; i < this.sampleLookup.length; ++i)
                 this.sampleLookup[i] = i * this.hopSize;
         }
 
-        private SpectrogramImage(ArrayList<LogFrequencySpectrum> spectrogram, WindowFunction windowFunction, int hopSize, float minFrequency, float maxFrequency, int binsPerSemitone) {
-            this(convertSpectrogramToImage(spectrogram), windowFunction, hopSize, minFrequency, maxFrequency, binsPerSemitone);
+        private SpectrogramImage(ArrayList<LogFrequencySpectrum> spectrogram, WindowFunction windowFunction, int hopSize, float minFrequency, float maxFrequency, int binsPerSemitone, boolean normalize) {
+            this(convertSpectrogramToImage(spectrogram, normalize, 0.1f, new ColorCoding(ColorCoding.INFERNO)), windowFunction, hopSize, minFrequency, maxFrequency, binsPerSemitone, normalize);
             this.spectrogram = spectrogram;
         }
 
         private boolean sameMetrics(WindowFunction windowFunction, int hopSize, float minFrequency, float maxFrequency, int binsPerSemitone) {
-            return this.windowFunction.equals(windowFunction) && (this.hopSize == hopSize) && (this.minFrequency == minFrequency) && (this.maxFrequency == maxFrequency) && (this.binsPerSemitone == binsPerSemitone);
+            return this.windowFunction.equals(windowFunction)
+                    && (this.hopSize == hopSize)
+                    && (this.minFrequency == minFrequency)
+                    && (this.maxFrequency == maxFrequency)
+                    && (this.binsPerSemitone == binsPerSemitone);
         }
 
         public ArrayList<LogFrequencySpectrum> getSpectrogram() {

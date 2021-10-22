@@ -255,7 +255,7 @@ public class MpmTreeNode extends UniqueNode<MpmTreeNode, Object> implements Text
             case accentuationPatternDef:
                 AccentuationPatternDef accentuationPatternDef = (AccentuationPatternDef) this.getUserObject();
                 this.name = accentuationPatternDef.getName() + ", length = " + accentuationPatternDef.getLength();
-                // TODO: visualize the contents/the accentuation pattern
+                // TODO: visualize the accentuation pattern
                 break;
 
             case accentuation:
@@ -624,7 +624,7 @@ public class MpmTreeNode extends UniqueNode<MpmTreeNode, Object> implements Text
         dateAtt.setValue(Double.toString(date));                        // change date attribute
 
         GenericMap map = (GenericMap) this.getParent().getUserObject(); // get the map
-        map.sort();                                                     // after changing the date it mus reorder its elements
+        map.sort();                                                     // after changing the date it must reorder its elements
     }
 
     /**
@@ -741,6 +741,70 @@ public class MpmTreeNode extends UniqueNode<MpmTreeNode, Object> implements Text
                 for (MpmTreeNode parent = this; parent != null; parent = parent.getParent())
                     if (parent.getType() == MpmNodeType.performance)
                         return (Performance) parent.getUserObject();
+        }
+        return null;
+    }
+
+    /**
+     * Find the MPM part element that this note belongs to.
+     * @return the part element or null if this node is no part and is not a child of a part
+     */
+    public Part getPart() {
+        switch (this.getType()) {
+            case mpm:
+            case metadata:
+            case author:
+            case comment:
+            case relatedResources:
+            case relatedResource:
+            case performance:
+            case global:
+                return null;
+
+//            case part:
+//            case header:
+//            case dated:
+//            case styleCollection:
+//            case articulationStyle:
+//            case metricalAccentuationStyle:
+//            case dynamicsStyle:
+//            case genericStyle:
+//            case rubatoStyle:
+//            case tempoStyle:
+//            case articulationMap:
+//            case asynchronyMap:
+//            case metricalAccentuationMap:
+//            case dynamicsMap:
+//            case genericMap:
+//            case imprecisionMap:
+//            case ornamentationMap:
+//            case rubatoMap:
+//            case tempoMap:
+//            case articulationDef:
+//            case accentuationPatternDef:
+//            case dynamicsDef:
+//            case rubatoDef:
+//            case tempoDef:
+//            case articulation:
+//            case accentuationPattern:
+//            case accentuation:
+//            case asynchrony:
+//            case dynamics:
+//            case distributionUniform:
+//            case distributionGaussian:
+//            case distributionTriangular:
+//            case distributionCorrelatedBrownianNoise:
+//            case distributionCorrelatedCompensatingTriangle:
+//            case rubato:
+//            case tempo:
+//            case style:
+//            case distributionList:
+//            case xmlElement:
+//            case unknown:
+            default:
+                for (MpmTreeNode parent = this; parent != null; parent = parent.getParent())
+                    if (parent.getType() == MpmNodeType.part)
+                        return (Part) parent.getUserObject();
         }
         return null;
     }

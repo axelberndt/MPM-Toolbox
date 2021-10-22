@@ -153,7 +153,7 @@ public class MsmTree extends WebExTree<MsmTreeNode> implements /*MouseListener,*
         MsmTreeNode n = this.getNodeForPath(path);
         n.play(this.projectPane.getMidiPlayer());                                                       // the node might be a node and should play its note via MIDI when selected
 
-        // trigger the score frame's score panel to repaint so it highlights the selected note, if visible
+        // trigger the score frame's score panel to repaint, so it highlights the selected note, if visible
         if ((n.getType() == MsmTreeNode.XmlNodeType.note)                                               // if the currently selected node is of type note
                 && (this.projectPane.getScoreFrame().getScoreDisplay() != null)) {                      // and we have a score display
 
@@ -161,6 +161,8 @@ public class MsmTree extends WebExTree<MsmTreeNode> implements /*MouseListener,*
             if (scoreDisplayPanel.getScorePage().contains((Element) n.getUserObject()))                 // if it contains the note we have just selected
                 scoreDisplayPanel.repaint();                                                            // let the score display repaint so the highlighted note gets displayed
         }
+
+        // TODO trigger the piano roll in the audio tab to display/emphasize this part
     }
 
     /**

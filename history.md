@@ -1,6 +1,12 @@
 ### Version History
 
 
+#### v0.1.7
+- Addition to the spectrogram context menu to switch between normalized and non-normalized display.
+- New method `getPart()` in classes `mpmToolbox.gui.msmTree.MsmTreeNode` and `mpmToolbox.gui.mpmTree.MpmTreeNode` to retrieve the MSM `part` element that the node belongs to.
+- Added class `mpmToolbox.gui.audio.PianoRollPanel` which is also the basis for the classes `WaveformPanel` and `SpectrogramPanel` in the same package.
+
+
 #### v0.1.6
 - Class `mpmToolbox.ProjectData` moved into the newly added package `mpmToolbox.projectData`.
 - New Class `mpmToolbox.projectData.Audio`. It extends the eponymous class from meico and replaces all its occurrences in the code.

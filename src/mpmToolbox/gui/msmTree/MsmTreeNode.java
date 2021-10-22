@@ -298,6 +298,24 @@ public class MsmTreeNode extends UniqueNode<MsmTreeNode, Node> implements TextBr
     }
 
     /**
+     * Find the MSM part element that this note belongs to.
+     * @return the part element or null if this node is no part and is not a child of a part
+     */
+    public Element getPart() {
+        switch (this.getType()) {
+            case root:
+            case global:
+                return null;
+            default: {
+                for (MsmTreeNode parent = this; parent != null; parent = parent.getParent())
+                    if (parent.getType() == MsmTreeNode.XmlNodeType.part)
+                        return (Element) parent.getUserObject();
+            }
+        }
+        return null;
+    }
+
+    /**
      * an enumeration of the node types
      */
     public enum XmlNodeType {

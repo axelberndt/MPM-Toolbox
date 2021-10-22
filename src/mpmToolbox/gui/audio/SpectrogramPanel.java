@@ -3,6 +3,7 @@ package mpmToolbox.gui.audio;
 import com.alee.laf.button.WebButton;
 import com.alee.laf.combobox.WebComboBox;
 import com.alee.laf.label.WebLabel;
+import com.alee.laf.menu.WebCheckBoxMenuItem;
 import com.alee.laf.menu.WebMenuItem;
 import com.alee.laf.menu.WebPopupMenu;
 import com.alee.laf.panel.WebPanel;
@@ -21,13 +22,8 @@ import java.util.Objects;
  * This class represents the spectrogram display in the audio tab.
  * @author Axel Berndt
  */
-public class SpectrogramPanel extends WebPanel implements ComponentListener, MouseListener, MouseMotionListener, MouseWheelListener {
-    private final AudioDocumentData parent;
-    private final WebLabel noData = new WebLabel("Select the audio recording to be displayed here via the SyncPlayer.", WebLabel.CENTER);
+public class SpectrogramPanel extends PianoRollPanel {
     private final SpectrogramSpecs spectrogramSpecs;
-    private Point mousePosition = null;             // this is to keep track of the mouse position and draw a cursor on the panel
-    private boolean mouseInThisPanel = false;       // this is set true when the mouse enters this panel and false if the mouse exits
-
     private double samplesPerPixel = 0.0;           // this value is part of the transformation process of the spectrogram image
     private int imageWidth = 1;                     // the width of the spectrogram image, part of the transformation process of the spectrogram image
     private int horizontalOffset = 0;               // the x-offset of the spectrogram image, part of the transformation process of the spectrogram image
@@ -38,16 +34,8 @@ public class SpectrogramPanel extends WebPanel implements ComponentListener, Mou
      * constructor
      */
     protected SpectrogramPanel(AudioDocumentData parent) {
-        super();
-        this.parent = parent;
+        super(parent, "Select the audio recording to be displayed here via the SyncPlayer.");
         this.spectrogramSpecs = new SpectrogramSpecs(this);
-
-        this.add(this.noData);
-
-        this.addComponentListener(this);
-        this.addMouseListener(this);
-        this.addMouseMotionListener(this);
-        this.addMouseWheelListener(this);
     }
 
     /**
@@ -88,10 +76,10 @@ public class SpectrogramPanel extends WebPanel implements ComponentListener, Mou
                 g2.drawLine(0, this.mousePosition.y, this.getWidth(), this.mousePosition.y);
 
                 // print info text
-                g2.setColor(Color.LIGHT_GRAY);
-                // TODO Werte berechnen
-                g2.drawString("Frequency: " + 44.0 + "Hz", 2, Settings.getDefaultFontSize());
-                g2.drawString("Pitch: A", 2, Settings.getDefaultFontSize() * 2);
+                // TODO compute and display frequency of mouse y position
+//                g2.setColor(Color.LIGHT_GRAY);
+//                double relativeYPos = (double)(this.getHeight() - this.mousePosition.y) / this.getHeight();
+//                g2.drawString("Frequency: " + spectrogramImage.getFrequency(relativeYPos) + " Hz", 2, Settings.getDefaultFontSize());
             }
         }
     }
@@ -114,6 +102,7 @@ public class SpectrogramPanel extends WebPanel implements ComponentListener, Mou
     /**
      * set the data that this panel should visualize
      */
+    @Override
     protected void setAudio() {
         if (this.parent.getAudio() == null) {
             this.add(this.noData);
@@ -128,17 +117,6 @@ public class SpectrogramPanel extends WebPanel implements ComponentListener, Mou
     }
 
     /**
-     * set the mouse position
-     * @param e
-     */
-    protected void setMousePosition(MouseEvent e) {
-        if (e == null)
-            this.mousePosition = null;
-        else
-            this.mousePosition = e.getPoint();
-    }
-
-    /**
      * the action to be performed on component resize
      *
      * @param e
@@ -146,34 +124,7 @@ public class SpectrogramPanel extends WebPanel implements ComponentListener, Mou
     @Override
     public void componentResized(ComponentEvent e) {
         this.updateZoom();
-        this.repaint();
-    }
-
-    /**
-     * the action to be performed on component move
-     *
-     * @param e
-     */
-    @Override
-    public void componentMoved(ComponentEvent e) {
-    }
-
-    /**
-     * the action to be performed on component show
-     *
-     * @param e
-     */
-    @Override
-    public void componentShown(ComponentEvent e) {
-    }
-
-    /**
-     * the action to be performed on component hide
-     *
-     * @param e
-     */
-    @Override
-    public void componentHidden(ComponentEvent e) {
+        super.componentResized(e);
     }
 
     /**
@@ -209,82 +160,21 @@ public class SpectrogramPanel extends WebPanel implements ComponentListener, Mou
                 });
                 menu.add(newSpectrogram);
 
+                // normalize or denormalize the spectrogram image
+                WebCheckBoxMenuItem normalize = new WebCheckBoxMenuItem("Normalize", this.spectrogramSpecs.normalize);
+                normalize.addChangeListener(changeEvent -> {
+                    this.spectrogramSpecs.normalize = normalize.isSelected();
+                    this.spectrogramSpecs.updateSpectrogramImage(this);
+                });
+                menu.add(normalize);
+
+                // choose overlay
+                menu.add(this.getOverlayChooser());
+
+
                 menu.show(this, e.getX() - 25, e.getY());
                 break;
         }
-    }
-
-    /**
-     * on mouse press event
-     *
-     * @param e
-     */
-    @Override
-    public void mousePressed(MouseEvent e) {
-    }
-
-    /**
-     * on mouse release event
-     *
-     * @param e
-     */
-    @Override
-    public void mouseReleased(MouseEvent e) {
-    }
-
-    /**
-     * on mouse enter event
-     *
-     * @param e
-     */
-    @Override
-    public void mouseEntered(MouseEvent e) {
-        this.mouseInThisPanel = true;
-        this.parent.communicateMouseEventToAllComponents(e);
-        this.parent.repaintAllComponents();
-    }
-
-    /**
-     * on mouse exit event
-     *
-     * @param e
-     */
-    @Override
-    public void mouseExited(MouseEvent e) {
-        this.mouseInThisPanel = false;
-        this.parent.communicateMouseEventToAllComponents(null);
-        this.parent.repaintAllComponents();
-    }
-
-    /**
-     * on mouse drag event
-     *
-     * @param e
-     */
-    @Override
-    public void mouseDragged(MouseEvent e) {
-        this.parent.getWaveformPanel().mouseDragged(e);
-    }
-
-    /**
-     * on mouse move event
-     *
-     * @param e
-     */
-    @Override
-    public void mouseMoved(MouseEvent e) {
-        this.parent.communicateMouseEventToAllComponents(e);
-        this.parent.repaintAllComponents();
-    }
-
-    /**
-     * on mouse wheel event
-     *
-     * @param e
-     */
-    @Override
-    public void mouseWheelMoved(MouseWheelEvent e) {
-        this.parent.getWaveformPanel().mouseWheelMoved(e);
     }
 
     /**
@@ -292,13 +182,14 @@ public class SpectrogramPanel extends WebPanel implements ComponentListener, Mou
      * @author Axel Berndt
      */
     private static class SpectrogramSpecs extends WebPanel {
-        private final WebButton computeButton = new WebButton("Compute Spectrogram (takes some time!)");
+        private final WebButton computeButton = new WebButton("Compute CQT Spectrogram (takes some time!)");
         private WebComboBox windowFunctionChooser = new WebComboBox();
         private WebSpinner windowLength = new WebSpinner(new SpinnerNumberModel(2048, 1, Integer.MAX_VALUE, 1));
         private WebSpinner hopSize = new WebSpinner(new SpinnerNumberModel(1024, 1, Integer.MAX_VALUE, 1));
         private WebSpinner minFreq = new WebSpinner(new SpinnerNumberModel(20.0f, 5.0f, 100000.0f, 1.0f));
         private WebSpinner maxFreq = new WebSpinner(new SpinnerNumberModel(10000.0f, 5.0f, 100000.0f, 1.0f));
         private WebSpinner binsPerSemitone = new WebSpinner(new SpinnerNumberModel(3, 1, Integer.MAX_VALUE, 1));
+        private boolean normalize = true;
 
         public SpectrogramSpecs(SpectrogramPanel parent) {
             super(new GridBagLayout());
@@ -390,52 +281,56 @@ public class SpectrogramPanel extends WebPanel implements ComponentListener, Mou
 
             // compute button
             this.computeButton.addActionListener(actionEvent -> {
-                parent.getRootPane().setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));   // change mouse cursor to busy
-                WindowFunction windowFunction;
-                int windowLength = (int) this.windowLength.getValue();
-                switch ((String) Objects.requireNonNull(this.windowFunctionChooser.getSelectedItem())) {
-                    case "Hamming":
-                        windowFunction = new WindowFunction.Hamming(windowLength);
-                        break;
-                    case "Hann":
-                        windowFunction = new WindowFunction.Hann(windowLength);
-                        break;
-                    case "Triangle":
-                        windowFunction = new WindowFunction.Triangle(windowLength);
-                        break;
-                    case "Welch":
-                        windowFunction = new WindowFunction.Welch(windowLength);
-                        break;
-                    case "Inverse Hamming":
-                        windowFunction = new WindowFunction.InverseWindowFunction(new WindowFunction.Hamming(windowLength));
-                        break;
-                    case "Inverse Hann":
-                        windowFunction = new WindowFunction.InverseWindowFunction(new WindowFunction.Hann(windowLength));
-                        break;
-                    case "Inverse Triangle":
-                        windowFunction = new WindowFunction.InverseWindowFunction(new WindowFunction.Triangle(windowLength));
-                        break;
-                    case "Inverse Welch":
-                        windowFunction = new WindowFunction.InverseWindowFunction(new WindowFunction.Welch(windowLength));
-                        break;
-                    default:
-                        return;
-                }
-                int hopSize = (int) this.hopSize.getValue();
-                float minFreq = (float) ((double) this.minFreq.getValue());
-                float maxFreq = (float) ((double) this.maxFreq.getValue());
-                int bins = (int) this.binsPerSemitone.getValue();
-                parent.parent.getAudio().computeSpectrogram(windowFunction, hopSize, minFreq, maxFreq, bins);
-                if (parent.parent.getSpectrogramImage() != null) {
-                    parent.remove(this);
-                    parent.updateZoom();
-                    parent.updateScroll();
-                    parent.repaint();
-                }
-                parent.getRootPane().setCursor(Cursor.getDefaultCursor());  // change mouse cursor back to default
+                this.updateSpectrogramImage(parent);
             });
             this.computeButton.setPadding(Settings.paddingInDialogs);
             Tools.addComponentToGridBagLayout(this, (GridBagLayout) this.getLayout(), this.computeButton, 2, 7, 1, 1, 1.0, 1.0, 0, 0, GridBagConstraints.BOTH, GridBagConstraints.LINE_START);
+        }
+
+        private void updateSpectrogramImage(SpectrogramPanel parent) {
+            parent.getRootPane().setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));   // change mouse cursor to busy
+            WindowFunction windowFunction;
+            int windowLength = (int) this.windowLength.getValue();
+            switch ((String) Objects.requireNonNull(this.windowFunctionChooser.getSelectedItem())) {
+                case "Hamming":
+                    windowFunction = new WindowFunction.Hamming(windowLength);
+                    break;
+                case "Hann":
+                    windowFunction = new WindowFunction.Hann(windowLength);
+                    break;
+                case "Triangle":
+                    windowFunction = new WindowFunction.Triangle(windowLength);
+                    break;
+                case "Welch":
+                    windowFunction = new WindowFunction.Welch(windowLength);
+                    break;
+                case "Inverse Hamming":
+                    windowFunction = new WindowFunction.InverseWindowFunction(new WindowFunction.Hamming(windowLength));
+                    break;
+                case "Inverse Hann":
+                    windowFunction = new WindowFunction.InverseWindowFunction(new WindowFunction.Hann(windowLength));
+                    break;
+                case "Inverse Triangle":
+                    windowFunction = new WindowFunction.InverseWindowFunction(new WindowFunction.Triangle(windowLength));
+                    break;
+                case "Inverse Welch":
+                    windowFunction = new WindowFunction.InverseWindowFunction(new WindowFunction.Welch(windowLength));
+                    break;
+                default:
+                    return;
+            }
+            int hopSize = (int) this.hopSize.getValue();
+            float minFreq = (float) ((double) this.minFreq.getValue());
+            float maxFreq = (float) ((double) this.maxFreq.getValue());
+            int bins = (int) this.binsPerSemitone.getValue();
+            parent.parent.getAudio().computeSpectrogram(windowFunction, hopSize, minFreq, maxFreq, bins, this.normalize);
+            if (parent.parent.getSpectrogramImage() != null) {
+                parent.remove(this);
+                parent.updateZoom();
+                parent.updateScroll();
+                parent.repaint();
+            }
+            parent.getRootPane().setCursor(Cursor.getDefaultCursor());  // change mouse cursor back to default
         }
     }
 }
