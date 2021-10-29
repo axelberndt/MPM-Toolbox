@@ -106,7 +106,7 @@ public class WaveformPanel extends PianoRollPanel {
                 menu.add(chooseChannel);
 
                 // choose overlay
-                menu.add(this.getOverlayChooser());
+                menu.add(this.parent.getOverlayChooser());
 
                 menu.show(this, e.getX() - 25, e.getY());
                 break;

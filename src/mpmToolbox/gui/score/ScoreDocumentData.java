@@ -15,6 +15,7 @@ import mpmToolbox.gui.ProjectPane;
 import mpmToolbox.gui.Settings;
 import mpmToolbox.gui.mpmTree.MpmTreeNode;
 import mpmToolbox.gui.msmTree.MsmTreeNode;
+import mpmToolbox.projectData.score.ScorePage;
 import mpmToolbox.supplementary.Tools;
 
 import javax.swing.*;
@@ -38,6 +39,7 @@ public class ScoreDocumentData extends DocumentData<WebPanel> implements ActionL
     protected InteractionMode currentInteractionMode = InteractionMode.panAndZoom;                              // this is set to the current interaction mode whenever the interactionMode split button is set
     protected final WebSpinner annotationSizeSpinner = new WebSpinner(new SpinnerNumberModel(0, -999, 999, 1)); // this spinner allows scaling the size of overlay elements in the score display
     boolean hideScore = false;
+    boolean hideOverlay = false;
 
     /**
      * constructor
@@ -100,9 +102,21 @@ public class ScoreDocumentData extends DocumentData<WebPanel> implements ActionL
         deleteButton.setToolTip("delete page");
 //        nextButton.addHotkey(Hotkey.DELETE);         // deactivated because handled in the scorePanel's keyboard listener
 
+        // the hide overlay button
+        final WebButton hideOverlayButton = new WebButton(this.hideOverlay ? "Show Overlay" : "Hide Overlay");
+        hideOverlayButton.setToolTip("hide/show the overlay on the score image");
+        hideOverlayButton.setPadding(Settings.paddingInDialogs);
+        hideOverlayButton.addActionListener(actionEvent -> {
+            if (this.scoreDisplay == null)
+                return;
+            this.hideOverlay = !this.hideOverlay;
+            this.scoreDisplay.repaint();
+            hideOverlayButton.setText(this.hideOverlay ? "Show Overlay" : "Hide Overlay");
+        });
+
         // the hide score button
         final WebButton hideScoreButton = new WebButton(this.hideScore ? "Show Score" : "Hide Score");
-        hideScoreButton.setToolTip("hide the score image and show only the overlay");
+        hideScoreButton.setToolTip("hide/show the score image");
         hideScoreButton.setPadding(Settings.paddingInDialogs);
         hideScoreButton.addActionListener(actionEvent -> {
             if (this.scoreDisplay == null)
@@ -129,7 +143,7 @@ public class ScoreDocumentData extends DocumentData<WebPanel> implements ActionL
         GridBagLayout scoreButtonPanelLayout = new GridBagLayout();
         final WebPanel scoreButtonPanel = new WebPanel(scoreButtonPanelLayout);
         scoreButtonPanel.setPadding(Settings.paddingInDialogs);
-        final GroupPane buttonGroup = new GroupPane(GroupPane.CENTER, previousButton, deleteButton, hideScoreButton, pageSelectButton, this.interactionMode, nextButton);    // the GroupPane groups the buttons
+        final GroupPane buttonGroup = new GroupPane(GroupPane.CENTER, previousButton, deleteButton, hideScoreButton, hideOverlayButton, pageSelectButton, this.interactionMode, nextButton);    // the GroupPane groups the buttons
         Tools.addComponentToGridBagLayout(scoreButtonPanel, scoreButtonPanelLayout, buttonGroup, 0, 0, 1, 1, 1.0, 1.0, 0, 0, GridBagConstraints.BOTH, GridBagConstraints.CENTER);
         Tools.addComponentToGridBagLayout(scoreButtonPanel, scoreButtonPanelLayout, this.annotationSizeSpinner, 1, 0, 1, 1, 1.0, 1.0, 0, 0, GridBagConstraints.BOTH, GridBagConstraints.CENTER);
 

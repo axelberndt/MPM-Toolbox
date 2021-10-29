@@ -169,7 +169,7 @@ public class SpectrogramPanel extends PianoRollPanel {
                 menu.add(normalize);
 
                 // choose overlay
-                menu.add(this.getOverlayChooser());
+                menu.add(this.parent.getOverlayChooser());
 
 
                 menu.show(this, e.getX() - 25, e.getY());

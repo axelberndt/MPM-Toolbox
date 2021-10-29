@@ -16,7 +16,7 @@ import mpmToolbox.gui.mpmEditingTools.editDialogs.*;
 import mpmToolbox.gui.mpmTree.MpmTree;
 import mpmToolbox.gui.mpmTree.MpmTreeNode;
 import mpmToolbox.gui.score.ScoreDisplayPanel;
-import mpmToolbox.gui.score.ScoreNode;
+import mpmToolbox.projectData.score.ScoreNode;
 import nu.xom.Attribute;
 import nu.xom.Element;
 

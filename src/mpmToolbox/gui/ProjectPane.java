@@ -18,9 +18,9 @@ import mpmToolbox.gui.audio.AudioDocumentData;
 import mpmToolbox.gui.mpmTree.MpmDockableFrame;
 import mpmToolbox.gui.mpmTree.MpmTree;
 import mpmToolbox.gui.msmTree.MsmTree;
-import mpmToolbox.gui.score.Score;
+import mpmToolbox.projectData.score.Score;
 import mpmToolbox.gui.score.ScoreDocumentData;
-import mpmToolbox.gui.score.ScorePage;
+import mpmToolbox.projectData.score.ScorePage;
 import mpmToolbox.gui.syncPlayer.SyncPlayer;
 import nu.xom.ParsingException;
 import org.xml.sax.SAXException;
@@ -360,7 +360,6 @@ public class ProjectPane extends WebDockablePane {
      */
     public void addAudio(mpmToolbox.projectData.Audio audio) {
         if (this.data.addAudio(audio)) {
-            // TODO: display the audio data in the tab
             this.syncPlayer.updateAudioList();
         }
     }
@@ -371,7 +370,6 @@ public class ProjectPane extends WebDockablePane {
      */
     public void removeAudio(int index) {
         this.data.removeAudio(index);
-        // TODO: empty the audio tab or display another audio object in it
         this.syncPlayer.updateAudioList();
     }
 

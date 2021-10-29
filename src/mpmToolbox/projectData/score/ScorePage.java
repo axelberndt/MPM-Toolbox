@@ -1,4 +1,4 @@
-package mpmToolbox.gui.score;
+package mpmToolbox.projectData.score;
 
 import meico.mei.Helper;
 import meico.supplementary.KeyValue;

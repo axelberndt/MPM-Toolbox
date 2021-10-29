@@ -2,14 +2,17 @@ package mpmToolbox.projectData;
 
 import com.tagtraum.jipes.audio.LogFrequencySpectrum;
 import com.tagtraum.jipes.math.WindowFunction;
+import meico.msm.Msm;
 import meico.supplementary.ColorCoding;
+import mpmToolbox.projectData.alignment.Alignment;
+import nu.xom.Attribute;
+import nu.xom.Element;
 
-import javax.sound.sampled.AudioFormat;
-import javax.sound.sampled.AudioInputStream;
 import javax.sound.sampled.UnsupportedAudioFileException;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.ArrayList;
 
 /**
@@ -17,60 +20,89 @@ import java.util.ArrayList;
  * @author Axel Berndt
  */
 public class Audio extends meico.audio.Audio {
-    protected ArrayList<double[]> waveforms = new ArrayList<>();// contains the waveform data for each audio channel as doubles in [-1.0, 1.0]
+    protected final ArrayList<double[]> waveforms;              // contains the waveform data for each audio channel as doubles in [-1.0, 1.0]
     private WaveformImage waveformImage = null;                 // the waveform image of this audio data
-
     private SpectrogramImage spectrogramImage = null;           // the visualization of the above spectrogram
+    private final Alignment alignment;
 
-    /**
-     * constructor, generates empty instance
-     */
-    public Audio() {
-        super();
-    }
+//    /**
+//     * constructor, generates empty instance
+//     */
+//    public Audio() {
+//        super();
+//    }
 
-    /**
-     * constructor with AudioInputStream
-     *
-     * @param inputStream
-     */
-    public Audio(AudioInputStream inputStream) {
-        super(inputStream);
-        this.waveforms = convertByteArray2DoubleArray(this.getAudio(), this.getFormat());
-    }
+//    /**
+//     * constructor with AudioInputStream
+//     *
+//     * @param inputStream
+//     */
+//    public Audio(AudioInputStream inputStream) {
+//        super(inputStream);
+//    }
+
+//    /**
+//     * this constructor reads audio data from the AudioInputStream and associates the file with it;
+//     * the file may differ from the input stream
+//     *
+//     * @param inputStream
+//     * @param file
+//     */
+//    public Audio(AudioInputStream inputStream, File file) {
+//        super(inputStream, file);
+//    }
+
+//    /**
+//     * with this constructor all data is given explicitly
+//     *
+//     * @param audioData
+//     * @param format
+//     * @param file
+//     */
+//    public Audio(byte[] audioData, AudioFormat format, File file) {
+//        super(audioData, format, file);
+//    }
 
     /**
      * constructor; use this one to load and decode MP3 files
      *
      * @param file
+     * @param msm the Msm instance to be aligned with this Audio object
      */
-    public Audio(File file) throws IOException, UnsupportedAudioFileException {
+    public Audio(File file, Msm msm) throws IOException, UnsupportedAudioFileException {
         super(file);
+
         this.waveforms = convertByteArray2DoubleArray(this.getAudio(), this.getFormat());
+        this.alignment = new Alignment(msm, null);
     }
 
     /**
-     * this constructor reads audio data from the AudioInputStream and associates the file with it;
-     * the file may differ from the input stream
-     *
-     * @param inputStream
-     * @param file
+     * constructor; use this one when loading a new MPM Toolbox project
+     * @param projectAudioData
+     * @param projectBasePath
+     * @param msm
+     * @throws IOException
+     * @throws UnsupportedAudioFileException
      */
-    public Audio(AudioInputStream inputStream, File file) {
-        super(inputStream, file);
+    public Audio(Element projectAudioData, String projectBasePath, Msm msm) throws IOException, UnsupportedAudioFileException {
+        super(new File(projectBasePath + projectAudioData.getAttributeValue("file").replaceAll("\\\\/", File.separator)));
+
         this.waveforms = convertByteArray2DoubleArray(this.getAudio(), this.getFormat());
+
+        Element alignmentData = projectAudioData.getFirstChildElement("alignment");
+        this.alignment = new Alignment(msm, alignmentData);
     }
 
     /**
-     * with this constructor all data is given explicitly
-     *
-     * @param audioData
-     * @param format
-     * @param file
+     * generate a project data XML element
+     * @param projectPath generate it this way: Paths.get(projectFile.getParent())
+     * @return
      */
-    public Audio(byte[] audioData, AudioFormat format, File file) {
-        super(audioData, format, file);
-        this.waveforms = convertByteArray2DoubleArray(this.getAudio(), this.getFormat());
+    public Element toXml(Path projectPath) {
+        Element out = new Element("audio");
+        out.addAttribute(new Attribute("file", projectPath.relativize(this.getFile().toPath()).toString()));
+        out.appendChild(this.alignment.toXml());
+        return out;
     }
 
     /**

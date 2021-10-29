@@ -26,9 +26,9 @@ import mpmToolbox.gui.mpmTree.MpmTree;
 import mpmToolbox.gui.mpmTree.MpmTreeNode;
 import mpmToolbox.gui.msmTree.MsmTree;
 import mpmToolbox.gui.msmTree.MsmTreeNode;
-import mpmToolbox.gui.score.Score;
-import mpmToolbox.gui.score.ScoreNode;
-import mpmToolbox.gui.score.ScorePage;
+import mpmToolbox.projectData.score.Score;
+import mpmToolbox.projectData.score.ScoreNode;
+import mpmToolbox.projectData.score.ScorePage;
 import nu.xom.Attribute;
 import nu.xom.Element;
 

@@ -142,7 +142,7 @@ public class SyncPlayer extends WebPanel {
 
     /**
      * This fills the performance chooser list.
-     * The method should be called when the the available performances have changed.
+     * The method should be called when the available performances have changed.
      */
     public void updatePerformanceList() {
         PerformanceChooserItem selectedItem = (PerformanceChooserItem) this.performanceChooser.getSelectedItem();   // store the previously selected item

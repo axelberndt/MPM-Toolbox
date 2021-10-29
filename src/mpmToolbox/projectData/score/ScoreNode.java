@@ -1,4 +1,4 @@
-package mpmToolbox.gui.score;
+package mpmToolbox.projectData.score;
 
 import mpmToolbox.supplementary.orthantNeighborhoodGraph.ONGNode;
 import nu.xom.Element;

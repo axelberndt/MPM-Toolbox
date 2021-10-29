@@ -13,6 +13,9 @@ import mpmToolbox.gui.mpmTree.MpmTree;
 import mpmToolbox.gui.mpmTree.MpmTreeNode;
 import mpmToolbox.gui.msmTree.MsmTree;
 import mpmToolbox.gui.msmTree.MsmTreeNode;
+import mpmToolbox.projectData.score.Score;
+import mpmToolbox.projectData.score.ScoreNode;
+import mpmToolbox.projectData.score.ScorePage;
 import mpmToolbox.supplementary.orthantNeighborhoodGraph.ONGNode;
 import nu.xom.Element;
 import nu.xom.Node;
@@ -117,6 +120,10 @@ public class ScoreDisplayPanel extends WebPanel implements MouseWheelListener, M
 
         if (!this.parent.hideScore)
             g2.drawImage(this.scorePage.getImage(), 0, 0, this);    // draw image
+
+        // draw the overlay information
+        if (this.parent.hideOverlay)
+            return;
 
         // set the stroke style
         float strokeWidth = this.yWidth / 3.0f;

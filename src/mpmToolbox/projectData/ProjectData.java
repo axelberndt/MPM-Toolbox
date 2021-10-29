@@ -7,8 +7,8 @@ import meico.mpm.Mpm;
 import meico.msm.Msm;
 import meico.supplementary.KeyValue;
 import meico.xml.XmlBase;
-import mpmToolbox.gui.score.Score;
-import mpmToolbox.gui.score.ScorePage;
+import mpmToolbox.projectData.score.Score;
+import mpmToolbox.projectData.score.ScorePage;
 import nu.xom.*;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.rendering.PDFRenderer;
@@ -35,7 +35,7 @@ public class ProjectData {
     private final Msm msm;                                      // the MSM document
     private Mpm mpm = null;                                     // the MPM document
     private final Score score;                                  // the music sheets
-    private final ArrayList<Audio> audio = new ArrayList<>();   // a list of audio recordings
+    private final ArrayList<mpmToolbox.projectData.Audio> audio = new ArrayList<>();   // a list of audio recordings
 
     /**
      * constructor
@@ -95,7 +95,7 @@ public class ProjectData {
             for (int i=0; i < audios.size(); ++i) {
                 String localAudioPath = audios.get(i).getAttributeValue("file").replaceAll("\\\\/", File.separator);    // adapt the filepath separators to the current OS (\, /)
                 try {
-                    this.addAudio(new mpmToolbox.projectData.Audio(new File(basePath + localAudioPath)));
+                    this.addAudio(new mpmToolbox.projectData.Audio(new File(basePath + localAudioPath), this.getMsm()));
                 } catch (UnsupportedAudioFileException | IOException ex) {
                     ex.printStackTrace();
                 }
@@ -329,18 +329,21 @@ public class ProjectData {
         if (!this.audio.isEmpty()) {
             Element audios = new Element("audios");
             root.appendChild(audios);
-            for (mpmToolbox.projectData.Audio f : this.audio) {
-//                Path src = f.getFile().toPath();
-//                Path dest = Paths.get(path + "\\data\\score\\" + f.getFile().getName());
+            for (mpmToolbox.projectData.Audio aud : this.audio) {
+//                Path src = aud.getFile().toPath();
+//                Path dest = Paths.get(path + "\\data\\score\\" + aud.getFile().getName());
 //                try {
 //                    Files.copy(src, dest, StandardCopyOption.REPLACE_EXISTING);
 //                } catch (IOException e) {
 //                    e.printStackTrace();
 //                    continue;
 //                }
-                Element audioElt = new Element("audio");
-                Path relativeAudioPath = Paths.get(file.getParent()).relativize(f.getFile().toPath());
-                audioElt.addAttribute(new Attribute("file", relativeAudioPath.toString()));
+
+//                Element audioElt = new Element("audio");
+//                Path relativeAudioPath = Paths.get(file.getParent()).relativize(aud.getFile().toPath());
+//                audioElt.addAttribute(new Attribute("file", relativeAudioPath.toString()));
+
+                Element audioElt = aud.toXml(Paths.get(file.getParent()));
                 audios.appendChild(audioElt);
             }
         }

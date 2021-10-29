@@ -4,10 +4,17 @@ import com.alee.api.annotations.NotNull;
 import com.alee.api.data.Orientation;
 import com.alee.extended.split.WebMultiSplitPane;
 import com.alee.extended.tab.DocumentData;
+import com.alee.laf.menu.WebMenu;
+import com.alee.laf.menu.WebMenuItem;
 import com.alee.laf.panel.WebPanel;
+import meico.mei.Helper;
+import meico.mpm.elements.Performance;
+import meico.msm.Msm;
 import mpmToolbox.gui.ProjectPane;
 import mpmToolbox.projectData.Audio;
 import mpmToolbox.supplementary.Tools;
+import nu.xom.Element;
+import nu.xom.Elements;
 
 import java.awt.*;
 import java.awt.event.MouseEvent;
@@ -29,6 +36,9 @@ public class AudioDocumentData extends DocumentData<WebPanel> {
     private int channelNumber = -1;                             // index of the waveform/channel to be rendered to image; -1 means all channels
     private int leftmostSample = -1;                            // index of the first sample to be rendered to image
     private int rightmostSample = -1;                           // index of the last sample to be rendered to image
+
+    private Msm expressiveMsm = null;
+    private Performance performance = null;
 
     /**
      * constructor
@@ -268,6 +278,89 @@ public class AudioDocumentData extends DocumentData<WebPanel> {
         this.spectrogram.updateZoom();
 
         this.repaintAllComponents();        // triggers repaint for all components
+    }
+
+    /**
+     * set the data to be displayed as piano roll
+     * @param msm the MSM or null if no piano roll should be displayed
+     * @param performance an MPM performance of null
+     */
+    protected void setPianoRollData(Msm msm, Performance performance) {
+        if (msm == null) {
+            this.expressiveMsm = null;
+            this.performance = null;
+            return;
+        }
+
+        this.performance = (performance != null) ? performance : Performance.createPerformance("not performance", msm.getPulsesPerQuarter());
+        this.expressiveMsm = this.performance.perform(msm);
+    }
+
+    /**
+     * create overlay chooser to be used in the context menus
+     * @return
+     */
+    protected WebMenu getOverlayChooser() {
+        Elements parts = this.getParent().getMsm().getParts();
+
+        WebMenu chooseOverlay = new WebMenu("Choose Overlay");
+
+        // switch overlay off
+        final WebMenuItem noOverlay = new WebMenuItem("No Overlay");
+        chooseOverlay.add(noOverlay);
+        noOverlay.addActionListener(actionEvent -> {
+            // TODO: do not display an overlay
+        });
+
+        // show piano roll that is pinned to the synchronization points
+        WebMenu synchMsm = new WebMenu("Synchronized MSM");
+        chooseOverlay.add(synchMsm);
+        {
+            WebMenuItem synchAllParts = new WebMenuItem("All Parts");
+            synchMsm.add(synchAllParts);
+            synchAllParts.addActionListener(actionEvent -> {
+                // TODO: display synchronized MSM overlay of all parts
+            });
+
+            for (Element part : parts) {
+                String partNum = Helper.getAttributeValue("number", part);
+                String partName = Helper.getAttributeValue("name", part);
+                WebMenuItem partItem = new WebMenuItem("Part " + partNum + " " + partName);
+                synchMsm.add(partItem);
+                partItem.addActionListener(actionEvent -> {
+                    // TODO: display synchronized MSM overlay of this part
+                });
+            }
+        }
+
+        // show piano roll of the performance rendering from the performance currently chosen in the SynchPlayer
+        WebMenu selectedPerformance = new WebMenu("Selected Performance");
+        selectedPerformance.setToolTipText("Produce an overlay of the performance rendering selected in the SyncPlayer.");
+        chooseOverlay.add(selectedPerformance);
+        if (this.getParent().getSyncPlayer().getSelectedPerformance() == null) {
+            selectedPerformance.setEnabled(false);
+        }
+        else {
+            selectedPerformance.setEnabled(true);
+
+            WebMenuItem perfAllParts = new WebMenuItem("All Parts");
+            selectedPerformance.add(perfAllParts);
+            perfAllParts.addActionListener(actionEvent -> {
+                // TODO: display synchronized MSM overlay of all parts
+            });
+
+            for (Element part : parts) {
+                String partNum = Helper.getAttributeValue("number", part);
+                String partName = Helper.getAttributeValue("name", part);
+                WebMenuItem partItem = new WebMenuItem("Part " + partNum + " " + partName);
+                selectedPerformance.add(partItem);
+                partItem.addActionListener(actionEvent -> {
+                    // TODO: display performed MSM overlay of this part
+                });
+            }
+        }
+
+        return chooseOverlay;
     }
 
     /**

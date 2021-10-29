@@ -402,7 +402,7 @@ public class MpmToolbox {
                     if (this.projectPane == null)
                         System.err.println("No project loaded to add the audio.");
                     else
-                        this.projectPane.addAudio(new mpmToolbox.projectData.Audio(file));
+                        this.projectPane.addAudio(new mpmToolbox.projectData.Audio(file, this.getProjectPane().getMsm()));
                     break;
                 case ".jpg":
                 case ".jpeg":

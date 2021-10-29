@@ -2,8 +2,11 @@
 
 
 #### v0.1.7
+- Reorganized some classes, i.e., classes `Score`, `ScoreNote`, `ScorePage` moved from package `mpmToolbox.gui.score` to package `mpmToolbox.projectData.score`.
+- Added "Hide Overlay" button to the score widget (classes `mpmToolbox.gui.score.ScoreDocumentData` and `ScoreDisplayPanel`) that allows to show the score without the overlays. 
 - Addition to the spectrogram context menu to switch between normalized and non-normalized display.
 - New method `getPart()` in classes `mpmToolbox.gui.msmTree.MsmTreeNode` and `mpmToolbox.gui.mpmTree.MpmTreeNode` to retrieve the MSM `part` element that the node belongs to.
+- New package `mpmToolbox.projectData.alignment` with several new classes that serve to associate measurements in audio recordings with MSM data.
 - Added class `mpmToolbox.gui.audio.PianoRollPanel` which is also the basis for the classes `WaveformPanel` and `SpectrogramPanel` in the same package.
 
 
@@ -22,10 +25,10 @@
 - Removed `rsyntaxtextarea-3.1.1.jar` from the externals. It was never used so far.
 - Class `mpmToolbox.gui.msmTree.MsmTree` has been expanded. It now provides its own instance of a `WebDockableFrame`. A simple getter method makes it easier to be used in class `mpmToolbox.gui.ProjectPane`. Thus, some code optimizations have been applied there.
 - New class `mpmToolbox.gui.mpmTree.MpmDockableFrame` has been added. This simplifies some code in class `mpmToolbox.gui.ProjectPane`.
-- New method `toXml()` in class `mpmToolbox.gui.score.ScorePage`. It exports the image data and concordances that are stored in MPM Toolbox's project files (`.mpr`).
-    - The same code was previously performed by method `mpmToolbox.gui.score.Score.toXml()`. It has been simplified accordingly and invokes the `ScorePage`'s `toXml()` now instead.
+- New method `toXml()` in class `mpmToolbox.projectData.score.ScorePage`. It exports the image data and concordances that are stored in MPM Toolbox's project files (`.mpr`).
+    - The same code was previously performed by method `mpmToolbox.projectData.score.Score.toXml()`. It has been simplified accordingly and invokes the `ScorePage`'s `toXml()` now instead.
     - Two new attributes were added to the generated `page` element, `width.pixels` and `height.pixels`. If the page image gets replaced by another with a different resolution, the coordinates of the concordances can be scaled on this basis.
-- Added another constructor to class `mpmToolbox.gui.score.ScorePage` to be used by the constructor of class `mpmToolbox.gui.score.Score` that reads the data from a project file (`.mpr`). The new `ScorePage` constructor checks if the image resolution changed and, if so, scales the concordance coordinates accordingly.
+- Added another constructor to class `mpmToolbox.projectData.score.ScorePage` to be used by the constructor of class `mpmToolbox.projectData.score.Score` that reads the data from a project file (`.mpr`). The new `ScorePage` constructor checks if the image resolution changed and, if so, scales the concordance coordinates accordingly.
 - Some first preparations for the audio analysis component.
     - Interactive waveform and CQT spectrogram display, incl. 
         - resize, 
@@ -51,7 +54,7 @@
   - It is not valid to have two maps of the same type within one and the same `dated` environment. Hence, if the target environment has already a map of the same type as the origin map, the contents will be merged into it.
 - The same functionality is also added to individual MPM map entries.
 - Bugfix in method `mpmToolbox.gui.mpmEditingTools.editDialogs.TempoEditor.edit()`. When editing a tempo transition with a numeric value for `transition.to` the `meanTempoAt`was not initialized from the source.
-- Enhancement of method `mpmToolbox.gui.score.ScorePage.addEntry()`. If an element to be added has no `xml:id` attribute, which is required to be linked to a score position, the method generates a random ID and adds the attribute to the element.
+- Enhancement of method `mpmToolbox.projectData.score.ScorePage.addEntry()`. If an element to be added has no `xml:id` attribute, which is required to be linked to a score position, the method generates a random ID and adds the attribute to the element.
 - Layout related fix in method `mpmToolbox.gui.mpmEditingTools.editDialogs.EditDialog.addIdInput()` to ensure that the ID input field has a fixed width and does not break the layout.
 
 

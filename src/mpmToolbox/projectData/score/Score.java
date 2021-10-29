@@ -1,4 +1,4 @@
-package mpmToolbox.gui.score;
+package mpmToolbox.projectData.score;
 
 import com.alee.api.annotations.NotNull;
 import meico.mei.Helper;
