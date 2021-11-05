@@ -6,6 +6,7 @@
 - Added "Hide Overlay" button to the score widget (classes `mpmToolbox.gui.score.ScoreDocumentData` and `ScoreDisplayPanel`) that allows to show the score without the overlays. 
 - Addition to the spectrogram context menu to switch between normalized and non-normalized display.
 - New method `getPart()` in classes `mpmToolbox.gui.msmTree.MsmTreeNode` and `mpmToolbox.gui.mpmTree.MpmTreeNode` to retrieve the MSM `part` element that the node belongs to.
+- New package `mpmToolbox.supplementary.avlTree` that implements AVL Tree data structure.
 - New package `mpmToolbox.projectData.alignment` with several new classes that serve to associate measurements in audio recordings with MSM data.
 - Added class `mpmToolbox.gui.audio.PianoRollPanel` which is also the basis for the classes `WaveformPanel` and `SpectrogramPanel` in the same package.
 

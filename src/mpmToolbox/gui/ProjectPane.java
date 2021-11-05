@@ -163,8 +163,9 @@ public class ProjectPane extends WebDockablePane {
 
         // fill the content pane in the center
 //        this.tabs.openDocument(new DocumentData<>("TestTab", "Test Tab", new WebButton("Test")));
-        this.tabs.openDocument(this.makeAudioFrame());
         this.tabs.openDocument(this.makeScoreFrame());
+        this.tabs.openDocument(this.makeAudioFrame());
+        this.tabs.setSelected(this.scoreFrame);
 
         this.setContent(this.tabs);     // this will fill the free space of the docking pane that is not occupied by a WebDockableFrame, this can be anything JComponent-based
     }

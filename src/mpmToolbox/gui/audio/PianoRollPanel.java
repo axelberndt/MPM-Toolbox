@@ -17,6 +17,10 @@ public class PianoRollPanel extends WebPanel implements ComponentListener, Mouse
     protected Point mousePosition = null;               // this is to keep track of the mouse position and draw a cursor on the panel
     protected boolean mouseInThisPanel = false;         // this is set true when the mouse enters this panel and false if the mouse exits
 
+    /**
+     * constructor
+     * @param parent
+     */
     protected PianoRollPanel(AudioDocumentData parent) {
         this(parent, "Select a part in the Musical Sequence Markup tree.");
     }

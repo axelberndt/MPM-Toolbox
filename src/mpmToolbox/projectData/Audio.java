@@ -106,6 +106,14 @@ public class Audio extends meico.audio.Audio {
     }
 
     /**
+     * access this audio's alignment data
+     * @return
+     */
+    public Alignment getAlignment() {
+        return this.alignment;
+    }
+
+    /**
      * a getter for the waveform data
      * @return an ArrayList where each element is the waveform of one channel
      */
