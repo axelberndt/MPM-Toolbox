@@ -38,15 +38,11 @@ public class Part extends HashMap<String, Note> {
         Element score = dated.getFirstChildElement("score");
         if (score != null) {
             for (Element e : score.getChildElements("note")) {
-                Note note;
                 try {
-                    note = new Note(e);
+                    this.put(new Note(e));
                 } catch (InvalidDataException | NumberFormatException exception) {
                     exception.printStackTrace();
-                    continue;
                 }
-                String id = note.getId();
-                this.put(id, note);
             }
         }
     }
