@@ -4,17 +4,12 @@ import com.alee.api.annotations.NotNull;
 import com.alee.api.data.Orientation;
 import com.alee.extended.split.WebMultiSplitPane;
 import com.alee.extended.tab.DocumentData;
-import com.alee.laf.menu.WebMenu;
-import com.alee.laf.menu.WebMenuItem;
 import com.alee.laf.panel.WebPanel;
-import meico.mei.Helper;
 import meico.mpm.elements.Performance;
-import meico.msm.Msm;
 import mpmToolbox.gui.ProjectPane;
 import mpmToolbox.projectData.Audio;
+import mpmToolbox.projectData.alignment.Alignment;
 import mpmToolbox.supplementary.Tools;
-import nu.xom.Element;
-import nu.xom.Elements;
 
 import java.awt.*;
 import java.awt.event.MouseEvent;
@@ -32,13 +27,11 @@ public class AudioDocumentData extends DocumentData<WebPanel> {
     private final SpectrogramPanel spectrogram;
     private final PianoRollPanel pianoRoll;
 
-    private Audio audio;
     private int channelNumber = -1;                             // index of the waveform/channel to be rendered to image; -1 means all channels
     private int leftmostSample = -1;                            // index of the first sample to be rendered to image
     private int rightmostSample = -1;                           // index of the last sample to be rendered to image
 
-    private Msm expressiveMsm = null;
-    private Performance performance = null;
+    private Alignment alignment;
 
     /**
      * constructor
@@ -46,6 +39,7 @@ public class AudioDocumentData extends DocumentData<WebPanel> {
      */
     public AudioDocumentData(@NotNull ProjectPane parent) {
         super("Audio", "Audio", null);
+        this.parent = parent;
 
         this.waveform = new WaveformPanel(this);
         this.spectrogram = new SpectrogramPanel(this);
@@ -53,9 +47,8 @@ public class AudioDocumentData extends DocumentData<WebPanel> {
 
         this.setComponent(this.audioPanel);
         this.setClosable(false);
-        this.parent = parent;
-        this.audio = this.parent.getSyncPlayer().getSelectedAudio();
-        this.setAudio(this.audio);
+        this.setAudio(false);
+        this.setAlignment(false);
 
         this.draw();
     }
@@ -129,15 +122,34 @@ public class AudioDocumentData extends DocumentData<WebPanel> {
     }
 
     /**
-     * set the data that is visualized here
-     * @param audio
+     * update the alignment data according to the currently selected performance in the SyncPlayer
      */
-    public void setAudio(Audio audio) {
-        if (this.audio == audio)
-            return;
+    public void setAlignment(boolean doRepaint) {
+        if (this.parent.getSyncPlayer().isAudioAlignmentSelected())
+            this.alignment = this.getAudio().getAlignment();
+        else {
+            Performance performance = this.parent.getSyncPlayer().getSelectedPerformance();
+            this.alignment = (performance == null) ? null : new Alignment(performance.perform(this.parent.getMsm()), null);
+        }
 
-        this.audio = audio;                 // set the audio data to be displayed
+        if (doRepaint)
+            this.repaintAllComponents();    // repaint of all components
+    }
 
+    /**
+     * access the current alignment
+     * @return
+     */
+    public Alignment getAlignment() {
+        return this.alignment;
+    }
+
+    /**
+     * update the audio data according to the currently selected performance in the SyncPlayer
+     * @param doRepaint
+     */
+    public void setAudio(boolean doRepaint) {
+        Audio audio = this.parent.getSyncPlayer().getSelectedAudio();
         if (audio != null) {
             this.channelNumber = -1;                                // all channels
             this.leftmostSample = 0;                                // first sample
@@ -146,7 +158,9 @@ public class AudioDocumentData extends DocumentData<WebPanel> {
 
         this.waveform.setAudio();
         this.spectrogram.setAudio();
-        this.repaintAllComponents();    // repaint of all components
+
+        if (doRepaint)
+            this.repaintAllComponents();    // repaint of all components
     }
 
     /**
@@ -154,7 +168,7 @@ public class AudioDocumentData extends DocumentData<WebPanel> {
      * @return
      */
     protected Audio getAudio() {
-        return this.audio;
+        return this.parent.getSyncPlayer().getSelectedAudio();
     }
 
     /**
@@ -166,8 +180,9 @@ public class AudioDocumentData extends DocumentData<WebPanel> {
     protected Audio.WaveformImage getWaveformImage(int width, int height) {
         if (this.getAudio() == null)
             return null;
-        this.audio.computeWaveformImage(this.channelNumber, this.leftmostSample, this.rightmostSample, width, height);
-        return this.audio.getWaveformImage();
+        Audio audio = this.getAudio();
+        audio.computeWaveformImage(this.channelNumber, this.leftmostSample, this.rightmostSample, width, height);
+        return audio.getWaveformImage();
     }
 
     /**
@@ -177,7 +192,7 @@ public class AudioDocumentData extends DocumentData<WebPanel> {
     protected Audio.SpectrogramImage getSpectrogramImage() {
         if (this.getAudio() == null)
             return null;
-        return this.audio.getSpectrogramImage();
+        return this.parent.getSyncPlayer().getSelectedAudio().getSpectrogramImage();
     }
 
     /**
@@ -278,89 +293,6 @@ public class AudioDocumentData extends DocumentData<WebPanel> {
         this.spectrogram.updateZoom();
 
         this.repaintAllComponents();        // triggers repaint for all components
-    }
-
-    /**
-     * set the data to be displayed as piano roll
-     * @param msm the MSM or null if no piano roll should be displayed
-     * @param performance an MPM performance of null
-     */
-    protected void setPianoRollData(Msm msm, Performance performance) {
-        if (msm == null) {
-            this.expressiveMsm = null;
-            this.performance = null;
-            return;
-        }
-
-        this.performance = (performance != null) ? performance : Performance.createPerformance("not performance", msm.getPulsesPerQuarter());
-        this.expressiveMsm = this.performance.perform(msm);
-    }
-
-    /**
-     * create overlay chooser to be used in the context menus
-     * @return
-     */
-    protected WebMenu getOverlayChooser() {
-        Elements parts = this.getParent().getMsm().getParts();
-
-        WebMenu chooseOverlay = new WebMenu("Choose Overlay");
-
-        // switch overlay off
-        final WebMenuItem noOverlay = new WebMenuItem("No Overlay");
-        chooseOverlay.add(noOverlay);
-        noOverlay.addActionListener(actionEvent -> {
-            // TODO: do not display an overlay
-        });
-
-        // show piano roll that is pinned to the synchronization points
-        WebMenu synchMsm = new WebMenu("Synchronized MSM");
-        chooseOverlay.add(synchMsm);
-        {
-            WebMenuItem synchAllParts = new WebMenuItem("All Parts");
-            synchMsm.add(synchAllParts);
-            synchAllParts.addActionListener(actionEvent -> {
-                // TODO: display synchronized MSM overlay of all parts
-            });
-
-            for (Element part : parts) {
-                String partNum = Helper.getAttributeValue("number", part);
-                String partName = Helper.getAttributeValue("name", part);
-                WebMenuItem partItem = new WebMenuItem("Part " + partNum + " " + partName);
-                synchMsm.add(partItem);
-                partItem.addActionListener(actionEvent -> {
-                    // TODO: display synchronized MSM overlay of this part
-                });
-            }
-        }
-
-        // show piano roll of the performance rendering from the performance currently chosen in the SynchPlayer
-        WebMenu selectedPerformance = new WebMenu("Selected Performance");
-        selectedPerformance.setToolTipText("Produce an overlay of the performance rendering selected in the SyncPlayer.");
-        chooseOverlay.add(selectedPerformance);
-        if (this.getParent().getSyncPlayer().getSelectedPerformance() == null) {
-            selectedPerformance.setEnabled(false);
-        }
-        else {
-            selectedPerformance.setEnabled(true);
-
-            WebMenuItem perfAllParts = new WebMenuItem("All Parts");
-            selectedPerformance.add(perfAllParts);
-            perfAllParts.addActionListener(actionEvent -> {
-                // TODO: display synchronized MSM overlay of all parts
-            });
-
-            for (Element part : parts) {
-                String partNum = Helper.getAttributeValue("number", part);
-                String partName = Helper.getAttributeValue("name", part);
-                WebMenuItem partItem = new WebMenuItem("Part " + partNum + " " + partName);
-                selectedPerformance.add(partItem);
-                partItem.addActionListener(actionEvent -> {
-                    // TODO: display performed MSM overlay of this part
-                });
-            }
-        }
-
-        return chooseOverlay;
     }
 
     /**

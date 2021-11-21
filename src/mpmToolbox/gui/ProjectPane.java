@@ -12,7 +12,9 @@ import meico.mei.Mei;
 import meico.midi.Midi;
 import meico.midi.MidiPlayer;
 import meico.mpm.Mpm;
+import meico.mpm.elements.Performance;
 import meico.msm.Msm;
+import mpmToolbox.projectData.Audio;
 import mpmToolbox.projectData.ProjectData;
 import mpmToolbox.gui.audio.AudioDocumentData;
 import mpmToolbox.gui.mpmTree.MpmDockableFrame;
@@ -152,14 +154,14 @@ public class ProjectPane extends WebDockablePane {
      * a helper method for the constructors to generate the GUI
      */
     private void makeGUI() {
-//        this.registerSettings(new Configuration("MyDockablePane", "state"));   // save (MyDockablePane.xml in user home directory if not set different) and reproduce the state on restart (https://github.com/mgarin/weblaf/wiki/How-to-use-WebDockablePane#saverestore-state)
-        this.setStyleId(StyleId.dockablepaneCompact);                          // a more compact styling of the dockable pane elements
+//        this.registerSettings(new Configuration("MyDockablePane", "state"));    // save (MyDockablePane.xml in user home directory if not set different) and reproduce the state on restart (https://github.com/mgarin/weblaf/wiki/How-to-use-WebDockablePane#saverestore-state)
+        this.setStyleId(StyleId.dockablepaneCompact);                       // a more compact styling of the dockable pane elements
         this.setSidebarButtonVisibility(SidebarButtonVisibility.always);
 
-        this.makePlayerFrame();         // the Sync Player in a dockable pane
+        this.makePlayerFrame();                                             // the Sync Player in a dockable pane
 
-        this.addFrame(this.msmTree.getDockableFrame()); // add the MSM tree to the UI
-        this.addFrame(this.mpmDockableFrame);   // the MPM tree is displayed in a dockable pane
+        this.addFrame(this.msmTree.getDockableFrame());                     // add the MSM tree to the UI
+        this.addFrame(this.mpmDockableFrame);                               // the MPM tree is displayed in a dockable pane
 
         // fill the content pane in the center
 //        this.tabs.openDocument(new DocumentData<>("TestTab", "Test Tab", new WebButton("Test")));
@@ -255,7 +257,9 @@ public class ProjectPane extends WebDockablePane {
     public void setMpm(Mpm mpm) {
         this.getProjectData().setMpm(mpm);
         this.mpmDockableFrame.setMpm(mpm);
-        this.syncPlayer.updatePerformanceList();
+
+        for (Performance performance : mpm.getAllPerformances())
+            this.syncPlayer.addPerformance(performance);
     }
 
     /**
@@ -361,7 +365,7 @@ public class ProjectPane extends WebDockablePane {
      */
     public void addAudio(mpmToolbox.projectData.Audio audio) {
         if (this.data.addAudio(audio)) {
-            this.syncPlayer.updateAudioList();
+            this.syncPlayer.addAudio(audio);
         }
     }
 
@@ -370,8 +374,9 @@ public class ProjectPane extends WebDockablePane {
      * @param index
      */
     public void removeAudio(int index) {
+        Audio audio = this.getAudio().get(index);
+        this.syncPlayer.removeAudio(audio);
         this.data.removeAudio(index);
-        this.syncPlayer.updateAudioList();
     }
 
     /**

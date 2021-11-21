@@ -1,7 +1,14 @@
 package mpmToolbox.gui.audio;
 
 import com.alee.laf.label.WebLabel;
+import com.alee.laf.menu.WebMenu;
+import com.alee.laf.menu.WebMenuItem;
 import com.alee.laf.panel.WebPanel;
+import meico.mei.Helper;
+import mpmToolbox.projectData.alignment.Part;
+import mpmToolbox.projectData.alignment.PianoRoll;
+import nu.xom.Element;
+import nu.xom.Elements;
 
 import java.awt.*;
 import java.awt.event.*;
@@ -22,7 +29,7 @@ public class PianoRollPanel extends WebPanel implements ComponentListener, Mouse
      * @param parent
      */
     protected PianoRollPanel(AudioDocumentData parent) {
-        this(parent, "Select a part in the Musical Sequence Markup tree.");
+        this(parent, "Select a performance in the SyncPlayer.");
     }
 
     /**
@@ -43,15 +50,78 @@ public class PianoRollPanel extends WebPanel implements ComponentListener, Mouse
     }
 
     /**
+     * draw the component
+     * @param g
+     */
+    @Override
+    protected void paintComponent(Graphics g) {
+        super.paintComponent(g);
+        // TODO: something meaningful?
+    }
+
+    /**
+     * draw the piano roll of the currently chosen audio data's alignment into the specified Graphics2D object
+     * @param g2d
+     */
+    protected void drawPianoRoll(Graphics2D g2d) {
+        if (this.parent.getAlignment() == null)
+            return;
+
+        // TODO: draw piano roll overlay; this is just test code, yet
+        double fromMilliseconds = ((double) this.parent.getLeftmostSample() / this.parent.getAudio().getFrameRate()) * 1000.0;
+        double toMilliseconds = ((double) this.parent.getRightmostSample() / this.parent.getAudio().getFrameRate()) * 1000.0;
+        PianoRoll pianoRoll = this.parent.getAlignment().getPianoRoll(fromMilliseconds, toMilliseconds, this.getWidth(), 128);
+//        PianoRoll pianoRoll = this.parent.getAudio().getAlignment().getPianoRoll(fromMilliseconds, toMilliseconds, this.getWidth(), 128);
+//        PianoRoll pianoRoll = (new Alignment(this.parent.parent.getSyncPlayer().getSelectedPerformance().perform(this.parent.parent.getMsm()), null)).getPianoRoll(fromMilliseconds, toMilliseconds, this.getWidth(), 128);
+        g2d.drawImage(pianoRoll, 0, this.getHeight(), this.getWidth(), -this.getHeight(), this);
+
+    }
+
+    /**
+     * create context menu submenu of the part to be displayed in the piano roll overlay
+     * @return
+     */
+    protected WebMenu getPianoRollTools() {
+        WebMenu pianoRollTools = new WebMenu("Piano Roll");
+
+        if (this.parent.getAlignment() == null) {
+            pianoRollTools.setEnabled(false);
+        } else {
+            pianoRollTools.setEnabled(true);
+
+            WebMenu choosePart = new WebMenu("Choose Part");
+            choosePart.setToolTipText("Select the part displayed in the piano roll overlay.");
+
+            WebMenuItem perfAllParts = new WebMenuItem("All Parts");
+            choosePart.add(perfAllParts);
+            perfAllParts.addActionListener(actionEvent -> {
+                // TODO ...
+            });
+
+            for (Element partElt : this.parent.getParent().getMsm().getParts()) {
+                int number = Integer.parseInt(Helper.getAttributeValue("number", partElt));
+                String name = "Part " + number + " " + Helper.getAttributeValue("name", partElt);
+                WebMenuItem partItem = new WebMenuItem(name);
+                choosePart.add(partItem);
+                partItem.addActionListener(actionEvent -> {
+                    // TODO ...
+                });
+            }
+
+            pianoRollTools.add(choosePart);
+        }
+
+        return pianoRollTools;
+    }
+
+    /**
      * set the data that this panel should visualize
      */
     protected void setAudio() {
-        if (this.parent.getAudio() == null) {
+        if (this.parent.getAudio() == null)
             this.add(this.noData);
-            return;
-        }
-
-        this.remove(this.noData);
+        else
+            this.remove(this.noData);
     }
 
     /**

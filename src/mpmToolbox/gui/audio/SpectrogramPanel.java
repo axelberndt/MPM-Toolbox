@@ -34,7 +34,7 @@ public class SpectrogramPanel extends PianoRollPanel {
      * constructor
      */
     protected SpectrogramPanel(AudioDocumentData parent) {
-        super(parent, "Select the audio recording to be displayed here via the SyncPlayer.");
+        super(parent, "Select an audio recording and performance via the SyncPlayer.");
         this.spectrogramSpecs = new SpectrogramSpecs(this);
     }
 
@@ -66,6 +66,7 @@ public class SpectrogramPanel extends PianoRollPanel {
         }
 
         g2.drawImage(spectrogramImage, this.horizontalOffset, 0, this.imageWidth, this.getHeight(), this);
+        this.drawPianoRoll(g2);
 
         // draw the mouse cursor
         if (this.mousePosition != null) {
@@ -140,7 +141,7 @@ public class SpectrogramPanel extends PianoRollPanel {
 
         switch (e.getButton()) {
             case MouseEvent.BUTTON1:                    // left click
-                // TODO: Place a marker
+                // TODO: select a note, place a marker ...
                 break;
             case MouseEvent.BUTTON3:                    // right click = context menu
                 WebPopupMenu menu = new WebPopupMenu();
@@ -169,7 +170,7 @@ public class SpectrogramPanel extends PianoRollPanel {
                 menu.add(normalize);
 
                 // choose overlay
-                menu.add(this.parent.getOverlayChooser());
+                menu.add(this.getPianoRollTools());
 
 
                 menu.show(this, e.getX() - 25, e.getY());

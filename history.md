@@ -9,6 +9,7 @@
 - New package `mpmToolbox.supplementary.avlTree` that implements AVL Tree data structure.
 - New package `mpmToolbox.projectData.alignment` with several new classes that serve to associate measurements in audio recordings with MSM data.
 - Added class `mpmToolbox.gui.audio.PianoRollPanel` which is also the basis for the classes `WaveformPanel` and `SpectrogramPanel` in the same package.
+- Several optimizations when editing `Performance` names, adding and removing `Performance` or `Audio` objects from and to the project in order to reduce update traffic between the widgets and the re-rendering of performances for overlay display in the audio widget.
 
 
 #### v0.1.6

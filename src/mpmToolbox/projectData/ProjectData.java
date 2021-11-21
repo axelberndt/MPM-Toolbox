@@ -93,9 +93,9 @@ public class ProjectData {
         if (e != null) {
             Elements audios = e.getChildElements("audio");
             for (int i=0; i < audios.size(); ++i) {
-                String localAudioPath = audios.get(i).getAttributeValue("file").replaceAll("\\\\/", File.separator);    // adapt the filepath separators to the current OS (\, /)
+                Element projectAudioData = audios.get(i);
                 try {
-                    this.addAudio(new mpmToolbox.projectData.Audio(new File(basePath + localAudioPath), this.getMsm()));
+                    this.addAudio(new mpmToolbox.projectData.Audio(projectAudioData, basePath, this.getMsm()));
                 } catch (UnsupportedAudioFileException | IOException ex) {
                     ex.printStackTrace();
                 }

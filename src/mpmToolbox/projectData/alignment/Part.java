@@ -5,20 +5,20 @@ import meico.mei.Helper;
 import nu.xom.Attribute;
 import nu.xom.Element;
 
-import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Map;
-import java.util.function.BiFunction;
 
 /**
  * An instance of this is a Hashmap of all MSM notes, accessed via their XML ID.
  * The notes are augmented with performance information.
  * @author Axel Berndt
  */
-public class Part extends HashMap<String, Note> {
-    private final Element xml;          // a reference to the original MSM part element
-    private ArrayList<Note> sequence = new ArrayList<>();
+public class Part {
+    private final Element xml;                                      // a reference to the original MSM part element
+    private final int number;
+    private final HashMap<String, Note> notes = new HashMap<>();
+    private final ArrayList<Note> noteSequence = new ArrayList<>(); // the notes in sequential order
+    private PianoRoll pianoRoll = null;
 
     /**
      * constructor
@@ -28,6 +28,7 @@ public class Part extends HashMap<String, Note> {
         super();
 
         this.xml = msmPart;
+        this.number = Integer.parseInt(Helper.getAttributeValue("number", this.xml));
 
         // get the dated environment
         Element dated = msmPart.getFirstChildElement("dated");
@@ -39,7 +40,7 @@ public class Part extends HashMap<String, Note> {
         if (score != null) {
             for (Element e : score.getChildElements("note")) {
                 try {
-                    this.put(new Note(e));
+                    this.add(new Note(e));
                 } catch (InvalidDataException | NumberFormatException exception) {
                     exception.printStackTrace();
                 }
@@ -55,7 +56,7 @@ public class Part extends HashMap<String, Note> {
     protected void syncWith(Element alignmentData) {
         for (Element e : alignmentData.getChildElements()) {
             String ref = Helper.getAttributeValue("ref", e);
-            Note note = this.get(ref);
+            Note note = this.getNote(ref);
 
             if (note == null)
                 continue;
@@ -69,54 +70,22 @@ public class Part extends HashMap<String, Note> {
      * @param note
      * @return If there is already a note associated with the id, it will be replaced and returned. Otherwise (no note replaced), this returns null.
      */
-    public Note put(Note note) {
-        Note out = super.put(note.getId(), note);     // this will add the id-note pair to the hashmap and overwrite any other note behind the same id; out will hold that previous note or null
+    public Note add(Note note) {
+        Note out = this.notes.put(note.getId(), note);  // this will add the id-note pair to the hashmap and overwrite any other note behind the same id; out will hold that previous note or null
 
-        if (out != null)                    // if there was a previous note that we replaced with the above line
-            this.sequence.remove(out);      // remove it also from the sequence
+        if (out != null)                                // if there was a previous note that we replaced with the above line
+            this.noteSequence.remove(out);              // remove it also from the sequence
 
         // add the note at the right position to the sequence
-        int i = this.sequence.size()-1;
+        int i = this.noteSequence.size()-1;
         for (; i >= 0; --i) {
-            double date = this.sequence.get(i).getMillisecondsDate();
+            double date = this.noteSequence.get(i).getMillisecondsDate();
             if (date <= note.getMillisecondsDate())
                 break;
         }
-        this.sequence.add(i+1, note);            // insert note also to the sequence
+        this.noteSequence.add(i+1, note);               // insert note also to the sequence
 
         return out;
-    }
-
-    @Override
-    public Note put(String id, Note note) {
-        throw new UnsupportedOperationException("Operation put(String id, Note note) is not supported in class Part. Use put(Note note) instead.");
-    }
-
-    /**
-     * add a number of key value pairs
-     * @param list
-     */
-    @Override
-    public void putAll(Map<? extends String,? extends Note> list) {
-        for (Entry<? extends String, ? extends Note> entry : list.entrySet()) {
-            this.put(entry.getValue());
-        }
-    }
-
-    /**
-     * If the specified key is not already associated with a value (or is mapped to null) associates it with the given value and returns null, else returns the current value.
-     * @param note
-     * @return
-     */
-    public Note putIfAbsent(Note note) {
-        if (this.get(note.getId()) != null)
-            return this.put(note);
-        return null;
-    }
-
-    @Override
-    public Note putIfAbsent(String id, Note note) {
-        throw new UnsupportedOperationException("Operation putIfAbsent(String id, Note note) is not supported in class Part. Use putIfAbsent(Note note) instead.");
     }
 
     /**
@@ -125,24 +94,10 @@ public class Part extends HashMap<String, Note> {
      * @return
      */
     public Note remove(String id) {
-        Note out = super.remove(id);
+        Note out = this.notes.remove(id);
         if (out != null)
-            this.sequence.remove(out);
+            this.noteSequence.remove(out);
         return out;
-    }
-
-    /**
-     * remove the specified entry only if the given key is associated with the specified value
-     * @param id
-     * @param note
-     * @return
-     */
-    public boolean remove(String id, Note note) {
-        if (super.remove(id, note)) {
-            this.sequence.remove(note);
-            return true;
-        }
-        return false;
     }
 
     /**
@@ -154,76 +109,90 @@ public class Part extends HashMap<String, Note> {
         return this.remove(note.getId());
     }
 
-    @Override
-    public Note remove(Object o) {
-        throw new UnsupportedOperationException("Operation remove(Object o) is not supported in class Part.");
-    }
-
-    @Override
-    public boolean remove(Object o, Object o1) {
-        throw new UnsupportedOperationException("Operation remove(Object o, Object o1) is not supported in class Part.");
-    }
-
     /**
-     * Replaces the entry for the specified key only if currently mapped to the specified value.
-     * @param oldNote
-     * @param newNote
+     * does this part have any notes?
      * @return
      */
-    public boolean replace(Note oldNote, Note newNote) {
-        boolean didReplace = this.get(oldNote.getId()) != null;
-        if (didReplace) {
-            this.remove(oldNote.getId());
-            this.put(newNote);
-        }
-        return didReplace;
-    }
-
-    @Override
-    public boolean replace(String id, Note oldNote, Note newNote) {
-        throw new UnsupportedOperationException("Operation replace(String id, Note oldNote, Note newNote) is not supported in class Part. Use replace(Note oldNote, Note newNote) instead.");
+    public boolean isEmpty() {
+        return this.notes.isEmpty();
     }
 
     /**
-     * Replaces the entry for the specified key only if it is currently mapped to some value.
+     * get the part's number
+     * @return
+     */
+    public int getNumber() {
+        return this.number;
+    }
+
+    /**
+     * access a note by id
      * @param id
-     * @param note
      * @return
      */
-    @Override
-    public Note replace(String id, Note note) {
-        if (this.get(id) != null)
-            return this.put(note);
-        return null;
-    }
-
-    @Override
-    public Note merge(String s, Note note, BiFunction<? super Note, ? super Note, ? extends Note> biFunction) {
-        throw new UnsupportedOperationException("Operation merge(String s, Note note, BiFunction<? super Note, ? super Note, ? extends Note> biFunction) is not supported in class Part.");
-    }
-
-    @Override
-    public void replaceAll(BiFunction<? super String, ? super Note, ? extends Note> biFunction) {
-        throw new UnsupportedOperationException("Operation replaceAll(BiFunction<? super String, ? super Note, ? extends Note> biFunction) is not supported in class Part.");
+    public Note getNote(String id) {
+        return this.notes.get(id);
     }
 
     /**
-     * create a clone of this
+     * find the first note at or after milliseconds and return its index in noteSequence
+     * @param milliseconds
      * @return
      */
-    @Override
-    public Object clone() {
-        Part clone;
-        try {
-            clone = new Part(this.getXml());
-        } catch (InvalidDataException e) {
-            e.printStackTrace();
+    public int getNoteIndexAtAfter(double milliseconds) {
+        if (this.isEmpty() || (this.noteSequence.get(this.noteSequence.size()-1).getMillisecondsDate() < milliseconds)) // if the part is empty or all its notes are before the specified date
+            return -1;                                                                                                  // done
+
+        if (this.noteSequence.get(0).getMillisecondsDate() >= milliseconds)     // if the first note is already at or after the date
+            return 0;                                                           // return 0
+
+        // binary search
+        int first = 0;
+        int last = this.noteSequence.size() - 1;
+        int mid = last / 2;
+        while (first <= last) {
+            if (this.noteSequence.get(mid).getMillisecondsDate() >= milliseconds)
+                last = mid - 1;
+            else if (this.noteSequence.get(mid + 1).getMillisecondsDate() >= milliseconds)
+                return mid + 1;
+            else
+                first = mid + 1;
+            mid = (first + last) / 2;
+        }
+        return -1;
+
+    }
+
+    /**
+     * find the note with the latest milliseconds.date.end
+     * @return
+     */
+    public Note getLastNoteSounding() {
+        if (this.isEmpty())
             return null;
+
+        Note out = null;
+
+        for (int i = this.noteSequence.size() - 1; i >= 0; --i) {
+            Note note = this.noteSequence.get(i);
+            if ((out == null) || (note.getMillisecondsDateEnd() > out.getMillisecondsDateEnd())) {
+                out = note;
+            }
         }
 
-        clone.sequence = (ArrayList<Note>) this.sequence.clone();
+        return out;
+    }
 
-        return clone;
+    /**
+     * Scales all notes' milliseconds dates by the specified factor.
+     * This transformation is also applied to fixed notes!
+     * @param factor
+     */
+    public void scaleTiming(double factor) {
+        for (Note note : this.noteSequence) {
+            note.setMillisecondsDate(note.getMillisecondsDate() * factor);
+            note.setMillisecondsDateEnd(note.getMillisecondsDateEnd() * factor);
+        }
     }
 
     /**
@@ -231,28 +200,58 @@ public class Part extends HashMap<String, Note> {
      * @param fromMilliseconds
      * @param toMilliseconds
      * @param imgWidth
-     * @param imgHeight
+     * @param imgHeight should correspond with the highest pitch class to be displayed, because one row of pixels is one diatonic pitch class, starting with MIDI's pitch 0; for MIDI-compliance use 128
      * @return
      */
-    protected BufferedImage getPianoRoll(double fromMilliseconds, double toMilliseconds, int imgWidth, int imgHeight) {
+    protected PianoRoll getPianoRoll(double fromMilliseconds, double toMilliseconds, int imgWidth, int imgHeight) {
+        if (fromMilliseconds == toMilliseconds)
+            return null;
+
         if (fromMilliseconds > toMilliseconds) {
             double temp = fromMilliseconds;
             fromMilliseconds = toMilliseconds;
             toMilliseconds = temp;
         }
 
-        BufferedImage out = new BufferedImage(imgWidth, imgHeight, BufferedImage.TYPE_INT_ARGB);
-        // TODO: better make my own BufferedImage derivative that does the pixel-to-milliseconds mapping
-        // TODO: fill it with content
+        // do not compute a new piano roll if the metrics did not change
+        if ((this.pianoRoll != null) && this.pianoRoll.sameMetrics(fromMilliseconds, toMilliseconds, imgWidth, imgHeight))
+            return this.pianoRoll;
 
-        return out;
+        double scaleToHorizontalPixels = imgWidth / (toMilliseconds - fromMilliseconds);    // we need this value later quite often
+
+        this.pianoRoll = new PianoRoll(fromMilliseconds, toMilliseconds, imgWidth, imgHeight);
+
+        // fill the piano roll image with content
+        for (Note note : this.noteSequence) {
+            if ((note.getMillisecondsDate() >= toMilliseconds) || (note.getMillisecondsDateEnd() < fromMilliseconds))   // if note is beyond the interval to be rendered
+                continue;                                                                                               // continue with the next note
+
+            // compute the y coordinate of the note (one row of pixels = one pitch class)
+            int y = (int) Math.round(note.getPitch());
+            if ((y < 0) || y >= imgHeight)       // if the pitch is outside the MIDI pitch range
+                continue;                        // we do not paint the note
+
+            // compute the x coordinate where the note starts
+            double millis = note.getMillisecondsDate() - fromMilliseconds;
+            int xStart = (millis <= 0.0) ? 0 : (int) Math.round(millis * scaleToHorizontalPixels);
+
+            // compute the x coordinate where the note ends
+            millis = note.getMillisecondsDateEnd() - fromMilliseconds;
+            int xEnd = (millis >= toMilliseconds) ? imgWidth : Math.min(imgWidth, (int) Math.round(millis * scaleToHorizontalPixels));
+
+            this.pianoRoll.add(xStart, xEnd, y, note);
+        }
+
+        return this.pianoRoll;
     }
+
+
 
     /**
      * access the original MSM element
      * @return
      */
-    protected Element getXml() {
+    public Element getXml() {
         return this.xml;
     }
 
@@ -271,11 +270,16 @@ public class Part extends HashMap<String, Note> {
         }
 
         // add all note entries
-        for (Note note : this.sequence)
+        for (Note note : this.noteSequence)
                 out.appendChild(note.toXml());
 //        for (Map.Entry<String, Note> entry : this.entrySet())
 //            out.appendChild(entry.getValue().toXml());
 
         return out;
+    }
+
+    @Override
+    public String toString() {
+        return "Part " + this.number + " " + Helper.getAttributeValue("name", this.xml);
     }
 }

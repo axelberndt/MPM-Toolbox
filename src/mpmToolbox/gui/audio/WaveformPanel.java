@@ -19,7 +19,7 @@ public class WaveformPanel extends PianoRollPanel {
      * constructor
      */
     protected WaveformPanel(AudioDocumentData parent) {
-        super(parent, "Select the audio recording to be displayed here via the SyncPlayer.");
+        super(parent, "Select an audio recording and performance via the SyncPlayer.");
     }
 
     /**
@@ -37,6 +37,7 @@ public class WaveformPanel extends PianoRollPanel {
         Graphics2D g2 = (Graphics2D)g;                  // make g a Graphics2D object so we can use its extended drawing features
 
         g2.drawImage(waveformImage, 0, 0, this);        // draw the waveform
+        this.drawPianoRoll(g2); // TODO this is only for testing, yet
 
         // draw the mouse cursor
         if (this.mousePosition != null) {
@@ -74,7 +75,7 @@ public class WaveformPanel extends PianoRollPanel {
 
         switch (e.getButton()) {
             case MouseEvent.BUTTON1:                    // left click
-                // TODO: Place a marker
+                // TODO: select a note, place a marker ...
                 break;
             case MouseEvent.BUTTON3:                    // right click = context menu
                 WebPopupMenu menu = new WebPopupMenu();
@@ -106,7 +107,7 @@ public class WaveformPanel extends PianoRollPanel {
                 menu.add(chooseChannel);
 
                 // choose overlay
-                menu.add(this.parent.getOverlayChooser());
+                menu.add(this.getPianoRollTools());
 
                 menu.show(this, e.getX() - 25, e.getY());
                 break;

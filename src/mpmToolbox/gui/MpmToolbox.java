@@ -153,20 +153,17 @@ public class MpmToolbox {
 
         WebMenuItem exportMidi = new WebMenuItem("MIDI", 'm');
         exportMidi.addActionListener(actionEvent -> {
-            Performance performance = this.getProjectPane().getSyncPlayer().getSelectedPerformance();
-            Midi midi = this.getProjectPane().getMsm().exportExpressiveMidi(performance, true);
+            Midi midi = this.getProjectPane().getSyncPlayer().getPerformanceRendering();
             midi.writeMidi();
         });
         WebMenuItem exportWav = new WebMenuItem("Wave", 'w');
         exportWav.addActionListener(actionEvent -> {
-            Performance performance = this.getProjectPane().getSyncPlayer().getSelectedPerformance();
-            Midi midi = this.getProjectPane().getMsm().exportExpressiveMidi(performance, true);
+            Midi midi = this.getProjectPane().getSyncPlayer().getPerformanceRendering();
             midi.exportAudio().writeAudio();
         });
         WebMenuItem exportMp3 = new WebMenuItem("MP3", '3');
         exportMp3.addActionListener(actionEvent -> {
-            Performance performance = this.getProjectPane().getSyncPlayer().getSelectedPerformance();
-            Midi midi = this.getProjectPane().getMsm().exportExpressiveMidi(performance, true);
+            Midi midi = this.getProjectPane().getSyncPlayer().getPerformanceRendering();
             midi.exportAudio().writeMp3();
         });
         this.export = new WebMenu("Export Performance Rendering as");

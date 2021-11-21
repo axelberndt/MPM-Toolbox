@@ -12,12 +12,15 @@ import meico.midi.MidiPlayer;
 import meico.mpm.elements.Performance;
 import mpmToolbox.gui.ProjectPane;
 import mpmToolbox.gui.Settings;
+import mpmToolbox.projectData.Audio;
 import mpmToolbox.supplementary.Tools;
 
 import javax.sound.midi.*;
 import javax.sound.sampled.Clip;
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 
@@ -37,7 +40,9 @@ public class SyncPlayer extends WebPanel {
     private final MidiPlayer midiPlayer = new MidiPlayer();
 
     private final WebComboBox performanceChooser = new WebComboBox();
+    private final PerformanceChooserItem noPerformanceRendering = new PerformanceChooserItem("No performance rendering");
     private final PerformanceChooserItem rawPerformance = new PerformanceChooserItem(Performance.createPerformance("Play raw notes, no performance"));
+    private final PerformanceChooserItem alignmentPerformance = new PerformanceChooserItem("Alignment of currently chosen audio");
 
     private final WebComboBox midiPortChooser = new WebComboBox();
 
@@ -81,17 +86,28 @@ public class SyncPlayer extends WebPanel {
      * this creates the Sync Player GUI
      */
     private void makeGui() {
+        // make the performance chooser
         this.updatePerformanceList();
         this.performanceChooser.setPadding(Settings.paddingInDialogs / 4);
         this.performanceChooser.setToolTip("Select the performance rendering to be played.");
+        this.performanceChooser.addItemListener(itemEvent -> {
+            if (itemEvent.getStateChange() == ItemEvent.SELECTED) {
+//                System.out.println(itemEvent.toString());
+                if (this.parent.getAudioFrame() != null) {
+                    this.parent.getAudioFrame().setAlignment(true);
+                }
+            }
+        });
         Tools.addComponentToGridBagLayout(this, (GridBagLayout) this.getLayout(), this.performanceChooser, 0, 0, 1, 1, 1.0, 1.0, 0, 0, GridBagConstraints.BOTH, GridBagConstraints.LINE_START);
 
+        // make the MIDI port label
         WebLabel midiPortLabel = new WebLabel("MIDI Out:");
         midiPortLabel.setToolTip("Select the MIDI port to output performance rendering. Default is \"Gervill\".");
         midiPortLabel.setHorizontalAlignment(WebLabel.RIGHT);
         midiPortLabel.setPadding(Settings.paddingInDialogs / 4);
         Tools.addComponentToGridBagLayout(this, (GridBagLayout) this.getLayout(), midiPortLabel, 1, 0, 1, 1, 1.0, 1.0, 0, 0, GridBagConstraints.BOTH, GridBagConstraints.LINE_START);
 
+        // make the MIDI port chooser
         this.updateMidiPortList();
         this.midiPortChooser.setPadding(Settings.paddingInDialogs / 4);
         this.midiPortChooser.setToolTip("Select the MIDI port to output performance rendering. Default is \"Gervill\".");
@@ -110,15 +126,27 @@ public class SyncPlayer extends WebPanel {
         });
         Tools.addComponentToGridBagLayout(this, (GridBagLayout) this.getLayout(), this.midiPortChooser, 2, 0, 1, 1, 1.0, 1.0, 0, 0, GridBagConstraints.BOTH, GridBagConstraints.LINE_START);
 
+        // make the audio chooser
         this.updateAudioList();
         this.audioChooser.setPadding(Settings.paddingInDialogs / 4);
         this.audioChooser.setToolTip("Select the audio recording to be played.");
-        this.audioChooser.addActionListener(actionEvent -> {    // when an audio recording is selected
-            if (this.audioChooser.getSelectedItem() != null)
-                this.parent.getAudioFrame().setAudio(((AudioChooserItem) this.audioChooser.getSelectedItem()).getValue());  // communicate the selection to the audio analysis frame as this should also display it
+        this.audioChooser.addItemListener(itemEvent -> {
+            if (itemEvent.getStateChange() == ItemEvent.SELECTED) {
+//                System.out.println(itemEvent.toString());
+                Audio audio = ((AudioChooserItem) itemEvent.getItem()).getValue();
+                if (audio == null) {                                                        // audio is unselected
+                    if (this.performanceChooser.getSelectedItem() == this.alignmentPerformance)   // if alignment performance option was selected
+                        this.performanceChooser.setSelectedIndex(0);                        // jump to the first option
+                    this.performanceChooser.removeItem(this.alignmentPerformance);          // remove the alignment performance option from the performance chooser
+                } else {
+                    this.updatePerformanceList();                                           // update the performance chooser list to add/delete the alignment performance option
+                }
+                this.parent.getAudioFrame().setAudio(true);                                 // communicate the selection to the audio analysis frame as this should also display it
+            }
         });
         Tools.addComponentToGridBagLayout(this, (GridBagLayout) this.getLayout(), this.audioChooser, 0, 1, 1, 1, 1.0, 1.0, 0, 0, GridBagConstraints.BOTH, GridBagConstraints.LINE_START);
 
+        // make the skip label, spinner and ms label
         WebLabel skipLabel = new WebLabel("skip:");
         skipLabel.setToolTip("Skip initial silence in the audio recording.");
         skipLabel.setHorizontalAlignment(WebLabel.RIGHT);
@@ -133,10 +161,12 @@ public class SyncPlayer extends WebPanel {
         millisecondsLabel.setPadding(Settings.paddingInDialogs / 4);
         Tools.addComponentToGridBagLayout(this, (GridBagLayout) this.getLayout(), millisecondsLabel, 3, 1, 1, 1, 1.0, 1.0, 0, 0, GridBagConstraints.BOTH, GridBagConstraints.LINE_START);
 
+        // make the play button
         this.playButton.setPadding((int) (Settings.paddingInDialogs * 1.5));
         this.playButton.addActionListener(actionEvent -> this.triggerPlayback());
         Tools.addComponentToGridBagLayout(this, (GridBagLayout) this.getLayout(), this.playButton, 4, 0, 1, 2, 1.0, 1.0, 0, 0, GridBagConstraints.BOTH, GridBagConstraints.LINE_START);
 
+        // make the slider
         this.makeSlider();
     }
 
@@ -146,17 +176,83 @@ public class SyncPlayer extends WebPanel {
      */
     public void updatePerformanceList() {
         PerformanceChooserItem selectedItem = (PerformanceChooserItem) this.performanceChooser.getSelectedItem();   // store the previously selected item
+        PerformanceChooserItem selectThis = null;
+
+        // temporarily switch the ItemListener off; otherwise it would always fire when an item is added
+        ItemListener itemListener = this.performanceChooser.getItemListeners()[0];
+        this.performanceChooser.removeItemListener(itemListener);
 
         this.performanceChooser.removeAllItems();
-        this.performanceChooser.addItem(new PerformanceChooserItem("No performance rendering"));
+        this.performanceChooser.addItem(this.noPerformanceRendering);
+        if (selectedItem == this.noPerformanceRendering)
+            selectThis = this.noPerformanceRendering;
+
+        if (this.getSelectedAudio() != null) {
+            this.performanceChooser.addItem(this.alignmentPerformance);
+            if (selectedItem == this.alignmentPerformance)
+                selectThis = this.alignmentPerformance;
+        }
+
         this.performanceChooser.addItem(this.rawPerformance);
+        if (selectedItem == this.rawPerformance)
+            selectThis = this.rawPerformance;
+
         if (this.parent.getMpm() != null) {
             for (Performance performance : this.parent.getMpm().getAllPerformances()) {
                 PerformanceChooserItem item = new PerformanceChooserItem(performance);
                 this.performanceChooser.addItem(item);
 
-                if ((selectedItem != null) && item.toString().equals(selectedItem.toString()))  // if this is the item that was previously selected
-                    this.performanceChooser.setSelectedItem(item);                              // keep this selection
+                if ((selectThis == null)
+                        && (selectedItem != null)
+                        && item.toString().equals(selectedItem.toString()))  // if this is the item that was previously selected
+                    selectThis = item;
+            }
+        }
+
+        this.performanceChooser.addItemListener(itemListener);      // switch ItemListener back on
+
+        if (selectThis != null)
+            this.performanceChooser.setSelectedItem(selectThis);
+        else                                                        // if the previously selected item could not be found in the newly assembled list
+            this.performanceChooser.setSelectedIndex(0);            // select item 0 by default
+    }
+
+    /**
+     * add a performance to the performance chooser
+     * @param performance
+     */
+    public void addPerformance(Performance performance) {
+        this.performanceChooser.addItem(new PerformanceChooserItem(performance));
+    }
+
+    /**
+     * this updates an entry in the performance chooser, e.g. when the performance was edited
+     * and its name (the key of the performance chooser item) has changed
+     * @param performance
+     */
+    public void updatePerformance(Performance performance) {
+        for (int i=0; i < this.performanceChooser.getItemCount(); ++i) {
+            PerformanceChooserItem item = (PerformanceChooserItem) this.performanceChooser.getItemAt(i);
+            if (item.getValue() == performance) {
+                item.setKey(performance.getName());
+                return;
+            }
+        }
+    }
+
+    /**
+     * remove a performance from the performance chooser
+     * @param performance
+     */
+    public void removePerformance(Performance performance) {
+        for (int i=0; i < this.performanceChooser.getItemCount(); ++i) {
+            PerformanceChooserItem item = (PerformanceChooserItem) this.performanceChooser.getItemAt(i);
+            if (item.getValue() == performance) {
+                if (this.performanceChooser.getSelectedItem() == item) {
+                    this.performanceChooser.setSelectedIndex(0);
+                }
+                this.performanceChooser.removeItem(item);
+                return;
             }
         }
     }
@@ -200,6 +296,49 @@ public class SyncPlayer extends WebPanel {
             if ((selectedItem != null) && item.toString().equals(selectedItem.toString()))      // if this is the item that was previously selected
                 this.audioChooser.setSelectedItem(item);                                        // keep this selection
         }
+    }
+
+    /**
+     * add the entry to the SyncPlayer's audio chooser
+     * @param audio
+     */
+    public void addAudio(Audio audio) {
+        this.audioChooser.addItem(new AudioChooserItem(audio));
+    }
+
+    /**
+     * remove an entry from the audio chooser
+     * @param audio
+     */
+    public void removeAudio(Audio audio) {
+        for (int i=0; i < this.audioChooser.getItemCount(); ++i) {
+            AudioChooserItem item = (AudioChooserItem) this.audioChooser.getItemAt(i);
+            if (item.getValue() == audio) {
+                if (this.audioChooser.getSelectedItem() == item) {
+                    this.audioChooser.setSelectedIndex(0);
+                }
+                this.audioChooser.removeItem(item);
+                return;
+            }
+        }
+    }
+
+    /**
+     * get the MIDI rendition of the currently selected performance
+     * @return
+     */
+    public Midi getPerformanceRendering() {
+        PerformanceChooserItem selectedPerformanceItem = (PerformanceChooserItem) this.performanceChooser.getSelectedItem();
+
+        if (selectedPerformanceItem == this.alignmentPerformance) {
+            Audio audio = this.getSelectedAudio();
+            if (audio != null) {
+                return audio.getAlignment().getExpressiveMsm().exportExpressiveMidi();
+            }
+        }
+
+        Performance performance = (selectedPerformanceItem == null) ? null : selectedPerformanceItem.getValue();
+        return this.parent.getMsm().exportExpressiveMidi(performance, true);
     }
 
     /**
@@ -304,6 +443,14 @@ public class SyncPlayer extends WebPanel {
     }
 
     /**
+     * check if audio alignment is selected
+     * @return
+     */
+    public synchronized boolean isAudioAlignmentSelected() {
+        return this.performanceChooser.getSelectedItem() == this.alignmentPerformance;
+    }
+
+    /**
      * query the Audio instance that is currently selected
      * @return the Audio instance or null
      */
@@ -335,18 +482,27 @@ public class SyncPlayer extends WebPanel {
          * constructor
          */
         protected PlaybackRunnable() {
-            if ((performanceChooser.getSelectedItem() == null) || (((PerformanceChooserItem) performanceChooser.getSelectedItem()).getValue() == null))
-                this.midi = null;
-            else
-                this.midi = parent.getMsm().exportExpressiveMidi(((PerformanceChooserItem) performanceChooser.getSelectedItem()).getValue(), true);
-
             getAudioPlayer().stop();
-            if ((audioChooser.getSelectedItem() != null) && getAudioPlayer().setAudioData(((AudioChooserItem) audioChooser.getSelectedItem()).getValue())) {
-                this.audio = getAudioPlayer().getAudioClip();
-                this.microsecAudioOffset = (long) ((double) skipMillisecondsInAudioPlayback.getValue()) * 1000;
-            }
-            else
+            Audio selectedAudio = null;
+            if (audioChooser.getSelectedItem() != null) {
+                selectedAudio = ((AudioChooserItem) audioChooser.getSelectedItem()).getValue();
+                if (getAudioPlayer().setAudioData(selectedAudio)) {
+                    this.audio = getAudioPlayer().getAudioClip();
+                    this.microsecAudioOffset = (long) ((double) skipMillisecondsInAudioPlayback.getValue()) * 1000;
+                } else
+                    this.audio = null;
+            } else
                 this.audio = null;
+
+            PerformanceChooserItem selectedPerformanceItem = (PerformanceChooserItem) performanceChooser.getSelectedItem();
+            if (selectedPerformanceItem == null)                                        // nothing selected
+                this.midi = null;
+            else if (selectedPerformanceItem.getValue() != null)                        // a performance is selected
+                this.midi = parent.getMsm().exportExpressiveMidi(selectedPerformanceItem.getValue(), true);
+            else if ((performanceChooser.getSelectedItem() == alignmentPerformance) && (selectedAudio != null)) // audio alignment is selected
+                this.midi = selectedAudio.getAlignment().getExpressiveMsm().exportExpressiveMidi();
+            else                                                                        // no performance selected
+                this.midi = null;
 
             this.midiIsLonger = (this.audio == null) || ((this.midi != null) && (this.midi.getMicrosecondLength() > (this.audio.getMicrosecondLength() - this.microsecAudioOffset)));
         }

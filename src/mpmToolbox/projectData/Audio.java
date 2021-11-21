@@ -25,44 +25,6 @@ public class Audio extends meico.audio.Audio {
     private SpectrogramImage spectrogramImage = null;           // the visualization of the above spectrogram
     private final Alignment alignment;
 
-//    /**
-//     * constructor, generates empty instance
-//     */
-//    public Audio() {
-//        super();
-//    }
-
-//    /**
-//     * constructor with AudioInputStream
-//     *
-//     * @param inputStream
-//     */
-//    public Audio(AudioInputStream inputStream) {
-//        super(inputStream);
-//    }
-
-//    /**
-//     * this constructor reads audio data from the AudioInputStream and associates the file with it;
-//     * the file may differ from the input stream
-//     *
-//     * @param inputStream
-//     * @param file
-//     */
-//    public Audio(AudioInputStream inputStream, File file) {
-//        super(inputStream, file);
-//    }
-
-//    /**
-//     * with this constructor all data is given explicitly
-//     *
-//     * @param audioData
-//     * @param format
-//     * @param file
-//     */
-//    public Audio(byte[] audioData, AudioFormat format, File file) {
-//        super(audioData, format, file);
-//    }
-
     /**
      * constructor; use this one to load and decode MP3 files
      *
@@ -74,6 +36,7 @@ public class Audio extends meico.audio.Audio {
 
         this.waveforms = convertByteArray2DoubleArray(this.getAudio(), this.getFormat());
         this.alignment = new Alignment(msm, null);
+        this.alignment.scaleTiming(((double) this.getNumberOfSamples() / this.getFrameRate()) * 1000.0);    // scale the initial alignment to the milliseconds length of the audio; so all notes are visible and in a good starting position
     }
 
     /**
@@ -91,6 +54,8 @@ public class Audio extends meico.audio.Audio {
 
         Element alignmentData = projectAudioData.getFirstChildElement("alignment");
         this.alignment = new Alignment(msm, alignmentData);
+        if (alignmentData == null)      // if we had no alignment data from the project file, an initial alignment was generated with a default tempo that will potentially not fit the audio length
+            this.alignment.scaleTiming(((double) this.getNumberOfSamples() / this.getFrameRate()) * 1000.0);    // scale the initial alignment to the milliseconds length of the audio; so all notes are visible and in a good starting position
     }
 
     /**
