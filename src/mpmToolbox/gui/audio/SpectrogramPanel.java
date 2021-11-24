@@ -187,9 +187,9 @@ public class SpectrogramPanel extends PianoRollPanel {
         private WebComboBox windowFunctionChooser = new WebComboBox();
         private WebSpinner windowLength = new WebSpinner(new SpinnerNumberModel(2048, 1, Integer.MAX_VALUE, 1));
         private WebSpinner hopSize = new WebSpinner(new SpinnerNumberModel(1024, 1, Integer.MAX_VALUE, 1));
-        private WebSpinner minFreq = new WebSpinner(new SpinnerNumberModel(20.0f, 5.0f, 100000.0f, 1.0f));
-        private WebSpinner maxFreq = new WebSpinner(new SpinnerNumberModel(10000.0f, 5.0f, 100000.0f, 1.0f));
-        private WebSpinner binsPerSemitone = new WebSpinner(new SpinnerNumberModel(3, 1, Integer.MAX_VALUE, 1));
+        private WebSpinner minFreq = new WebSpinner(new SpinnerNumberModel(8.0, 5.0, 100000.0, 1.0));
+        private WebSpinner maxFreq = new WebSpinner(new SpinnerNumberModel(12544.0, 5.0, 100000.0, 1.0));
+        private WebSpinner binsPerSemitone = new WebSpinner(new SpinnerNumberModel(1, 1, Integer.MAX_VALUE, 1));
         private boolean normalize = true;
 
         public SpectrogramSpecs(SpectrogramPanel parent) {
@@ -200,7 +200,7 @@ public class SpectrogramPanel extends PianoRollPanel {
 
             // some space around the GUI
             Tools.addComponentToGridBagLayout(this, (GridBagLayout) this.getLayout(), new WebPanel(), 0, 0, 1, 1, 7.0, 6.0, 0, 0, GridBagConstraints.BOTH, GridBagConstraints.LINE_START);  // above and left
-            Tools.addComponentToGridBagLayout(this, (GridBagLayout) this.getLayout(), new WebPanel(), 4, 8, 1, 1, 7.0, 6.0, 0, 0, GridBagConstraints.BOTH, GridBagConstraints.LINE_START);  // below and right
+            Tools.addComponentToGridBagLayout(this, (GridBagLayout) this.getLayout(), new WebPanel(), 5, 8, 1, 1, 7.0, 6.0, 0, 0, GridBagConstraints.BOTH, GridBagConstraints.LINE_START);  // below and right
 
             // window function
             WebLabel windowFunctionLabel = new WebLabel("Window Function:", WebLabel.RIGHT);
@@ -230,7 +230,7 @@ public class SpectrogramPanel extends PianoRollPanel {
 
             WebLabel windowLengthUnit = new WebLabel("samples", WebLabel.LEFT);
             windowLengthUnit.setPadding(Settings.paddingInDialogs);
-            Tools.addComponentToGridBagLayout(this, (GridBagLayout) this.getLayout(), windowLengthUnit, 3, 2, 1, 1, 1.0, 1.0, 0, 0, GridBagConstraints.BOTH, GridBagConstraints.LINE_START);
+            Tools.addComponentToGridBagLayout(this, (GridBagLayout) this.getLayout(), windowLengthUnit, 3, 2, 1, 1, 0.1, 1.0, 0, 0, GridBagConstraints.BOTH, GridBagConstraints.LINE_START);
 
             // hop size
             WebLabel hopSizeLabel = new WebLabel("Hop Size:", WebLabel.RIGHT);
@@ -243,7 +243,7 @@ public class SpectrogramPanel extends PianoRollPanel {
 
             WebLabel hopSizeUnit = new WebLabel("samples", WebLabel.LEFT);
             hopSizeUnit.setPadding(Settings.paddingInDialogs);
-            Tools.addComponentToGridBagLayout(this, (GridBagLayout) this.getLayout(), hopSizeUnit, 3, 3, 1, 1, 1.0, 1.0, 0, 0, GridBagConstraints.BOTH, GridBagConstraints.LINE_START);
+            Tools.addComponentToGridBagLayout(this, (GridBagLayout) this.getLayout(), hopSizeUnit, 3, 3, 1, 1, 0.1, 1.0, 0, 0, GridBagConstraints.BOTH, GridBagConstraints.LINE_START);
 
             // max frequency
             WebLabel maxFreqLabel = new WebLabel("Max. Frequency:", WebLabel.RIGHT);
@@ -256,7 +256,13 @@ public class SpectrogramPanel extends PianoRollPanel {
 
             WebLabel maxFreqUnit = new WebLabel("Hz", WebLabel.LEFT);
             maxFreqUnit.setPadding(Settings.paddingInDialogs);
-            Tools.addComponentToGridBagLayout(this, (GridBagLayout) this.getLayout(), maxFreqUnit, 3, 4, 1, 1, 1.0, 1.0, 0, 0, GridBagConstraints.BOTH, GridBagConstraints.LINE_START);
+            Tools.addComponentToGridBagLayout(this, (GridBagLayout) this.getLayout(), maxFreqUnit, 3, 4, 1, 1, 0.1, 1.0, 0, 0, GridBagConstraints.BOTH, GridBagConstraints.LINE_START);
+
+            WebButton maxMidi = new WebButton("Max. MIDI Pitch");
+            maxMidi.addActionListener(actionEvent -> {
+                maxFreq.setValue(12543.8539514160);
+            });
+            Tools.addComponentToGridBagLayout(this, (GridBagLayout) this.getLayout(), maxMidi, 4, 4, 1, 1, 0.1, 1.0, 0, 0, GridBagConstraints.BOTH, GridBagConstraints.LINE_START);
 
             // min frequency
             WebLabel minFreqLabel = new WebLabel("Min. Frequency:", WebLabel.RIGHT);
@@ -269,7 +275,13 @@ public class SpectrogramPanel extends PianoRollPanel {
 
             WebLabel minFreqUnit = new WebLabel("Hz", WebLabel.LEFT);
             minFreqUnit.setPadding(Settings.paddingInDialogs);
-            Tools.addComponentToGridBagLayout(this, (GridBagLayout) this.getLayout(), minFreqUnit, 3, 5, 1, 1, 1.0, 1.0, 0, 0, GridBagConstraints.BOTH, GridBagConstraints.LINE_START);
+            Tools.addComponentToGridBagLayout(this, (GridBagLayout) this.getLayout(), minFreqUnit, 3, 5, 1, 1, 0.1, 1.0, 0, 0, GridBagConstraints.BOTH, GridBagConstraints.LINE_START);
+
+            WebButton minMidi = new WebButton("Min. MIDI Pitch");
+            minMidi.addActionListener(actionEvent -> {
+                minFreq.setValue(8.1757989156);
+            });
+            Tools.addComponentToGridBagLayout(this, (GridBagLayout) this.getLayout(), minMidi, 4, 5, 1, 1, 0.1, 1.0, 0, 0, GridBagConstraints.BOTH, GridBagConstraints.LINE_START);
 
             // bins per semitone
             WebLabel binsLabel = new WebLabel("Bins per Semitone:", WebLabel.RIGHT);

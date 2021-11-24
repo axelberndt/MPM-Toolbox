@@ -10,6 +10,7 @@
 - New package `mpmToolbox.projectData.alignment` with several new classes that serve to associate measurements in audio recordings with MSM data.
 - Added class `mpmToolbox.gui.audio.PianoRollPanel` which is also the basis for the classes `WaveformPanel` and `SpectrogramPanel` in the same package.
 - Several optimizations when editing `Performance` names, adding and removing `Performance` or `Audio` objects from and to the project in order to reduce update traffic between the widgets and the re-rendering of performances for overlay display in the audio widget.
+- Added buttons "Min. MIDI Pitch" and "Max. MIDI Pitch" to the spectrogram specs. These set the min. and max frequency of the spectrogram. Use these to align it with the piano roll.
 
 
 #### v0.1.6

@@ -31,7 +31,7 @@ public class AudioDocumentData extends DocumentData<WebPanel> {
     private int leftmostSample = -1;                            // index of the first sample to be rendered to image
     private int rightmostSample = -1;                           // index of the last sample to be rendered to image
 
-    private Alignment alignment;
+    private Alignment alignment;                                // this is the alignment with the piano roll overlay used in the sub-panels
 
     /**
      * constructor
@@ -47,8 +47,8 @@ public class AudioDocumentData extends DocumentData<WebPanel> {
 
         this.setComponent(this.audioPanel);
         this.setClosable(false);
-        this.setAudio(false);
-        this.setAlignment(false);
+        this.updateAudio(false);
+        this.updateAlignment(false);
 
         this.draw();
     }
@@ -124,7 +124,7 @@ public class AudioDocumentData extends DocumentData<WebPanel> {
     /**
      * update the alignment data according to the currently selected performance in the SyncPlayer
      */
-    public void setAlignment(boolean doRepaint) {
+    public void updateAlignment(boolean doRepaint) {
         if (this.parent.getSyncPlayer().isAudioAlignmentSelected())
             this.alignment = this.getAudio().getAlignment();
         else {
@@ -148,7 +148,7 @@ public class AudioDocumentData extends DocumentData<WebPanel> {
      * update the audio data according to the currently selected performance in the SyncPlayer
      * @param doRepaint
      */
-    public void setAudio(boolean doRepaint) {
+    public void updateAudio(boolean doRepaint) {
         Audio audio = this.parent.getSyncPlayer().getSelectedAudio();
         if (audio != null) {
             this.channelNumber = -1;                                // all channels

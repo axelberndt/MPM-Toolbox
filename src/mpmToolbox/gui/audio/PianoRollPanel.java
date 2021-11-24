@@ -5,10 +5,8 @@ import com.alee.laf.menu.WebMenu;
 import com.alee.laf.menu.WebMenuItem;
 import com.alee.laf.panel.WebPanel;
 import meico.mei.Helper;
-import mpmToolbox.projectData.alignment.Part;
 import mpmToolbox.projectData.alignment.PianoRoll;
 import nu.xom.Element;
-import nu.xom.Elements;
 
 import java.awt.*;
 import java.awt.event.*;

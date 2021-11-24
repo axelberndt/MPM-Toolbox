@@ -94,7 +94,7 @@ public class SyncPlayer extends WebPanel {
             if (itemEvent.getStateChange() == ItemEvent.SELECTED) {
 //                System.out.println(itemEvent.toString());
                 if (this.parent.getAudioFrame() != null) {
-                    this.parent.getAudioFrame().setAlignment(true);
+                    this.parent.getAudioFrame().updateAlignment(true);
                 }
             }
         });
@@ -141,7 +141,7 @@ public class SyncPlayer extends WebPanel {
                 } else {
                     this.updatePerformanceList();                                           // update the performance chooser list to add/delete the alignment performance option
                 }
-                this.parent.getAudioFrame().setAudio(true);                                 // communicate the selection to the audio analysis frame as this should also display it
+                this.parent.getAudioFrame().updateAudio(true);                                 // communicate the selection to the audio analysis frame as this should also display it
             }
         });
         Tools.addComponentToGridBagLayout(this, (GridBagLayout) this.getLayout(), this.audioChooser, 0, 1, 1, 1, 1.0, 1.0, 0, 0, GridBagConstraints.BOTH, GridBagConstraints.LINE_START);
