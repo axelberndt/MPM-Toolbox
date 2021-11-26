@@ -612,10 +612,11 @@ public class SyncPlayer extends WebPanel {
 
                 // update playbackSlider
                 double relativePlaybackPosition;
-                if (this.midiIsLonger)
+                if (this.midiIsLonger) {
                     relativePlaybackPosition = getMidiPlayer().getRelativePosition();
-                else
-                    relativePlaybackPosition = (double) (getAudioPlayer().getMicrosecondPosition() - this.microsecAudioOffset) / (double) (getAudioPlayer().getMicrosecondLength() - this.microsecAudioOffset);
+                } else {
+                    relativePlaybackPosition = (getAudioPlayer().getMicrosecondLength() >= this.microsecAudioOffset) ? 1.0 : (double) (getAudioPlayer().getMicrosecondPosition() - this.microsecAudioOffset) / (double) (getAudioPlayer().getMicrosecondLength() - this.microsecAudioOffset);
+                }
 
                 if ((playbackSlider.getValue() == sliderMax) || (!getAudioPlayer().isPlaying() && !getMidiPlayer().isPlaying())) {
                     runnable = null;

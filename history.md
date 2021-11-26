@@ -2,6 +2,7 @@
 
 
 #### v0.1.7
+- Fixed potential division-by-zero bug in `mpmToolbox.gui.syncPlayer.SyncPlayer.PlaybackRunnable.run()`.
 - Reorganized some classes, i.e., classes `Score`, `ScoreNote`, `ScorePage` moved from package `mpmToolbox.gui.score` to package `mpmToolbox.projectData.score`.
 - Added "Hide Overlay" button to the score widget (classes `mpmToolbox.gui.score.ScoreDocumentData` and `ScoreDisplayPanel`) that allows to show the score without the overlays. 
 - Addition to the spectrogram context menu to switch between normalized and non-normalized display.
