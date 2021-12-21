@@ -18,6 +18,7 @@ public class Alignment {
     private final ArrayList<mpmToolbox.projectData.alignment.Part> parts = new ArrayList<>();
     private PianoRoll pianoRoll = null;
     private final Msm msm;
+    private ArrayList<double[]> timingTransformation = new ArrayList<>();   // each element provides the following values {startDate, endDate, toStartDate, toEndDate}, all in milliseconds
 
     /**
      * constructor
@@ -145,11 +146,120 @@ public class Alignment {
     }
 
     /**
+     * Use this method when notes are un-fixed or fixed notes are silently repositioned.
+     * It recomputes the milliseconds timing of all notes.
+     */
+    public void updateTiming() {
+        // create an ordered list of all fixed notes
+        ArrayList<Note> fixedNotes = new ArrayList<>();
+        for (Part part : this.getParts()) {
+            ArrayList<Note> f = part.getAllFixedNotes(false);   // get the part's list of fixed notes in the order of the current timing
+
+            if (fixedNotes.isEmpty()) {                         // if the fixedNotes list is empty
+                fixedNotes.addAll(f);                           // we can simply add the part's list, it is already ordered
+                continue;                                       // go on with the next part
+            }
+
+            int i = 0;
+            for (Note n : f) {
+                boolean added = false;
+                for (; i < fixedNotes.size(); ++i) {
+                    if (fixedNotes.get(i).getMillisecondsDate() > n.getMillisecondsDate()) {
+                        fixedNotes.add(i, n);
+                        added = true;
+                        i++;
+                        break;
+                    }
+                }
+                if (!added)
+                    fixedNotes.add(n);
+            }
+        }
+
+        if (fixedNotes.isEmpty())                               // if no fixed notes
+            return;                                             // we are done
+
+        this.timingTransformation.clear();                      // we compute the timing transformation data anew
+        Note beginner = null;                                   // the section to be scaled begins with this note's millisecondsDate and initialMillisecondsDate
+        Note stopper = null;                                    // the section is scaled into [beginner.millisecondsDate; this note's millisecondsDate)
+        for (int i=0; i < fixedNotes.size(); ++i) {
+            Note n = fixedNotes.get(i);
+
+            if (stopper == null)                                // if we seek a stopper
+                stopper = n;                                    // we take the first note we find
+
+            // check if this is a beginner note, i.e. a note that was not shifted before another fixed note
+            boolean isEnder = true;
+            for (int j=i+1; j < fixedNotes.size(); ++j) {       // check if another fixed note follows in the sequence that was initially before the current note
+                if (fixedNotes.get(j).getInitialMillisecondsDate() < n.getInitialMillisecondsDate()) {  // if we found one
+                    isEnder = false;                            // set the flag false
+                    break;
+                }
+            }
+
+            if (isEnder) {                                      // if we found the next beginner = "ender" of the previous section
+                if (beginner != null)                           // usually we have a beginner
+                    this.timingTransformation.add(new double[]{beginner.getInitialMillisecondsDate(), n.getInitialMillisecondsDate(), beginner.getMillisecondsDate(), stopper.getMillisecondsDate()});
+                else                                            // but right at the beginning we have no beginner but have to handle the notes before the first fixed note
+                    this.timingTransformation.add(new double[]{0.0, n.getInitialMillisecondsDate(), Math.max(0.0, stopper.getMillisecondsDate() - n.getInitialMillisecondsDate()), stopper.getMillisecondsDate()});
+
+                beginner = n;
+                stopper = null;
+            }
+        }
+
+        // after the above loop there is the last beginner left for which we have to add an entry in the timingTransformation list
+        assert beginner != null;
+        this.timingTransformation.add(new double[]{beginner.getInitialMillisecondsDate(), Double.MAX_VALUE, beginner.getMillisecondsDate(), Double.MAX_VALUE});
+
+        this.renderTiming();                                    // compute the new milliseconds timing
+    }
+
+    /**
+     * apply the current timing transformation to all parts, so their note get new millisecondsDates and millisecondsDateEnds
+     */
+    private void renderTiming() {
+        for (Part part : this.getParts())   // apply the timing transform to each part
+            part.transformTiming(this.timingTransformation);
+    }
+
+    /**
+     * Sets a new milliseconds date and end date of the note and places it in the note sequence accordingly.
+     * The note is made fixed. The non-fixed notes are not repositioned by this method! This has to be done subsequently.
+     * @param note the note to be moved
+     * @param toMilliseconds the new onset position of the note
+     */
+    public void reposition(@NotNull Note note, double toMilliseconds) {
+        note.setFixed(true);                                // pin the note to its position, so it will not be affected by timing interpolations when another note is dragged
+
+        if (note.getMillisecondsDate() == toMilliseconds)   // the note does not move
+            return;                                         // done
+
+        // we do not allow shifting the note to negative timing
+        if (toMilliseconds < 0.0)
+            toMilliseconds = 0.0;
+
+        for (Part part : this.getParts())
+            if (part.contains(note))
+                part.reposition(note, toMilliseconds);
+    }
+
+    /**
+     * resets the values of each note in each part to their initial values;
+     * the invoking application should also run recomputePianoRoll() to update the piano roll image
+     */
+    public void reset() {
+        for (Part part : this.getParts()) {
+            part.reset();
+        }
+    }
+
+    /**
      * Scale the complete music to the specified length, i.e. the last milliseconds.date.end.
      * This transformation is also applied to fixed notes!
-     * @param milliseconds
+     * @param milliseconds the milliseconds length to which the notes are scaled or null if no scaling is set
      */
-    public void scaleTiming(double milliseconds) {
+    public void scaleOverallTiming(double milliseconds) {
         Note lastNoteSounding = null;
 
         for (Part part : this.parts) {
@@ -165,7 +275,7 @@ public class Alignment {
         double factor = milliseconds / lastNoteSounding.getMillisecondsDateEnd();
 
         for (Part part : this.parts) {
-            part.scaleTiming(factor);
+            part.scaleOverallTiming(factor);
         }
     }
 
@@ -189,6 +299,34 @@ public class Alignment {
            this.pianoRoll.add(p.getPianoRoll(fromMilliseconds, toMilliseconds, imgWidth, imgHeight));
 
         return this.pianoRoll;
+    }
+
+    /**
+     * get the latest PianoRoll instance without recomputing it
+     * @return the piano roll or null
+     */
+    public PianoRoll getPianoRoll() {
+        return this.pianoRoll;
+    }
+
+    /**
+     * recomputes the piano roll image with the same metrics as the current one
+     * @return
+     */
+    public PianoRoll recomputePianoRoll() {
+        if (this.pianoRoll == null)
+            return null;
+
+        for (Part p : this.parts)
+            p.recomputePianoRoll();
+
+        double fromMilliseconds = this.pianoRoll.getFromMilliseconds();
+        double toMilliseconds = this.pianoRoll.getToMilliseconds();
+        int imgWidth = this.pianoRoll.getWidth();
+        int imgHeight = this.pianoRoll.getHeight();
+
+        this.pianoRoll = null;
+        return this.getPianoRoll(fromMilliseconds, toMilliseconds, imgWidth, imgHeight);
     }
 
     /**

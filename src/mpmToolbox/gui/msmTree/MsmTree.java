@@ -10,6 +10,7 @@ import com.alee.managers.icon.Icons;
 import com.alee.managers.style.StyleId;
 import mpmToolbox.gui.ProjectPane;
 import mpmToolbox.gui.score.ScoreDisplayPanel;
+import nu.xom.Attribute;
 import nu.xom.Element;
 import nu.xom.Node;
 
@@ -136,6 +137,35 @@ public class MsmTree extends WebExTree<MsmTreeNode> implements /*MouseListener,*
                 return treeNode;
             }
         }
+        return null;
+    }
+
+    /**
+     * find  the first MsmTreeNode with the specified ID
+     * @param id
+     * @param depthFirstStrategy true for depth first search, false for breath first search
+     * @return
+     */
+    public MsmTreeNode findNode(String id, boolean depthFirstStrategy) {
+        if (id == null)
+            return null;
+
+        Enumeration<MsmTreeNode> e = depthFirstStrategy ? this.getRootNode().depthFirstEnumeration() : this.getRootNode().breadthFirstEnumeration();
+
+        while (e.hasMoreElements()) {
+            MsmTreeNode treeNode = e.nextElement();
+            if (!(treeNode.getUserObject() instanceof Element))
+                continue;
+            Element xml = (Element) treeNode.getUserObject();
+
+            Attribute idAtt = xml.getAttribute("id", "http://www.w3.org/XML/1998/namespace");
+            if (idAtt == null)
+                continue;
+
+            if (idAtt.getValue().equals(id))
+                return treeNode;
+        }
+
         return null;
     }
 

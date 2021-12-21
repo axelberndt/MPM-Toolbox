@@ -1,5 +1,6 @@
 package mpmToolbox.gui.audio;
 
+import com.alee.laf.menu.WebCheckBoxMenuItem;
 import com.alee.laf.menu.WebMenu;
 import com.alee.laf.menu.WebMenuItem;
 import com.alee.laf.menu.WebPopupMenu;
@@ -34,10 +35,10 @@ public class WaveformPanel extends PianoRollPanel {
         if (waveformImage == null)
             return;
 
-        Graphics2D g2 = (Graphics2D)g;                  // make g a Graphics2D object so we can use its extended drawing features
+        Graphics2D g2 = (Graphics2D)g;                  // make g a Graphics2D object, so we can use its extended drawing features
 
         g2.drawImage(waveformImage, 0, 0, this);        // draw the waveform
-        this.drawPianoRoll(g2); // TODO this is only for testing, yet
+        this.drawPianoRoll(g2);
 
         // draw the mouse cursor
         if (this.mousePosition != null) {
@@ -46,7 +47,7 @@ public class WaveformPanel extends PianoRollPanel {
 //            g2.drawLine(0, this.mousePosition.y, this.getWidth(), this.mousePosition.y);
 
             // print info text
-            int sampleIndex = this.getSampleIndex(this.mousePosition);
+            int sampleIndex = this.getSampleIndex(this.mousePosition.getX());
             double millisec = Tools.round(((double) sampleIndex / this.parent.getAudio().getFrameRate()) * 1000.0, 2);
             g2.setColor(Color.LIGHT_GRAY);
             g2.drawString("Sample No.: " + sampleIndex, 2, Settings.getDefaultFontSize());
@@ -55,13 +56,39 @@ public class WaveformPanel extends PianoRollPanel {
     }
 
     /**
-     * compute which sample the mouse cursor is pointing at
-     * @param mousePosition
-     * @return
+     * on mouse enter event
+     * @param e
      */
-    protected int getSampleIndex(Point mousePosition) {
-        double relativePosition = mousePosition.getX() / this.getWidth();
-        return (int) Math.round((relativePosition * (this.parent.getRightmostSample() - this.parent.getLeftmostSample())) + this.parent.getLeftmostSample());
+    @Override
+    public void mouseEntered(MouseEvent e) {
+        if (this.parent.getAudio() == null)
+            return;
+
+        super.mouseEntered(e);
+    }
+
+    /**
+     * on mouse exit event
+     * @param e
+     */
+    @Override
+    public void mouseExited(MouseEvent e) {
+        if (this.parent.getAudio() == null)
+            return;
+
+        super.mouseExited(e);
+    }
+
+    /**
+     * on mouse exit event
+     * @param e
+     */
+    @Override
+    public void mouseMoved(MouseEvent e) {
+        if (this.parent.getAudio() == null)
+            return;
+
+        super.mouseMoved(e);
     }
 
     /**
@@ -70,20 +97,20 @@ public class WaveformPanel extends PianoRollPanel {
      */
     @Override
     public void mouseClicked(MouseEvent e) {
-        if (this.parent.getAudio() == null)     // if there is no audio data
-            return;                             // nothing to do here
+        if (this.parent.getAudio() == null)             // if there is no audio data
+            return;                                     // nothing to do here
 
         switch (e.getButton()) {
             case MouseEvent.BUTTON1:                    // left click
-                // TODO: select a note, place a marker ...
+                super.mouseClicked(e);                  // select a note
                 break;
             case MouseEvent.BUTTON3:                    // right click = context menu
-                WebPopupMenu menu = new WebPopupMenu();
+                WebPopupMenu menu = this.getContextMenu(e);
 
                 // play from here
                 WebMenuItem playFromHere = new WebMenuItem("Play from here");
                 playFromHere.addActionListener(actionEvent -> {
-                    this.parent.getParent().getSyncPlayer().triggerPlayback(this.getSampleIndex(e.getPoint()));
+                    this.parent.getParent().getSyncPlayer().triggerPlayback(this.getSampleIndex(e.getPoint().getX()));
                 });
                 menu.add(playFromHere);
 
@@ -105,9 +132,6 @@ public class WaveformPanel extends PianoRollPanel {
                     chooseChannel.add(channelItem);
                 }
                 menu.add(chooseChannel);
-
-                // choose overlay
-                menu.add(this.getPianoRollTools());
 
                 menu.show(this, e.getX() - 25, e.getY());
                 break;

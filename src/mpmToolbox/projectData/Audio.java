@@ -23,7 +23,7 @@ public class Audio extends meico.audio.Audio {
     protected final ArrayList<double[]> waveforms;              // contains the waveform data for each audio channel as doubles in [-1.0, 1.0]
     private WaveformImage waveformImage = null;                 // the waveform image of this audio data
     private SpectrogramImage spectrogramImage = null;           // the visualization of the above spectrogram
-    private final Alignment alignment;
+    private Alignment alignment;                                // audio to MSM alignment
 
     /**
      * constructor; use this one to load and decode MP3 files
@@ -35,8 +35,7 @@ public class Audio extends meico.audio.Audio {
         super(file);
 
         this.waveforms = convertByteArray2DoubleArray(this.getAudio(), this.getFormat());
-        this.alignment = new Alignment(msm, null);
-        this.alignment.scaleTiming(((double) this.getNumberOfSamples() / this.getFrameRate()) * 1000.0);    // scale the initial alignment to the milliseconds length of the audio; so all notes are visible and in a good starting position
+        this.initAlignment(msm);
     }
 
     /**
@@ -55,7 +54,7 @@ public class Audio extends meico.audio.Audio {
         Element alignmentData = projectAudioData.getFirstChildElement("alignment");
         this.alignment = new Alignment(msm, alignmentData);
         if (alignmentData == null)      // if we had no alignment data from the project file, an initial alignment was generated with a default tempo that will potentially not fit the audio length
-            this.alignment.scaleTiming(((double) this.getNumberOfSamples() / this.getFrameRate()) * 1000.0);    // scale the initial alignment to the milliseconds length of the audio; so all notes are visible and in a good starting position
+            this.alignment.scaleOverallTiming(((double) this.getNumberOfSamples() / this.getFrameRate()) * 1000.0);    // scale the initial alignment to the milliseconds length of the audio; so all notes are visible and in a good starting position
     }
 
     /**
@@ -76,6 +75,15 @@ public class Audio extends meico.audio.Audio {
      */
     public Alignment getAlignment() {
         return this.alignment;
+    }
+
+    /**
+     * initialize or reset the alignment data for this Audio object
+     * @param msm the Msm instance to be aligned with this Audio object
+     */
+    public void initAlignment(Msm msm) {
+        this.alignment = new Alignment(msm, null);
+        this.alignment.scaleOverallTiming(((double) this.getNumberOfSamples() / this.getFrameRate()) * 1000.0);    // scale the initial alignment to the milliseconds length of the audio; so all notes are visible and in a good starting position
     }
 
     /**

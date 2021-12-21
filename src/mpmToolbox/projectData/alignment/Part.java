@@ -1,7 +1,9 @@
 package mpmToolbox.projectData.alignment;
 
+import com.alee.api.annotations.NotNull;
 import com.sun.media.sound.InvalidDataException;
 import meico.mei.Helper;
+import meico.supplementary.KeyValue;
 import nu.xom.Attribute;
 import nu.xom.Element;
 
@@ -14,10 +16,11 @@ import java.util.HashMap;
  * @author Axel Berndt
  */
 public class Part {
-    private final Element xml;                                      // a reference to the original MSM part element
+    private final Element xml;                                          // a reference to the original MSM part element
     private final int number;
     private final HashMap<String, Note> notes = new HashMap<>();
-    private final ArrayList<Note> noteSequence = new ArrayList<>(); // the notes in sequential order
+    private final ArrayList<Note> noteSequence = new ArrayList<>();     // the notes in sequential order of their current date
+    private final ArrayList<Note> initialSequence = new ArrayList<>();  // the notes in sequential order of their initial date
     private PianoRoll pianoRoll = null;
 
     /**
@@ -73,19 +76,43 @@ public class Part {
     public Note add(Note note) {
         Note out = this.notes.put(note.getId(), note);  // this will add the id-note pair to the hashmap and overwrite any other note behind the same id; out will hold that previous note or null
 
-        if (out != null)                                // if there was a previous note that we replaced with the above line
-            this.noteSequence.remove(out);              // remove it also from the sequence
+        if (out != null) {                              // if there was a previous note that we replaced with the above line
+            this.noteSequence.remove(out);              // remove it also from the sequences
+            this.initialSequence.remove(out);
+        }
+        this.addToInitialSequence(note);    // add note to initial sequence
+        this.addToSequence(note);                       // add the note at the right position to the sequence
 
-        // add the note at the right position to the sequence
-        int i = this.noteSequence.size()-1;
+        return out;
+    }
+
+    /**
+     * add the note to the note sequence
+     * @param note
+     */
+    private void addToSequence(Note note) {
+        // add note to noteSequence
+        int i = this.noteSequence.size() - 1;
         for (; i >= 0; --i) {
             double date = this.noteSequence.get(i).getMillisecondsDate();
             if (date <= note.getMillisecondsDate())
                 break;
         }
-        this.noteSequence.add(i+1, note);               // insert note also to the sequence
+        this.noteSequence.add(i + 1, note);               // insert note also to the sequence
+    }
 
-        return out;
+    /**
+     * add the note to the initial sequence
+     * @param note
+     */
+    private void addToInitialSequence(Note note) {
+        int i = this.initialSequence.size() - 1;
+        for (; i >= 0; --i) {
+            double date = this.initialSequence.get(i).getInitialMillisecondsDate();
+            if (date <= note.getInitialMillisecondsDate())
+                break;
+        }
+        this.initialSequence.add(i + 1, note);               // insert note also to the sequence
     }
 
     /**
@@ -95,8 +122,10 @@ public class Part {
      */
     public Note remove(String id) {
         Note out = this.notes.remove(id);
-        if (out != null)
+        if (out != null) {
             this.noteSequence.remove(out);
+            this.initialSequence.remove(out);
+        }
         return out;
     }
 
@@ -135,6 +164,15 @@ public class Part {
     }
 
     /**
+     * checks if the part contains the given note
+     * @param note
+     * @return
+     */
+    public boolean contains(Note note) {
+        return this.notes.containsValue(note);
+    }
+
+    /**
      * find the first note at or after milliseconds and return its index in noteSequence
      * @param milliseconds
      * @return
@@ -160,7 +198,48 @@ public class Part {
             mid = (first + last) / 2;
         }
         return -1;
+    }
 
+    /**
+     * retrieve the fixed notes at and around the specified milliseconds date
+     * @param milliseconds
+     * @return array of 3 notes {before, at, after}; may contain null values!
+     */
+    public Note[] getFixedNoteBeforeAtAfter(double milliseconds) {
+        Note before = null;
+        Note at = null;
+        Note after = null;
+
+        for (Note note : this.noteSequence) {
+            if (!note.isFixed())
+                continue;
+
+            if (note.getMillisecondsDate() > milliseconds) {
+                after = note;
+                break;
+            }
+
+            if (note.getMillisecondsDate() == milliseconds)
+                at = note;
+            else    // if (note.getMillisecondsDate() < milliseconds)
+                before = note;
+        }
+
+        return new Note[] {before, at, after};
+    }
+
+    /**
+     * collect all fixed notes from this part's note sequence and return them in timely order
+     * @param initialOrder get the fixed notes in their initial or current order
+     * @return
+     */
+    public ArrayList<Note> getAllFixedNotes(boolean initialOrder) {
+        ArrayList<Note> fixed = new ArrayList<>();
+        for (Note note : ((initialOrder) ? this.initialSequence : this.noteSequence)) {
+            if (note.isFixed())
+                fixed.add(note);
+        }
+        return fixed;
     }
 
     /**
@@ -184,14 +263,108 @@ public class Part {
     }
 
     /**
+     * resets the values of each note to their initial value
+     * the invoking application should also run recomputePianoRoll() to update the piano roll image
+     */
+    protected void reset() {
+        this.noteSequence.clear();
+
+        for (Note note : this.initialSequence) {
+            note.reset();
+            this.noteSequence.add(note);
+        }
+    }
+
+    /**
      * Scales all notes' milliseconds dates by the specified factor.
      * This transformation is also applied to fixed notes!
      * @param factor
      */
-    public void scaleTiming(double factor) {
-        for (Note note : this.noteSequence) {
-            note.setMillisecondsDate(note.getMillisecondsDate() * factor);
-            note.setMillisecondsDateEnd(note.getMillisecondsDateEnd() * factor);
+    protected void scaleOverallTiming(double factor) {
+        for (Note note : this.initialSequence) {
+            note.setMillisecondsDate(note.getInitialMillisecondsDate() * factor);
+            note.setMillisecondsDateEnd(note.getInitialMillisecondsDateEnd() * factor);
+        }
+    }
+
+    /**
+     * Sets a new milliseconds date and end date of the note and places it in the note sequence accordingly.
+     * The non-fixed notes are not repositioned by this method! this has to be done subsequently.
+     * @param note
+     * @param toMilliseconds
+     */
+    protected void reposition(@NotNull Note note, double toMilliseconds) {
+        note.setMillisecondsDateEnd(note.getInitialMillisecondsDateEnd() - note.getInitialMillisecondsDate() + toMilliseconds);
+        note.setMillisecondsDate(toMilliseconds);
+        this.noteSequence.remove(note);
+        this.addToSequence(note);
+    }
+
+    /**
+     * places all non-fixed notes according to the positions of the fixed notes
+     * @param timingTransformation the transformation data; each element provides the following values {startDate, endDate, toStartDate, toEndDate}, all in milliseconds
+     */
+    protected void transformTiming(ArrayList<double[]> timingTransformation) {
+        for (double[] segment : timingTransformation)
+            this.transformTiming(segment[0], segment[1], segment[2], segment[3]);
+
+        this.noteSequence.clear();
+        for (Note note : this.initialSequence)
+            this.addToSequence(note);
+    }
+
+    /**
+     * helper method for transformTiming(fixedNotes);
+     * transforms all note onsets in [startDate; endDate) to [toStartDate; toEndDate)
+     * and offsets in (startDate; endDate] to (toStartDate; toEndDate]
+     * @param startDate
+     * @param endDate
+     * @param toStartDate
+     * @param toEndDate
+     */
+    private void transformTiming(double startDate, double endDate, double toStartDate, double toEndDate) {
+        boolean shiftDontScale = (endDate == startDate) || (toStartDate >= toEndDate);
+        double scaleFactor = shiftDontScale ? 1.0 : (toEndDate - toStartDate) / (endDate - startDate);  // if the section has 0 length, we do not scale anything
+
+        ArrayList<Note> fixed = new ArrayList<>();
+        int i = 0;
+        for (; i < this.initialSequence.size(); ++i) {
+            Note note = this.initialSequence.get(i);
+
+            if (note.isFixed()) {                                   // if the note is fixed
+                fixed.add(note);                                    // store for further treatment
+                continue;
+            }
+
+            if (note.getInitialMillisecondsDate() >= endDate)       // we have to check only the notes that start before endDate
+                break;
+
+            // transform the note's onset
+            double iDate = note.getInitialMillisecondsDate();
+            if (iDate >= startDate)
+                note.setMillisecondsDate(shiftDontScale ? toStartDate : ((iDate - startDate) * scaleFactor) + toStartDate);
+
+            // transform the note's offset
+            iDate = note.getInitialMillisecondsDateEnd();
+            if ((iDate > startDate) && (iDate <= endDate))
+                note.setMillisecondsDateEnd(shiftDontScale ? endDate - startDate + toStartDate : ((iDate - startDate) * scaleFactor) + toStartDate);
+        }
+
+        // now treat the fixed notes
+        for (; i < this.initialSequence.size(); ++i) {
+            Note note = this.initialSequence.get(i);
+            if (note.isFixed())
+                fixed.add(note);                                    // store for further treatment
+        }
+        for (Note f : fixed) {
+            if ((f.getMillisecondsDate() >= toEndDate)              // if it is behind the target end date
+                    || (f.getInitialMillisecondsDate() > startDate))// or it was behind the initial start date
+                continue;                                           // we leave it unaltered
+
+            // change the milliseconds offset date of the fixed note; its onset date is fixed
+            double iDate = f.getInitialMillisecondsDateEnd();
+            if ((iDate > startDate) && (iDate <= endDate))
+                f.setMillisecondsDateEnd(shiftDontScale ? endDate - startDate + toStartDate : ((iDate - startDate) * scaleFactor) + toStartDate);
         }
     }
 
@@ -203,7 +376,7 @@ public class Part {
      * @param imgHeight should correspond with the highest pitch class to be displayed, because one row of pixels is one diatonic pitch class, starting with MIDI's pitch 0; for MIDI-compliance use 128
      * @return
      */
-    protected PianoRoll getPianoRoll(double fromMilliseconds, double toMilliseconds, int imgWidth, int imgHeight) {
+    public PianoRoll getPianoRoll(double fromMilliseconds, double toMilliseconds, int imgWidth, int imgHeight) {
         if (fromMilliseconds == toMilliseconds)
             return null;
 
@@ -245,7 +418,30 @@ public class Part {
         return this.pianoRoll;
     }
 
+    /**
+     * get the latest PianoRoll instance without recomputing it
+     * @return the piano roll or null
+     */
+    public PianoRoll getPianoRoll() {
+        return this.pianoRoll;
+    }
 
+    /**
+     * recomputes the piano roll image with the same metrics as the current one
+     * @return
+     */
+    public PianoRoll recomputePianoRoll() {
+        if (this.pianoRoll == null)
+            return null;
+
+        double fromMilliseconds = this.pianoRoll.getFromMilliseconds();
+        double toMilliseconds = this.pianoRoll.getToMilliseconds();
+        int imgWidth = this.pianoRoll.getWidth();
+        int imgHeight = this.pianoRoll.getHeight();
+
+        this.pianoRoll = null;
+        return this.getPianoRoll(fromMilliseconds, toMilliseconds, imgWidth, imgHeight);
+    }
 
     /**
      * access the original MSM element

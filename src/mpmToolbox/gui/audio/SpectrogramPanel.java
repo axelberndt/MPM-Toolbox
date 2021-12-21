@@ -11,6 +11,7 @@ import com.alee.laf.spinner.WebSpinner;
 import com.tagtraum.jipes.math.WindowFunction;
 import mpmToolbox.gui.Settings;
 import mpmToolbox.projectData.Audio;
+import mpmToolbox.projectData.alignment.Note;
 import mpmToolbox.supplementary.Tools;
 
 import javax.swing.*;
@@ -129,6 +130,42 @@ public class SpectrogramPanel extends PianoRollPanel {
     }
 
     /**
+     * on mouse enter event
+     * @param e
+     */
+    @Override
+    public void mouseEntered(MouseEvent e) {
+        if (this.noData.isShowing() || this.spectrogramSpecs.isShowing())
+            return;
+
+        super.mouseEntered(e);
+    }
+
+    /**
+     * on mouse exit event
+     * @param e
+     */
+    @Override
+    public void mouseExited(MouseEvent e) {
+        if (this.noData.isShowing() || this.spectrogramSpecs.isShowing())
+            return;
+
+        super.mouseExited(e);
+    }
+
+    /**
+     * on mouse exit event
+     * @param e
+     */
+    @Override
+    public void mouseMoved(MouseEvent e) {
+        if (this.noData.isShowing() || this.spectrogramSpecs.isShowing())
+            return;
+
+        super.mouseMoved(e);
+    }
+
+    /**
      * on mouse click event
      *
      * @param e
@@ -141,15 +178,15 @@ public class SpectrogramPanel extends PianoRollPanel {
 
         switch (e.getButton()) {
             case MouseEvent.BUTTON1:                    // left click
-                // TODO: select a note, place a marker ...
+                super.mouseClicked(e);                  // select a note
                 break;
             case MouseEvent.BUTTON3:                    // right click = context menu
-                WebPopupMenu menu = new WebPopupMenu();
+                WebPopupMenu menu = this.getContextMenu(e);
 
                 // play from here
                 WebMenuItem playFromHere = new WebMenuItem("Play from here");
                 playFromHere.addActionListener(actionEvent -> {
-                    this.parent.getParent().getSyncPlayer().triggerPlayback(this.parent.getWaveformPanel().getSampleIndex(e.getPoint()));
+                    this.parent.getParent().getSyncPlayer().triggerPlayback(this.parent.getWaveformPanel().getSampleIndex(e.getPoint().getX()));
                 });
                 menu.add(playFromHere);
 
@@ -168,10 +205,6 @@ public class SpectrogramPanel extends PianoRollPanel {
                     this.spectrogramSpecs.updateSpectrogramImage(this);
                 });
                 menu.add(normalize);
-
-                // choose overlay
-                menu.add(this.getPianoRollTools());
-
 
                 menu.show(this, e.getX() - 25, e.getY());
                 break;
@@ -258,12 +291,6 @@ public class SpectrogramPanel extends PianoRollPanel {
             maxFreqUnit.setPadding(Settings.paddingInDialogs);
             Tools.addComponentToGridBagLayout(this, (GridBagLayout) this.getLayout(), maxFreqUnit, 3, 4, 1, 1, 0.1, 1.0, 0, 0, GridBagConstraints.BOTH, GridBagConstraints.LINE_START);
 
-            WebButton maxMidi = new WebButton("Max. MIDI Pitch");
-            maxMidi.addActionListener(actionEvent -> {
-                maxFreq.setValue(12543.8539514160);
-            });
-            Tools.addComponentToGridBagLayout(this, (GridBagLayout) this.getLayout(), maxMidi, 4, 4, 1, 1, 0.1, 1.0, 0, 0, GridBagConstraints.BOTH, GridBagConstraints.LINE_START);
-
             // min frequency
             WebLabel minFreqLabel = new WebLabel("Min. Frequency:", WebLabel.RIGHT);
             minFreqLabel.setPadding(Settings.paddingInDialogs);
@@ -277,11 +304,14 @@ public class SpectrogramPanel extends PianoRollPanel {
             minFreqUnit.setPadding(Settings.paddingInDialogs);
             Tools.addComponentToGridBagLayout(this, (GridBagLayout) this.getLayout(), minFreqUnit, 3, 5, 1, 1, 0.1, 1.0, 0, 0, GridBagConstraints.BOTH, GridBagConstraints.LINE_START);
 
-            WebButton minMidi = new WebButton("Min. MIDI Pitch");
-            minMidi.addActionListener(actionEvent -> {
+            WebButton alignFreq2Midi = new WebButton("<html><center><p>Align Frequencies</p><p style='margin-top:7'>with MIDI Pitches</p></center></html>");
+            alignFreq2Midi.setPadding(Settings.paddingInDialogs);
+            alignFreq2Midi.setToolTip("Sets min. and max. frequency of the CQT so that the piano roll pitches align with it.");
+            alignFreq2Midi.addActionListener(actionEvent -> {
+                maxFreq.setValue(12543.8539514160);
                 minFreq.setValue(8.1757989156);
             });
-            Tools.addComponentToGridBagLayout(this, (GridBagLayout) this.getLayout(), minMidi, 4, 5, 1, 1, 0.1, 1.0, 0, 0, GridBagConstraints.BOTH, GridBagConstraints.LINE_START);
+            Tools.addComponentToGridBagLayout(this, (GridBagLayout) this.getLayout(), alignFreq2Midi, 4, 4, 1, 2, 0.1, 1.0, 0, 0, GridBagConstraints.BOTH, GridBagConstraints.LINE_START);
 
             // bins per semitone
             WebLabel binsLabel = new WebLabel("Bins per Semitone:", WebLabel.RIGHT);

@@ -96,6 +96,7 @@ public class SyncPlayer extends WebPanel {
                 if (this.parent.getAudioFrame() != null) {
                     this.parent.getAudioFrame().updateAlignment(true);
                 }
+                this.parent.getAudioFrame().updateAudioTools();
             }
         });
         Tools.addComponentToGridBagLayout(this, (GridBagLayout) this.getLayout(), this.performanceChooser, 0, 0, 1, 1, 1.0, 1.0, 0, 0, GridBagConstraints.BOTH, GridBagConstraints.LINE_START);
@@ -134,14 +135,14 @@ public class SyncPlayer extends WebPanel {
             if (itemEvent.getStateChange() == ItemEvent.SELECTED) {
 //                System.out.println(itemEvent.toString());
                 Audio audio = ((AudioChooserItem) itemEvent.getItem()).getValue();
-                if (audio == null) {                                                        // audio is unselected
-                    if (this.performanceChooser.getSelectedItem() == this.alignmentPerformance)   // if alignment performance option was selected
-                        this.performanceChooser.setSelectedIndex(0);                        // jump to the first option
-                    this.performanceChooser.removeItem(this.alignmentPerformance);          // remove the alignment performance option from the performance chooser
+                if (audio == null) {                                                            // audio is unselected
+                    if (this.performanceChooser.getSelectedItem() == this.alignmentPerformance) // if alignment performance option was selected
+                        this.performanceChooser.setSelectedIndex(0);                            // jump to the first option
+                    this.performanceChooser.removeItem(this.alignmentPerformance);              // remove the alignment performance option from the performance chooser
                 } else {
-                    this.updatePerformanceList();                                           // update the performance chooser list to add/delete the alignment performance option
+                    this.updatePerformanceList();                                               // update the performance chooser list to add/delete the alignment performance option
                 }
-                this.parent.getAudioFrame().updateAudio(true);                                 // communicate the selection to the audio analysis frame as this should also display it
+                this.parent.getAudioFrame().updateAudio(true);                                  // communicate the selection to the audio analysis frame as this should also display it
             }
         });
         Tools.addComponentToGridBagLayout(this, (GridBagLayout) this.getLayout(), this.audioChooser, 0, 1, 1, 1, 1.0, 1.0, 0, 0, GridBagConstraints.BOTH, GridBagConstraints.LINE_START);
@@ -615,7 +616,7 @@ public class SyncPlayer extends WebPanel {
                 if (this.midiIsLonger) {
                     relativePlaybackPosition = getMidiPlayer().getRelativePosition();
                 } else {
-                    relativePlaybackPosition = (getAudioPlayer().getMicrosecondLength() >= this.microsecAudioOffset) ? 1.0 : (double) (getAudioPlayer().getMicrosecondPosition() - this.microsecAudioOffset) / (double) (getAudioPlayer().getMicrosecondLength() - this.microsecAudioOffset);
+                    relativePlaybackPosition = (getAudioPlayer().getMicrosecondLength() <= this.microsecAudioOffset) ? 1.0 : (double) (getAudioPlayer().getMicrosecondPosition() - this.microsecAudioOffset) / (double) (getAudioPlayer().getMicrosecondLength() - this.microsecAudioOffset);
                 }
 
                 if ((playbackSlider.getValue() == sliderMax) || (!getAudioPlayer().isPlaying() && !getMidiPlayer().isPlaying())) {

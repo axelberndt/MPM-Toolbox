@@ -62,7 +62,15 @@ public class PianoRoll extends BufferedImage {
         if ((x < 0) || (x >= this.getWidth()) || (y < 0) || (y >= this.getHeight()))
             return false;
 
-        Color color = (note == null) ? new Color(0, 0, 0, 0) : Settings.scoreNoteColor; // if note is null, make the pixel completely transparent, otherwise set the note color
+        // if note is null, make the pixel completely transparent, otherwise set the performance color for fixed notes and note color for non-fixed notes
+        Color color;
+        if (note == null)
+            color = new Color(0, 0, 0, 0);
+        else if (note.isFixed())
+            color = Settings.scorePerformanceColorHighlighted;
+        else
+            color = Settings.scoreNoteColor;
+
         this.setRGB(x, y, color.getRGB());      // set the note color
         this.noteReferences[x][y] = note;       // set reference
         return true;
@@ -92,12 +100,13 @@ public class PianoRoll extends BufferedImage {
         rgba[2] = (this.getRGB(x, y)) & 0xFF;
         rgba[3] = (this.getRGB(x, y) >> 24) & 0xff;
 
+        Color color = (note.isFixed()) ? Settings.scorePerformanceColorHighlighted : Settings.scoreNoteColor;
 
         // add the color of a note so that it becomes brighter, but avoid numbers greater than 255
-        int r = Math.min(255, Math.round((((255f - rgba[0]) * Settings.scoreNoteColor.getRed()) / 255) + rgba[0]));
-        int g = Math.min(255, Math.round((((255f - rgba[1]) * Settings.scoreNoteColor.getGreen()) / 255) + rgba[1]));
-        int b = Math.min(255, Math.round((((255f - rgba[2]) * Settings.scoreNoteColor.getBlue()) / 255) + rgba[2]));
-        int a = Math.min(255, Math.round((((255f - rgba[3]) * Settings.scoreNoteColor.getAlpha()) / 255) + rgba[3]));
+        int r = Math.min(255, Math.round((((255f - rgba[0]) * color.getRed()) / 255) + rgba[0]));
+        int g = Math.min(255, Math.round((((255f - rgba[1]) * color.getGreen()) / 255) + rgba[1]));
+        int b = Math.min(255, Math.round((((255f - rgba[2]) * color.getBlue()) / 255) + rgba[2]));
+        int a = Math.min(255, Math.round((((255f - rgba[3]) * color.getAlpha()) / 255) + rgba[3]));
 //        int a = Settings.scoreNoteColor.getAlpha();         // for a constant transparency
 
         this.setRGB(x, y, new Color(r, g, b, a).getRGB());  // add the color

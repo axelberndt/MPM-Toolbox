@@ -2,16 +2,19 @@
 
 
 #### v0.1.7
+- Little edit in method `mpmToolbox.gui.score.ScoreDisplayPanel.mouseMoved()` that changes the mouse cursor to hand symbol when moved to a clickable overlay element.
 - Fixed potential division-by-zero bug in `mpmToolbox.gui.syncPlayer.SyncPlayer.PlaybackRunnable.run()`.
 - Reorganized some classes, i.e., classes `Score`, `ScoreNote`, `ScorePage` moved from package `mpmToolbox.gui.score` to package `mpmToolbox.projectData.score`.
 - Added "Hide Overlay" button to the score widget (classes `mpmToolbox.gui.score.ScoreDocumentData` and `ScoreDisplayPanel`) that allows to show the score without the overlays. 
 - Addition to the spectrogram context menu to switch between normalized and non-normalized display.
 - New method `getPart()` in classes `mpmToolbox.gui.msmTree.MsmTreeNode` and `mpmToolbox.gui.mpmTree.MpmTreeNode` to retrieve the MSM `part` element that the node belongs to.
-- New package `mpmToolbox.supplementary.avlTree` that implements AVL Tree data structure.
-- New package `mpmToolbox.projectData.alignment` with several new classes that serve to associate measurements in audio recordings with MSM data.
+- New package `mpmToolbox.supplementary.avlTree` that implements the AVL Tree data structure.
+- New package `mpmToolbox.projectData.alignment` with several new classes that serve to associate measurements in audio recordings with MSM data, display them as piano roll and interact with it.
+- Alignment data is stored in `mpr` project files.
 - Added class `mpmToolbox.gui.audio.PianoRollPanel` which is also the basis for the classes `WaveformPanel` and `SpectrogramPanel` in the same package.
 - Several optimizations when editing `Performance` names, adding and removing `Performance` or `Audio` objects from and to the project in order to reduce update traffic between the widgets and the re-rendering of performances for overlay display in the audio widget.
-- Added buttons "Min. MIDI Pitch" and "Max. MIDI Pitch" to the spectrogram specs. These set the min. and max frequency of the spectrogram. Use these to align it with the piano roll.
+- Added button "Align Frequencies with MIDI Pitches" to the spectrogram specs. These set the min. and max frequency of the spectrogram. Use these to align it vertically with the piano roll.
+- Added combobox and sub-class `PartChooserItem` to class `mpmToolbox.gui.audio.AudioDocumentData` to choose the musical part or select all parts to be displayed by the piano roll overlay.
 
 
 #### v0.1.6

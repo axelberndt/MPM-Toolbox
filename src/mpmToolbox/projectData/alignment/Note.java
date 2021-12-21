@@ -10,12 +10,17 @@ import nu.xom.Element;
  * @author Axel Berndt
  */
 public class Note {
-    private final Element xml;                  // a reference to the original MSM element
-    private double millisecondsDate;
-    private double millisecondsDateEnd;
+    private final Element xml;                          // a reference to the original MSM element
+
+    private final double initialMillisecondsDate;       // the initial date of the note will remain unaltered throughout any other transformations
+    private final double initialMillisecondsDateEnd;    // the initial end date of the note will remain unaltered throughout any other transformations
+
+    private double millisecondsDate;                    // the date of the note, subject to alteration
+    private double millisecondsDateEnd;                 // the end date of the note, subject to alteration
+
     private double velocity;
     private double pitch;
-    private boolean fixed = false;              // signals that the values of this note should not be scaled when another note is edited; this note is fixed
+    private boolean fixed = false;                      // signals that the values of this note should not be scaled when another note is edited; this note is fixed
 
     /**
      * constructor
@@ -31,7 +36,8 @@ public class Note {
             if (millisDate == null)
                 throw new InvalidDataException("Invalid MSM element " + xml.toXML() + "; missing attribute date.");
         }
-        this.millisecondsDate = Double.parseDouble(millisDate.getValue());
+        this.initialMillisecondsDate = Double.parseDouble(millisDate.getValue());
+        this.millisecondsDate = this.initialMillisecondsDate;
 
         // parse the note's offset date
         Attribute millisEnd = Helper.getAttribute("milliseconds.date.end", xml);
@@ -39,11 +45,12 @@ public class Note {
             millisEnd = Helper.getAttribute("duration", xml);
             if (millisEnd == null)
                 throw new InvalidDataException("Invalid MSM element " + xml.toXML() + "; missing attribute duration.");
-            this.millisecondsDateEnd = this.millisecondsDate + Double.parseDouble(millisEnd.getValue());
+            this.initialMillisecondsDateEnd = this.millisecondsDate + Double.parseDouble(millisEnd.getValue());
         }
         else {
-            this.millisecondsDateEnd = Double.parseDouble(millisEnd.getValue());
+            this.initialMillisecondsDateEnd = Double.parseDouble(millisEnd.getValue());
         }
+        this.millisecondsDateEnd = this.initialMillisecondsDateEnd;
 
         // parse the note's MIDI pitch
         Attribute ptch = Helper.getAttribute("midi.pitch", xml);
@@ -90,11 +97,36 @@ public class Note {
     }
 
     /**
+     * undo all changes and set the note's initial values
+     */
+    public void reset() {
+        this.millisecondsDate = this.initialMillisecondsDate;
+        this.millisecondsDateEnd = this.initialMillisecondsDateEnd;
+        this.fixed = false;
+    }
+
+    /**
      * get the xml:id of the note
      * @return
      */
-    protected String getId() {
+    public String getId() {
         return this.xml.getAttributeValue("id", "http://www.w3.org/XML/1998/namespace");
+    }
+
+    /**
+     * read the initial milliseconds date of the note
+     * @return
+     */
+    public double getInitialMillisecondsDate() {
+        return this.initialMillisecondsDate;
+    }
+
+    /**
+     * read the initial milliseconds end date of the note
+     * @return
+     */
+    public double getInitialMillisecondsDateEnd() {
+        return this.initialMillisecondsDateEnd;
     }
 
     /**
@@ -181,7 +213,7 @@ public class Note {
      * access the original MSM element
      * @return
      */
-    protected Element getXml() {
+    public Element getXml() {
         return this.xml;
     }
 

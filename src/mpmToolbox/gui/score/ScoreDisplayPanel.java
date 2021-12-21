@@ -886,8 +886,11 @@ public class ScoreDisplayPanel extends WebPanel implements MouseWheelListener, M
      */
     @Override
     public void mouseMoved(MouseEvent mouseEvent) {
-        if (mouseEvent.isControlDown())     // if CTRL is pressed we are in pan & zoom mode and there is nothing to be done
+        if (mouseEvent.isControlDown()) {   // if CTRL is pressed we are in pan & zoom mode and there is nothing to be done
+            Element selectedElement = this.getOverlayElementAt(mouseEvent);         // get the overlay element at the mouse position
+            this.setCursor((selectedElement == null) ? Cursor.getDefaultCursor() : new Cursor(Cursor.HAND_CURSOR)); // change mouse cursor to hand if there is an overlay element
             return;
+        }
 
         switch (this.parent.currentInteractionMode) {
             case markNotes:
@@ -903,6 +906,8 @@ public class ScoreDisplayPanel extends WebPanel implements MouseWheelListener, M
                 break;
 
             case panAndZoom:
+                Element selectedElement = this.getOverlayElementAt(mouseEvent);         // get the overlay element at the mouse position
+                this.setCursor((selectedElement == null) ? Cursor.getDefaultCursor() : new Cursor(Cursor.HAND_CURSOR)); // change mouse cursor to hand if there is an overlay element
             default:
                 break;
         }
@@ -989,8 +994,6 @@ public class ScoreDisplayPanel extends WebPanel implements MouseWheelListener, M
      */
     @Override
     public void keyPressed(KeyEvent keyEvent) {
-//        if (keyEvent.isControlDown())
-//            this.parent.markNotesButton.setSelected(!this.parent.markNotesButton.isSelected());
     }
 
     /**
