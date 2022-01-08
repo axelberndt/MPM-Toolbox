@@ -1,6 +1,10 @@
 ### Version History
 
 
+#### v0.1.8
+- Some preparations in classes `SyncPlayer` and `SpectrogramPanel`.
+
+
 #### v0.1.7
 - Little edit in method `mpmToolbox.gui.score.ScoreDisplayPanel.mouseMoved()` that changes the mouse cursor to hand symbol when moved to a clickable overlay element.
 - Fixed potential division-by-zero bug in `mpmToolbox.gui.syncPlayer.SyncPlayer.PlaybackRunnable.run()`.

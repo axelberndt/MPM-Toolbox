@@ -332,6 +332,8 @@ public class SpectrogramPanel extends PianoRollPanel {
 
         private void updateSpectrogramImage(SpectrogramPanel parent) {
             parent.getRootPane().setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));   // change mouse cursor to busy
+            // TODO: instead of the above, start a new thread where the computation is done, and change the compute button to CANCEL for as long as the computation takes
+
             WindowFunction windowFunction;
             int windowLength = (int) this.windowLength.getValue();
             switch ((String) Objects.requireNonNull(this.windowFunctionChooser.getSelectedItem())) {

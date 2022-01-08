@@ -483,14 +483,15 @@ public class SyncPlayer extends WebPanel {
          * constructor
          */
         protected PlaybackRunnable() {
+            this.microsecAudioOffset = (long) ((double) skipMillisecondsInAudioPlayback.getValue()) * 1000;
+
             getAudioPlayer().stop();
             Audio selectedAudio = null;
             if (audioChooser.getSelectedItem() != null) {
                 selectedAudio = ((AudioChooserItem) audioChooser.getSelectedItem()).getValue();
-                if (getAudioPlayer().setAudioData(selectedAudio)) {
+                if (getAudioPlayer().setAudioData(selectedAudio))
                     this.audio = getAudioPlayer().getAudioClip();
-                    this.microsecAudioOffset = (long) ((double) skipMillisecondsInAudioPlayback.getValue()) * 1000;
-                } else
+                else
                     this.audio = null;
             } else
                 this.audio = null;
@@ -504,6 +505,18 @@ public class SyncPlayer extends WebPanel {
                 this.midi = selectedAudio.getAlignment().getExpressiveMsm().exportExpressiveMidi();
             else                                                                        // no performance selected
                 this.midi = null;
+
+            // TODO: the below is unfinished; the webspinner does not allow negative values, yet; the audio is unhandled
+            // if the offset is negative, we delay the MIDI instead of the audio
+//            if ((this.midi != null) && (this.microsecAudioOffset < 0)) {
+//                long midiOffset = Math.round((double) skipMillisecondsInAudioPlayback.getValue());
+//                for (Track track : this.midi.getSequence().getTracks()) {
+//                    for (int i=0; i < track.size(); ++i) {
+//                        MidiEvent e = track.get(i);
+//                        e.setTick(e.getTick() + midiOffset);
+//                    }
+//                }
+//            }
 
             this.midiIsLonger = (this.audio == null) || ((this.midi != null) && (this.midi.getMicrosecondLength() > (this.audio.getMicrosecondLength() - this.microsecAudioOffset)));
         }

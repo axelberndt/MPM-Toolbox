@@ -125,6 +125,7 @@ public class Audio extends meico.audio.Audio {
             try {
                 this.waveformImage = new WaveformImage(convertWaveform2Image(this.waveforms.get(channelNumber), leftmostSample, rightmostSample, width, height), channelNumber, leftmostSample, rightmostSample);
             } catch (ArrayIndexOutOfBoundsException | IllegalArgumentException e) {
+                e.printStackTrace();
                 this.waveformImage = null;
                 return true;
             }
@@ -138,6 +139,7 @@ public class Audio extends meico.audio.Audio {
                     BufferedImage img = convertWaveform2Image(waveform, leftmostSample, rightmostSample, width, heightSubdivision);  // draw the waveform to the image
                     channels.add(img);
                 } catch (ArrayIndexOutOfBoundsException | IllegalArgumentException e) {
+                    e.printStackTrace();
                     this.waveformImage = null;
                     return true;
                 }
