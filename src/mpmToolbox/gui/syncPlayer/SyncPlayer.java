@@ -12,11 +12,12 @@ import meico.midi.MidiPlayer;
 import meico.mpm.elements.Performance;
 import mpmToolbox.gui.ProjectPane;
 import mpmToolbox.gui.Settings;
+import mpmToolbox.gui.syncPlayer.utilities.AudioChooserItem;
+import mpmToolbox.gui.syncPlayer.utilities.PerformanceChooserItem;
 import mpmToolbox.projectData.Audio;
 import mpmToolbox.supplementary.Tools;
 
 import javax.sound.midi.*;
-import javax.sound.sampled.Clip;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ItemEvent;
@@ -30,26 +31,26 @@ import java.awt.event.MouseListener;
  * @author Axel Berndt
  */
 public class SyncPlayer extends WebPanel {
-    private final ProjectPane parent;                                   // a link to the parent project pane to access its data, midi player etc.
+    protected final ProjectPane parent;                                   // a link to the parent project pane to access its data, midi player etc.
 
-    private final WebButton playButton = new WebButton("\u25B6");       //  ◼ "\u25FC", ▶ "\u25B6"
-    private static final int sliderMax = 1000000;
-    private final WebSlider playbackSlider = new WebSlider(WebSlider.HORIZONTAL, 0, sliderMax, 0);  // the slider that indicates playback position
+    protected final WebButton playButton = new WebButton("\u25B6");       //  ◼ "\u25FC", ▶ "\u25B6"
+    protected static final int sliderMax = 1000000;
+    protected final WebSlider playbackSlider = new WebSlider(WebSlider.HORIZONTAL, 0, sliderMax, 0);  // the slider that indicates playback position
 
     private final AudioPlayer audioPlayer = new AudioPlayer();
     private final MidiPlayer midiPlayer = new MidiPlayer();
 
-    private final WebComboBox performanceChooser = new WebComboBox();
+    protected final WebComboBox performanceChooser = new WebComboBox();
     private final PerformanceChooserItem noPerformanceRendering = new PerformanceChooserItem("No performance rendering");
     private final PerformanceChooserItem rawPerformance = new PerformanceChooserItem(Performance.createPerformance("Play raw notes, no performance"));
-    private final PerformanceChooserItem alignmentPerformance = new PerformanceChooserItem("Alignment of currently chosen audio");
+    protected final PerformanceChooserItem alignmentPerformance = new PerformanceChooserItem("Alignment of currently chosen audio");
 
     private final WebComboBox midiPortChooser = new WebComboBox();
 
-    private final WebComboBox audioChooser = new WebComboBox();
-    private final WebSpinner skipMillisecondsInAudioPlayback = new WebSpinner(new SpinnerNumberModel(0L, 0L, 9999999999L, 1L));
+    protected final WebComboBox audioChooser = new WebComboBox();
+    protected final WebSpinner skipMillisecondsInAudioPlayback = new WebSpinner(new SpinnerNumberModel(0L, -9999999999L, 9999999999L, 1L));
 
-    private PlaybackRunnable runnable = null;
+    protected PlaybackRunnable runnable = null;
 
     /**
      * constructor
@@ -149,7 +150,7 @@ public class SyncPlayer extends WebPanel {
 
         // make the skip label, spinner and ms label
         WebLabel skipLabel = new WebLabel("skip:");
-        skipLabel.setToolTip("Skip initial silence in the audio recording.");
+        skipLabel.setToolTip("<html><center>Skip initial time in the audio recording.<br>Negative values are skipped from the MIDI performance rendering.</center></html>");
         skipLabel.setHorizontalAlignment(WebLabel.RIGHT);
         skipLabel.setPadding(Settings.paddingInDialogs / 4);
         Tools.addComponentToGridBagLayout(this, (GridBagLayout) this.getLayout(), skipLabel, 1, 1, 1, 1, 1.0, 1.0, 0, 0, GridBagConstraints.BOTH, GridBagConstraints.LINE_START);
@@ -399,7 +400,7 @@ public class SyncPlayer extends WebPanel {
             this.runnable.jumpTo(relativePosition);                     // jump to indicated position
         }
         else {
-            this.runnable = new PlaybackRunnable();
+            this.runnable = new PlaybackRunnable(this);
             this.runnable.start(relativePosition);                      // start the new runnable
         }
     }
@@ -416,7 +417,7 @@ public class SyncPlayer extends WebPanel {
             return;
 
         if (this.runnable == null)
-            this.runnable = new PlaybackRunnable();
+            this.runnable = new PlaybackRunnable(this);
 
         // compute relative position
         double timePosition = ((double) samplePosition / audio.getSampleRate()) * 1000000.0;    // sample position in microseconds
@@ -459,201 +460,5 @@ public class SyncPlayer extends WebPanel {
         if (this.audioChooser.getSelectedItem() == null)
             return null;
         return ((AudioChooserItem) this.audioChooser.getSelectedItem()).getValue();
-    }
-
-    /**
-     * This class represents the Runnable instance that the thread is running when
-     * aligning the playback slider position with the music and switching off the
-     * play button at the end of the playback.
-     * @author Axel Berndt
-     */
-    private class PlaybackRunnable implements Runnable {
-        private volatile Thread thread = null;
-        private volatile boolean terminate = false;
-
-        private double relativeMidiPlaybackPosition = 0.0;
-        private long audioPlaybackPosition = 0;
-        private long microsecAudioOffset = 0;
-
-        private final Midi midi;
-        private final Clip audio;
-        private final boolean midiIsLonger;
-
-        /**
-         * constructor
-         */
-        protected PlaybackRunnable() {
-            this.microsecAudioOffset = (long) ((double) skipMillisecondsInAudioPlayback.getValue()) * 1000;
-
-            getAudioPlayer().stop();
-            Audio selectedAudio = null;
-            if (audioChooser.getSelectedItem() != null) {
-                selectedAudio = ((AudioChooserItem) audioChooser.getSelectedItem()).getValue();
-                if (getAudioPlayer().setAudioData(selectedAudio))
-                    this.audio = getAudioPlayer().getAudioClip();
-                else
-                    this.audio = null;
-            } else
-                this.audio = null;
-
-            PerformanceChooserItem selectedPerformanceItem = (PerformanceChooserItem) performanceChooser.getSelectedItem();
-            if (selectedPerformanceItem == null)                                        // nothing selected
-                this.midi = null;
-            else if (selectedPerformanceItem.getValue() != null)                        // a performance is selected
-                this.midi = parent.getMsm().exportExpressiveMidi(selectedPerformanceItem.getValue(), true);
-            else if ((performanceChooser.getSelectedItem() == alignmentPerformance) && (selectedAudio != null)) // audio alignment is selected
-                this.midi = selectedAudio.getAlignment().getExpressiveMsm().exportExpressiveMidi();
-            else                                                                        // no performance selected
-                this.midi = null;
-
-            // TODO: the below is unfinished; the webspinner does not allow negative values, yet; the audio is unhandled
-            // if the offset is negative, we delay the MIDI instead of the audio
-//            if ((this.midi != null) && (this.microsecAudioOffset < 0)) {
-//                long midiOffset = Math.round((double) skipMillisecondsInAudioPlayback.getValue());
-//                for (Track track : this.midi.getSequence().getTracks()) {
-//                    for (int i=0; i < track.size(); ++i) {
-//                        MidiEvent e = track.get(i);
-//                        e.setTick(e.getTick() + midiOffset);
-//                    }
-//                }
-//            }
-
-            this.midiIsLonger = (this.audio == null) || ((this.midi != null) && (this.midi.getMicrosecondLength() > (this.audio.getMicrosecondLength() - this.microsecAudioOffset)));
-        }
-
-        /**
-         * initialize and start a new thread with this runnable
-         * @param relativeSliderPosition
-         */
-        protected void start(double relativeSliderPosition) {
-            if (((this.audio == null) && (this.midi == null)) || (this.thread != null))
-                return;
-
-            playButton.setText("\u25FC");                      // set the playButton's symbol to ◼
-            this.setPlaybackPositions(relativeSliderPosition);
-            this.thread = new Thread(this);
-            this.thread.start();
-        }
-
-        /**
-         * start those players that have data
-         */
-        private void startPlayers() {
-            if ((this.midi != null) && (this.relativeMidiPlaybackPosition < 1.0)) {
-                try {
-                    getMidiPlayer().play(this.midi, this.relativeMidiPlaybackPosition);   // start MIDI playback at the slider position
-                } catch (InvalidMidiDataException e) {
-                    e.printStackTrace();
-                }
-            }
-
-            if ((this.audio != null) && (this.audioPlaybackPosition < getAudioPlayer().getMicrosecondLength())) {
-                getAudioPlayer().setMicrosecondPosition(this.audioPlaybackPosition);
-                getAudioPlayer().play();
-            }
-        }
-
-        /**
-         * invoke this method to terminate the runnable and, thus, the thread
-         */
-        protected synchronized void stop() {
-            getMidiPlayer().stop();
-            getAudioPlayer().stop();
-            this.terminate = true;
-        }
-
-        /**
-         * signal the runnable to jump to another playback position
-         * @param relativeSliderPosition
-         */
-        protected synchronized void jumpTo(double relativeSliderPosition) {
-            if (!this.isPlaying())
-                return;
-
-            this.setPlaybackPositions(relativeSliderPosition);
-
-            if (this.audio != null) {
-                getAudioPlayer().pause();
-                getAudioPlayer().setAudioData(this.audio);
-                getAudioPlayer().setMicrosecondPosition(this.audioPlaybackPosition);
-                getAudioPlayer().play();
-            }
-
-            if (this.midi != null) {
-                try {
-                    getMidiPlayer().play(this.midi, this.relativeMidiPlaybackPosition);
-                } catch (InvalidMidiDataException e) {
-                    e.printStackTrace();
-                }
-            }
-        }
-
-        /**
-         * set the playback positions before starting playback
-         * @param relativeSliderPosition
-         */
-        private void setPlaybackPositions(double relativeSliderPosition) {
-            if (this.midiIsLonger) {
-                this.relativeMidiPlaybackPosition = relativeSliderPosition;
-                if (this.audio != null)
-                    this.audioPlaybackPosition = (long) (relativeSliderPosition * this.midi.getMicrosecondLength()) + this.microsecAudioOffset;
-            }
-            else {    // audio is longer
-                long effectiveAudioLength = getAudioPlayer().getMicrosecondLength() - this.microsecAudioOffset;
-                this.audioPlaybackPosition = (long) (relativeSliderPosition * effectiveAudioLength) + this.microsecAudioOffset;
-                if (this.midi != null)
-                    this.relativeMidiPlaybackPosition = ((double) this.audioPlaybackPosition - this.microsecAudioOffset) / this.midi.getMicrosecondLength();
-            }
-        }
-
-        /**
-         * indicates whether the playback ist still running
-         * @return
-         */
-        protected boolean isPlaying() {
-            return getAudioPlayer().isPlaying() || getMidiPlayer().isPlaying();
-        }
-
-        /**
-         * this defines what the thread actually does while running
-         */
-        @Override
-        public void run() {
-            this.startPlayers();
-
-            while (!this.terminate) {  // while the music plays
-//                this.playButton.setText("\u25FC");
-
-                // update playbackSlider
-                double relativePlaybackPosition;
-                if (this.midiIsLonger) {
-                    relativePlaybackPosition = getMidiPlayer().getRelativePosition();
-                } else {
-                    relativePlaybackPosition = (getAudioPlayer().getMicrosecondLength() <= this.microsecAudioOffset) ? 1.0 : (double) (getAudioPlayer().getMicrosecondPosition() - this.microsecAudioOffset) / (double) (getAudioPlayer().getMicrosecondLength() - this.microsecAudioOffset);
-                }
-
-                if ((playbackSlider.getValue() == sliderMax) || (!getAudioPlayer().isPlaying() && !getMidiPlayer().isPlaying())) {
-                    runnable = null;
-                    break;
-                }
-
-                if (!playbackSlider.getValueIsAdjusting())
-                    playbackSlider.setValue((int) (relativePlaybackPosition * sliderMax));
-
-                try {
-                    Thread.sleep(200L);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-            }
-
-            // playback stops, this thread must terminate, but before that, do some housekeeping
-            SwingUtilities.invokeLater(() -> {      // GUI operations must be done on the Event Dispatch Thread
-                if (!terminate && !playbackSlider.getValueIsAdjusting())   // if we reached the end of the music, i.e. playback was not terminated by interaction
-                    playbackSlider.setValue(0);     // set slider to start position ... in any other case just keep the slider position
-
-                playButton.setText("\u25B6");       //  ▶ "\u25B6"
-            });
-        }
     }
 }

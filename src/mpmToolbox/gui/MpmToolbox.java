@@ -237,7 +237,6 @@ public class MpmToolbox {
                 e.printStackTrace();
             }
         });
-        // TODO: open info dialog
         help.add(about);
 
         // put them all together

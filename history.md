@@ -2,7 +2,9 @@
 
 
 #### v0.1.8
-- Some preparations in classes `SyncPlayer` and `SpectrogramPanel`.
+- Meico update with new functionality to add a timing offset to `Midi` instances and improved audio waveform image rendering.
+- So far, the SyncPlayer (class `mpmToolbox.gui.syncPlayer.SyncPlayer` and its inner class `PlaybackRunnable`) allowed only positive audio offsets. Now it can also handle negative offsets. Instead of adding the offset time to the audio data it will be removed from the MIDI sequence.
+- Spectrogram computation is put into new class `mpmToolbox.gui.audio.utilities.SpectrogramComputation` which visualizes the progress in a dialog with progress bar. The process of spectrogram computation is now done in a separate thread via a `SwingWorker` derivative called `mpmToolbox.gui.audio.utilities.SpectrogramComputationWorker` that informs the progress bar and can be cancelled.
 
 
 #### v0.1.7

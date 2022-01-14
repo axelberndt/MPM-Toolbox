@@ -2,7 +2,6 @@ package mpmToolbox.gui.audio;
 
 import com.alee.laf.label.WebLabel;
 import com.alee.laf.menu.WebCheckBoxMenuItem;
-import com.alee.laf.menu.WebMenuItem;
 import com.alee.laf.menu.WebPopupMenu;
 import com.alee.laf.panel.WebPanel;
 import mpmToolbox.gui.msmTree.MsmTree;
@@ -19,7 +18,7 @@ import java.awt.event.*;
  * @author Axel Berndt
  */
 public class PianoRollPanel extends WebPanel implements ComponentListener, MouseListener, MouseMotionListener, MouseWheelListener {
-    protected final AudioDocumentData parent;
+    public final AudioDocumentData parent;
     protected final WebLabel noData;
     protected Point mousePosition = null;                   // this is to keep track of the mouse position and draw a cursor on the panel
     protected boolean mouseInThisPanel = false;             // this is set true when the mouse enters this panel and false if the mouse exits

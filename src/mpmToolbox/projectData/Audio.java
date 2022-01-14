@@ -1,19 +1,27 @@
 package mpmToolbox.projectData;
 
-import com.tagtraum.jipes.audio.LogFrequencySpectrum;
+import com.alee.extended.window.WebProgressDialog;
+import com.tagtraum.jipes.AbstractSignalProcessor;
+import com.tagtraum.jipes.SignalPipeline;
+import com.tagtraum.jipes.SignalPump;
+import com.tagtraum.jipes.audio.*;
 import com.tagtraum.jipes.math.WindowFunction;
+import com.tagtraum.jipes.universal.Mapping;
 import meico.msm.Msm;
-import meico.supplementary.ColorCoding;
+import mpmToolbox.gui.audio.utilities.SpectrogramImage;
+import mpmToolbox.gui.audio.utilities.WaveformImage;
 import mpmToolbox.projectData.alignment.Alignment;
 import nu.xom.Attribute;
 import nu.xom.Element;
 
 import javax.sound.sampled.UnsupportedAudioFileException;
+import javax.swing.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Map;
 
 /**
  * This class represents audio data in an MPM Toolbox project. It extends meico's Audio class.
@@ -113,6 +121,12 @@ public class Audio extends meico.audio.Audio {
      * @return true if image has changed
      */
     public boolean computeWaveformImage(int channelNumber, int leftmostSample, int rightmostSample, int width, int height) {
+        // the below lines are obsolete because of the later exception handling
+//        if ((height <= 0) || (width <= 0)) {
+//            this.waveformImage = null;
+//            return true;
+//        }
+
         // if the arguments are equal to those from the last rendering, we do not need to render a new waveform image
         if ((this.waveformImage != null)
                 && (this.waveformImage.getWidth() == width)
@@ -170,6 +184,57 @@ public class Audio extends meico.audio.Audio {
     }
 
     /**
+     * This computes a Contant Q Transform spectrogram and returns it as array of CQT slices.
+     *
+     * @param windowFunction
+     * @param hopSize
+     * @param minFrequency
+     * @param maxFrequency
+     * @param binsPerSemitone
+     * @param pump In other dsp frameworks the pump might be called dispatcher, it delivers the audio frames. The application can provide its own pump. Via the pump the application can cancel the processing which is useful in multithreaded environments.
+     * @param progressBar the progress bar to be updated and display the progress
+     * @return
+     */
+    public ArrayList<LogFrequencySpectrum> exportConstantQTransformSpectrogram(WindowFunction windowFunction, int hopSize, float minFrequency, float maxFrequency, int binsPerSemitone, SignalPump<AudioBuffer> pump, WebProgressDialog progressBar) throws IOException {
+        long startTime = System.currentTimeMillis();                    // we measure the time that the conversion consumes
+        System.out.println("\nComputing CQT spectrogram (window: " + windowFunction + ", hop size: " + hopSize + ", min freq: " + minFrequency + ", max freq: " + maxFrequency + ", bins per semitone: " + binsPerSemitone + ").");
+
+        int numSamples = this.getAudio().length / (2 * this.getChannels());
+        progressBar.setMaximum(numSamples);
+
+        SignalPipeline<AudioBuffer, LogFrequencySpectrum> cqtPipeline = new SignalPipeline<>(
+                new Mono(),                                             // if there are more than one channel, reduce them to mono
+                new SlidingWindow(windowFunction.getLength(), hopSize),
+                new Mapping<AudioBuffer>(AudioBufferFunctions.createMapFunction(windowFunction)),
+                new ConstantQTransform(minFrequency, maxFrequency, 12 * binsPerSemitone),
+                new AbstractSignalProcessor<LogFrequencySpectrum, ArrayList<LogFrequencySpectrum>>("specID") {  // aggregate the CQTs to a spectrum with id "specID" (needed to access it in the results)
+                    private final ArrayList<LogFrequencySpectrum> spectrogram = new ArrayList<>();
+
+                    @Override
+                    protected ArrayList<LogFrequencySpectrum> processNext(LogFrequencySpectrum input) throws IOException {
+                        this.spectrogram.add(input);
+                        SwingUtilities.invokeLater(() -> {
+                            int state = this.spectrogram.size() * hopSize;
+                            progressBar.setProgress(state);
+                            progressBar.setText((numSamples - state) + " samples left");
+                        });
+                        return this.spectrogram;
+                    }
+                }
+        );
+
+        AudioSignalSource source = new AudioSignalSource(meico.audio.Audio.convertByteArray2AudioInputStream(this.getAudio(), this.getFormat()));
+        pump.setSignalSource(source);                                   // in other dsp frameworks the pump might be called dispatcher, it delivers the audio frames
+        pump.add(cqtPipeline);
+        Map<Object, Object> results = pump.pump();
+
+        System.out.println("Computing CQT spectrogram finished. Time consumed: " + (System.currentTimeMillis() - startTime) + " milliseconds");
+
+        return (ArrayList<LogFrequencySpectrum>) results.get("specID");
+    }
+
+
+    /**
      * This triggers the computation of the spectrogram, and it's rendering to a SpectrogramImage. It can take some time!
      * @param windowFunction
      * @param hopSize
@@ -177,9 +242,11 @@ public class Audio extends meico.audio.Audio {
      * @param maxFrequency
      * @param binsPerSemitone
      * @param normalize
+     * @param pump the audio frame dispatcher
+     * @param progressBar
      * @return true if image has changed
      */
-    public boolean computeSpectrogram(WindowFunction windowFunction, int hopSize, float minFrequency, float maxFrequency, int binsPerSemitone, boolean normalize) {
+    public boolean computeSpectrogram(WindowFunction windowFunction, int hopSize, float minFrequency, float maxFrequency, int binsPerSemitone, boolean normalize, SignalPump<AudioBuffer> pump, WebProgressDialog progressBar) {
         // if the arguments are equal to those from the last time, we do not need to compute a new spectrogram
         if ((this.spectrogramImage != null)
                 && this.spectrogramImage.sameMetrics(windowFunction, hopSize, minFrequency, maxFrequency, binsPerSemitone)) {
@@ -191,9 +258,10 @@ public class Audio extends meico.audio.Audio {
             return false;
         }
 
+        this.spectrogramImage = null;
         ArrayList<LogFrequencySpectrum> spectrogram;
         try {
-            spectrogram = this.exportConstantQTransformSpectrogram(windowFunction, hopSize, minFrequency, maxFrequency, binsPerSemitone);
+            spectrogram = this.exportConstantQTransformSpectrogram(windowFunction, hopSize, minFrequency, maxFrequency, binsPerSemitone, pump, progressBar);
         } catch (IOException | NegativeArraySizeException | IllegalArgumentException e) {
             e.printStackTrace();
             return false;
@@ -209,82 +277,5 @@ public class Audio extends meico.audio.Audio {
      */
     public SpectrogramImage getSpectrogramImage() {
         return this.spectrogramImage;
-    }
-
-    /**
-     * This class is basically a BufferedImage with some additional information about the display metrics.
-     * @author Axel Berndt
-     */
-    public static class WaveformImage extends BufferedImage {
-        private final int channelNumber;        // index of the waveform/channel to be rendered to image; -1 means all channels
-        private final int leftmostSample;       // index of the first sample to be rendered to image
-        private final int rightmostSample;      // index of the last sample to be rendered to image
-
-        private WaveformImage(int width, int height, int imageType, int channelNumber, int leftmostSample, int rightmostSample) {
-            super(width, height, imageType);
-
-            this.channelNumber = channelNumber;
-            this.leftmostSample = leftmostSample;
-            this.rightmostSample = rightmostSample;
-        }
-
-        private WaveformImage(BufferedImage bi, int channelNumber, int leftmostSample, int rightmostSample) {
-            super(bi.getColorModel(), bi.getRaster(), bi.getColorModel().isAlphaPremultiplied(), null);
-
-            this.channelNumber = channelNumber;
-            this.leftmostSample = leftmostSample;
-            this.rightmostSample = rightmostSample;
-        }
-
-        private boolean sameMetrics(int channelNumber, int leftmostSample, int rightmostSample) {
-            return (this.channelNumber == channelNumber) && (this.leftmostSample == leftmostSample) && (this.rightmostSample == rightmostSample);
-        }
-    }
-
-    /**
-     * This class is basically a BufferedImage with some additional information about the spectrogram metrics.
-     * @author Axel Berndt
-     */
-    public static class SpectrogramImage extends BufferedImage {
-        private ArrayList<LogFrequencySpectrum> spectrogram = null; // the spectrogram of this audio data
-        private final WindowFunction windowFunction;
-        private final int hopSize;
-        private final float minFrequency;
-        private final float maxFrequency;
-        private final int binsPerSemitone;
-        private final boolean normalize;
-        private final int[] sampleLookup;
-
-        private SpectrogramImage(BufferedImage bi, WindowFunction windowFunction, int hopSize, float minFrequency, float maxFrequency, int binsPerSemitone, boolean normalize) {
-            super(bi.getColorModel(), bi.getRaster(), bi.getColorModel().isAlphaPremultiplied(), null);
-
-            this.windowFunction = windowFunction;
-            this.hopSize = hopSize;
-            this.minFrequency = minFrequency;
-            this.maxFrequency = maxFrequency;
-            this.binsPerSemitone = binsPerSemitone;
-            this.normalize = normalize;
-
-            this.sampleLookup = new int[this.getWidth()];
-            for (int i = 0; i < this.sampleLookup.length; ++i)
-                this.sampleLookup[i] = i * this.hopSize;
-        }
-
-        private SpectrogramImage(ArrayList<LogFrequencySpectrum> spectrogram, WindowFunction windowFunction, int hopSize, float minFrequency, float maxFrequency, int binsPerSemitone, boolean normalize) {
-            this(convertSpectrogramToImage(spectrogram, normalize, 0.1f, new ColorCoding(ColorCoding.INFERNO)), windowFunction, hopSize, minFrequency, maxFrequency, binsPerSemitone, normalize);
-            this.spectrogram = spectrogram;
-        }
-
-        private boolean sameMetrics(WindowFunction windowFunction, int hopSize, float minFrequency, float maxFrequency, int binsPerSemitone) {
-            return this.windowFunction.equals(windowFunction)
-                    && (this.hopSize == hopSize)
-                    && (this.minFrequency == minFrequency)
-                    && (this.maxFrequency == maxFrequency)
-                    && (this.binsPerSemitone == binsPerSemitone);
-        }
-
-        public ArrayList<LogFrequencySpectrum> getSpectrogram() {
-            return this.spectrogram;
-        }
     }
 }

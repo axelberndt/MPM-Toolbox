@@ -12,6 +12,8 @@ import meico.mpm.elements.Performance;
 import meico.supplementary.KeyValue;
 import mpmToolbox.gui.ProjectPane;
 import mpmToolbox.gui.Settings;
+import mpmToolbox.gui.audio.utilities.SpectrogramImage;
+import mpmToolbox.gui.audio.utilities.WaveformImage;
 import mpmToolbox.projectData.Audio;
 import mpmToolbox.projectData.alignment.Alignment;
 import mpmToolbox.supplementary.Tools;
@@ -274,7 +276,7 @@ public class AudioDocumentData extends DocumentData<WebPanel> {
      * a getter for the audio data that are currently displayed in the audio tab
      * @return
      */
-    protected Audio getAudio() {
+    public Audio getAudio() {
         return this.parent.getSyncPlayer().getSelectedAudio();
     }
 
@@ -284,7 +286,7 @@ public class AudioDocumentData extends DocumentData<WebPanel> {
      * @param height
      * @return
      */
-    protected Audio.WaveformImage getWaveformImage(int width, int height) {
+    protected WaveformImage getWaveformImage(int width, int height) {
         if (this.getAudio() == null)
             return null;
         Audio audio = this.getAudio();
@@ -296,7 +298,7 @@ public class AudioDocumentData extends DocumentData<WebPanel> {
      * return the audio's spectrogram image
      * @return
      */
-    protected Audio.SpectrogramImage getSpectrogramImage() {
+    public SpectrogramImage getSpectrogramImage() {
         if (this.getAudio() == null)
             return null;
         return this.parent.getSyncPlayer().getSelectedAudio().getSpectrogramImage();

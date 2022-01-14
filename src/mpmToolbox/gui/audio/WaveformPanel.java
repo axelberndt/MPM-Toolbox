@@ -1,11 +1,10 @@
 package mpmToolbox.gui.audio;
 
-import com.alee.laf.menu.WebCheckBoxMenuItem;
 import com.alee.laf.menu.WebMenu;
 import com.alee.laf.menu.WebMenuItem;
 import com.alee.laf.menu.WebPopupMenu;
 import mpmToolbox.gui.Settings;
-import mpmToolbox.projectData.Audio;
+import mpmToolbox.gui.audio.utilities.WaveformImage;
 import mpmToolbox.supplementary.Tools;
 
 import java.awt.*;
@@ -31,7 +30,7 @@ public class WaveformPanel extends PianoRollPanel {
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);                        // this ensures that the background is filled with the standard background color
 
-        Audio.WaveformImage waveformImage = this.parent.getWaveformImage(this.getWidth(), this.getHeight());
+        WaveformImage waveformImage = this.parent.getWaveformImage(this.getWidth(), this.getHeight());
         if (waveformImage == null)
             return;
 
