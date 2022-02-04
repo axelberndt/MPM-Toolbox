@@ -120,7 +120,6 @@ public class PianoRoll extends BufferedImage {
      * @param xEnd
      * @param y
      * @param note
-     * @return
      */
     protected void add(int xStart, int xEnd, int y, Note note) {
         float duration = xEnd - xStart;
