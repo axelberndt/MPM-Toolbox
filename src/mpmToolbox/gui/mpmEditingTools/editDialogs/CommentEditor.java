@@ -37,7 +37,7 @@ public class CommentEditor extends EditDialog<Comment> {
         this.text.setLineWrap(true);
         this.text.setWrapStyleWord(true);
         this.text.setInputPrompt("Enter Text");
-        this.text.setMinimumHeight(getFontMetrics(this.getFont()).getHeight() * 10);
+        this.text.setMinimumHeight(getFontMetrics(this.text.getFont()).getHeight() * 10);
         this.text.setPadding(Settings.paddingInDialogs);
         WebScrollPane textScroller = new WebScrollPane(this.text);
         textScroller.setMinimumHeight(this.text.getMinimumHeight());

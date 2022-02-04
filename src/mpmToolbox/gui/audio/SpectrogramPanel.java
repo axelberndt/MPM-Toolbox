@@ -60,6 +60,7 @@ public class SpectrogramPanel extends PianoRollPanel {
 
         g2.drawImage(spectrogramImage, this.horizontalOffset, 0, this.imageWidth, this.getHeight(), this);
         this.drawPianoRoll(g2);
+//        this.drawPlaybackCursor(g2);
 
         // draw the mouse cursor
         if (this.mousePosition != null) {
@@ -192,7 +193,7 @@ public class SpectrogramPanel extends PianoRollPanel {
 
                 // normalize or denormalize the spectrogram image
                 WebCheckBoxMenuItem normalize = new WebCheckBoxMenuItem("Normalize", this.spectrogramSpecs.normalize);
-                normalize.addChangeListener(changeEvent -> {
+                normalize.addActionListener(actionEvent -> {
                     this.spectrogramSpecs.normalize = normalize.isSelected();
                     this.spectrogramSpecs.updateSpectrogramImage();
                 });

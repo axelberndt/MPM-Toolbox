@@ -14,6 +14,7 @@ import mpmToolbox.gui.ProjectPane;
 import mpmToolbox.gui.Settings;
 import mpmToolbox.gui.audio.utilities.SpectrogramImage;
 import mpmToolbox.gui.audio.utilities.WaveformImage;
+import mpmToolbox.gui.mpmEditingTools.MpmEditingTools;
 import mpmToolbox.projectData.Audio;
 import mpmToolbox.projectData.alignment.Alignment;
 import mpmToolbox.supplementary.Tools;
@@ -34,17 +35,18 @@ public class AudioDocumentData extends DocumentData<WebPanel> {
 
     private final WaveformPanel waveform;
     private final SpectrogramPanel spectrogram;
-//    private final PianoRollPanel pianoRoll;
 
-    private int channelNumber = -1;                             // index of the waveform/channel to be rendered to image; -1 means all channels
-    private int leftmostSample = -1;                            // index of the first sample to be rendered to image
-    private int rightmostSample = -1;                           // index of the last sample to be rendered to image
+    private int channelNumber = -1;                                 // index of the waveform/channel to be rendered to image; -1 means all channels
+    private int leftmostSample = -1;                                // index of the first sample to be rendered to image
+    private int rightmostSample = -1;                               // index of the last sample to be rendered to image
+//    private int playbackSamplePos = -1;
 
-    private Alignment alignment;                                // this is the alignment with the piano roll overlay used in the sub-panels
+    private Alignment alignment;                                    // this is the alignment with the piano roll overlay used in the sub-panels
 
-    private final WebComboBox partChooser = new WebComboBox();  // with this combobox the user can select whether all musical part or only on individual part should be displayed in the piano roll overlay
+    private final WebComboBox partChooser = new WebComboBox();      // with this combobox the user can select whether all musical part or only on individual part should be displayed in the piano roll overlay
 //    private final WebSwitch globalLocalSwitch = new WebSwitch();
-    private final WebButton resetAlignment = new WebButton("Reset Alignment");
+    private final WebButton resetButton = new WebButton("Reset");   // this button re-initializes the alignment
+    private final WebButton perf2AlignConvert = new WebButton("<html>Alignment &rarr; Performance</html>"); // this is the button to convert a performance to an alignment and vice versa
 
     /**
      * constructor
@@ -57,10 +59,10 @@ public class AudioDocumentData extends DocumentData<WebPanel> {
         this.makePartChooser();
 //        this.makeGlobalLocalSwitch();
         this.makeResetButton();
+        this.makePerf2AlignButton();
 
         this.waveform = new WaveformPanel(this);
         this.spectrogram = new SpectrogramPanel(this);
-//        this.pianoRoll = new PianoRollPanel(this);
 
         this.setComponent(this.audioPanel);
         this.setClosable(false);
@@ -118,8 +120,9 @@ public class AudioDocumentData extends DocumentData<WebPanel> {
      * define the button to reset the alignment
      */
     private void makeResetButton() {
-        this.resetAlignment.setPadding(Settings.paddingInDialogs);
-        this.resetAlignment.addActionListener(actionEvent -> {
+        this.resetButton.setPadding(Settings.paddingInDialogs);
+        this.resetButton.setToolTip("Re-initialize the piano roll.");
+        this.resetButton.addActionListener(actionEvent -> {
             this.alignment.reset();
 
             // in case of audio alignment being reset, scale the initial alignment to the milliseconds length of the audio; so all notes are visible and in a good starting position
@@ -135,11 +138,55 @@ public class AudioDocumentData extends DocumentData<WebPanel> {
     }
 
     /**
+     * define the button to convert a performance to an alignment and vice versa
+     */
+    private void makePerf2AlignButton() {
+        this.perf2AlignConvert.setPadding(Settings.paddingInDialogs);
+        this.perf2AlignConvert.setToolTip("<html>Convert audio alignment to performance or vice versa.</html>");
+        this.perf2AlignConvert.addActionListener(actionEvent -> {
+            if (this.getParent().getSyncPlayer().isAudioAlignmentSelected()) {          // if an audio alignment is selected, we create a performance from the current timing data
+                Performance performance = MpmEditingTools.createPerformanceDialog();    // open dialog for performance creation
+                if (!this.getParent().getMpm().addPerformance(performance))             // add the performance to the MPM
+                    return;                                                             // if performance adding failed, cancel
+
+                this.getAlignment().exportPerformance(performance);
+
+                // update MPM tree and SyncPlayer, and select the performance in both
+                this.getParent().getMpmTree().setSelectedNode(this.getParent().getMpmTree().reloadRootNode().findChildNode(performance, false));
+                this.getParent().getSyncPlayer().addPerformance(performance, true);     // the SyncPlayer must update its performance chooser
+            } else {                                                                    // if a performance is selected,
+                this.getAudio().setAlignment(this.getAlignment());                      // we transfer the current timing data to the audio alignment
+                this.getParent().getSyncPlayer().selectAlignmentPerformance();          // select the alignment in the SyncPlayer so any further interaction in the piano roll will be on the alignment and not on the performance
+            }
+        });
+    }
+
+//    public void setPlaybackPosition(double relativePosition) {
+//        if (this.getAudio() == null)
+//            return;
+//
+//        this.playbackSamplePos = (int) Math.round(this.getAudio().getNumberOfSamples() * relativePosition);
+//        this.repaintAllComponents();
+//    }
+//
+//    protected Double getRelativePlaybackPosInDisplay() {
+//        if ((this.getAudio() == null) || (this.playbackSamplePos < this.getLeftmostSample()) || (this.playbackSamplePos > this.getRightmostSample()))
+//            return null;
+//
+//        return (double)(this.playbackSamplePos - this.getLeftmostSample()) / (this.getRightmostSample() - this.getLeftmostSample());
+//    }
+
+    /**
      * this enables or disables the part chooser according to whether there is a performance selected in the syncPlayer
      */
     public void updateAudioTools() {
-        this.partChooser.setEnabled(this.alignment != null);
-        this.resetAlignment.setEnabled(this.alignment != null);
+        boolean enable = (this.getAudio() != null) && (this.alignment != null);
+
+        this.partChooser.setEnabled(enable);
+        this.resetButton.setEnabled(enable);
+
+        this.perf2AlignConvert.setEnabled(enable);
+        this.perf2AlignConvert.setText((this.getParent().getSyncPlayer().getSelectedPerformance() == null) ? "<html>Alignment &rarr; Performance</html>" : "<html>Performance &rarr; Alignment</html>");
     }
 
     /**
@@ -164,7 +211,6 @@ public class AudioDocumentData extends DocumentData<WebPanel> {
         splitPane.setContinuousLayout(true);                                        // when the divider is moved the content is continuously redrawn
         splitPane.add(this.waveform);
         splitPane.add(this.spectrogram);
-//        splitPane.add(this.pianoRoll);    // TODO: this pane will be used to display and edit timing curves
 
         GridBagLayout gridBagLayout = (GridBagLayout) this.audioPanel.getLayout();
         Tools.addComponentToGridBagLayout(this.audioPanel, gridBagLayout, splitPane, 0, 0, 1, 1, 1.0, 1.0, 0, 0, GridBagConstraints.BOTH, GridBagConstraints.CENTER);
@@ -174,7 +220,8 @@ public class AudioDocumentData extends DocumentData<WebPanel> {
         GridBagLayout buttonLayout = (GridBagLayout) buttonPanel.getLayout();
         Tools.addComponentToGridBagLayout(buttonPanel, buttonLayout, this.partChooser, 0, 1, 1, 1, 1.0, 0.0, 0, 0, GridBagConstraints.NONE, GridBagConstraints.CENTER);
 //        Tools.addComponentToGridBagLayout(buttonPanel, buttonLayout, this.globalLocalSwitch, 1, 1, 1, 1, 1.0, 0.0, 0, 0, GridBagConstraints.NONE, GridBagConstraints.CENTER);
-        Tools.addComponentToGridBagLayout(buttonPanel, buttonLayout, this.resetAlignment, 2, 1, 1, 1, 1.0, 0.0, 0, 0, GridBagConstraints.NONE, GridBagConstraints.CENTER);
+        Tools.addComponentToGridBagLayout(buttonPanel, buttonLayout, this.resetButton, 2, 1, 1, 1, 1.0, 0.0, 0, 0, GridBagConstraints.NONE, GridBagConstraints.CENTER);
+        Tools.addComponentToGridBagLayout(buttonPanel, buttonLayout, this.perf2AlignConvert, 3, 1, 1, 1, 1.0, 0.0, 0, 0, GridBagConstraints.NONE, GridBagConstraints.CENTER);
         Tools.addComponentToGridBagLayout(this.audioPanel, gridBagLayout, buttonPanel, 0, 1, 1, 1, 1.0, 0.0, 0, 0, GridBagConstraints.NONE, GridBagConstraints.CENTER);
     }
 
@@ -194,14 +241,6 @@ public class AudioDocumentData extends DocumentData<WebPanel> {
         return this.spectrogram;
     }
 
-//    /**
-//     * a getter for the piano roll panel
-//     * @return
-//     */
-//    protected PianoRollPanel getPianoRollPanel() {
-//        return this.pianoRoll;
-//    }
-
     /**
      * The sequence at which the child components update their visualizations is important.
      * This method takes care of it.
@@ -209,7 +248,6 @@ public class AudioDocumentData extends DocumentData<WebPanel> {
     protected void repaintAllComponents() {
         this.waveform.repaint();
         this.spectrogram.repaint();
-//        this.pianoRoll.repaint();
     }
 
     /**
@@ -219,7 +257,6 @@ public class AudioDocumentData extends DocumentData<WebPanel> {
     protected void communicateMouseEventToAllComponents(MouseEvent e) {
         this.waveform.setMousePosition(e);
         this.spectrogram.setMousePosition(e);
-//        this.pianoRoll.setMousePosition(e);
     }
 
     /**

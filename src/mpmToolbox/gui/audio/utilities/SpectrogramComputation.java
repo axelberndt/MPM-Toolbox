@@ -1,5 +1,6 @@
 package mpmToolbox.gui.audio.utilities;
 
+import com.alee.api.annotations.NotNull;
 import com.alee.extended.window.WebProgressDialog;
 import com.alee.laf.button.WebButton;
 import com.alee.laf.panel.WebPanel;
@@ -22,7 +23,7 @@ public class SpectrogramComputation extends WebProgressDialog {
     /**
      * constructor
      */
-    public SpectrogramComputation(WindowFunction windowFunction, int hopSize, float minFreq, float maxFreq, int bins, boolean normalize, SpectrogramSpecs parent) {
+    public SpectrogramComputation(@NotNull WindowFunction windowFunction, int hopSize, float minFreq, float maxFreq, int bins, boolean normalize, @NotNull SpectrogramSpecs parent) {
         super("Computing Spectrogram");
 
         this.parent = parent;

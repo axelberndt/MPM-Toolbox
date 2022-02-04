@@ -1,6 +1,19 @@
 ### Version History
 
 
+#### v0.1.9
+- Added a MIDI Master Volume slider to the SyncPlayer. It is relevant when audio recording and MIDI performance are played synchronously and the MIDI part is too loud. However, Master Volume Control is a MIDI SysEx message and not all devices support it. MPM Toolbox's default synthesizer, Gervill, fortunately does.
+- Bugfix in method `mpmToolbox.gui.mpmEditingTools.CommentEditor.makeContentPanel()`. It was unable to query the font metrics for proper initialization.
+- All editing functionality in classes `mpmToolbox.gui.mpmEditingTools.MpmEditingTools` and `mpmToolbox.gui.mpmEditingTools.PlaceAndCreateContextMenu` has been extended, so the piano roll visualization in the audio frame (class `mpmToolbox.gui.audio.AudioDocumentData`) is kept up to date.
+- Audio-to-MSM alignments are initially scaled to fit the length of the audio. however, whenever the user edits the alignment, the initial scaling gets lost. Therefore, the last sounding note is now set fixed (pinned to its position after scaling).
+- The notes in the piano roll are displayed with a slight alpha fade so that onsets are easier to see when subsequent notes of the same pitch are displayed.
+- Enhancement in `mpmToolbox.projectData.alignment.Alignment`. 
+  - Method `updateTiming()` has been simplified and code was moved to method `updateTimingTransformation()` as this functionality is also required aside from rendering.
+  - The last step in method `updateTimingTransformation()` is a rather dull way to handle the timing after the last fixed note. The enhancement will now continue with the tempo from before the last fixed note.
+  - New functionality in class `mpmToolbox.gui.audio.AudioDocumentData` and `mpmToolbox.projectData.alignment.Alignment`, resp., to transform an alignment to an `meico.mpm.elements.Performance` and vice versa.
+  - In the process of the aforementioned addition, corresponding new functionality has been added via methods `exportTiming()` and `exportArticulation`. These transform the timing data of the alignment to an MPM tempo, asynchrony and articulation map.
+
+
 #### v0.1.8
 - Meico update with new functionality to add a timing offset to `Midi` instances and improved audio waveform image rendering.
 - So far, the SyncPlayer (class `mpmToolbox.gui.syncPlayer.SyncPlayer` and its inner class `PlaybackRunnable`) allowed only positive audio offsets. Now it can also handle negative offsets. Instead of adding the offset time to the audio data it will be removed from the MIDI sequence.

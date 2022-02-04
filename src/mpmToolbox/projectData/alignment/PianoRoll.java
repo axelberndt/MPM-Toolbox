@@ -83,10 +83,11 @@ public class PianoRoll extends BufferedImage {
      * as this method does not check this!
      * @param x
      * @param y
+     * @param alphaFade a value in [0, 1] that is multiplied with the default alpha value; with this, the fading of the note throughout its duration is realized
      * @param note
      * @return
      */
-    private void add(int x, int y, @NotNull Note note) {
+    private void add(int x, int y, float alphaFade, @NotNull Note note) {
         // this first check is not necessary as far as the invoking method does this already
 //        if ((x < 0) || (x >= this.getWidth()) || (y < 0) || (y >= this.getHeight()) || (note == null))
 //            return;
@@ -106,7 +107,7 @@ public class PianoRoll extends BufferedImage {
         int r = Math.min(255, Math.round((((255f - rgba[0]) * color.getRed()) / 255) + rgba[0]));
         int g = Math.min(255, Math.round((((255f - rgba[1]) * color.getGreen()) / 255) + rgba[1]));
         int b = Math.min(255, Math.round((((255f - rgba[2]) * color.getBlue()) / 255) + rgba[2]));
-        int a = Math.min(255, Math.round((((255f - rgba[3]) * color.getAlpha()) / 255) + rgba[3]));
+        int a = Math.min(255, Math.round((((255f - rgba[3]) * color.getAlpha() * alphaFade) / 255) + rgba[3]));
 //        int a = Settings.scoreNoteColor.getAlpha();         // for a constant transparency
 
         this.setRGB(x, y, new Color(r, g, b, a).getRGB());  // add the color
@@ -122,8 +123,12 @@ public class PianoRoll extends BufferedImage {
      * @return
      */
     protected void add(int xStart, int xEnd, int y, Note note) {
-        for (int x = xStart; x < xEnd; ++x)     // for each pixel from (xStar, y) to (xEnd, y)
-            this.add(x, y, note);
+        float duration = xEnd - xStart;
+        for (int x = xStart; x < xEnd; ++x) {   // for each pixel from (xStar, y) to (xEnd, y)
+            float alphaFade = (float) Math.pow((xEnd - x) / duration, 0.2);
+            this.add(x, y, alphaFade, note);
+//            this.add(x, y, 1f, note);
+        }
     }
 
     /**

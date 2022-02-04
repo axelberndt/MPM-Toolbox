@@ -259,7 +259,7 @@ public class ProjectPane extends WebDockablePane {
         this.mpmDockableFrame.setMpm(mpm);
 
         for (Performance performance : mpm.getAllPerformances())
-            this.syncPlayer.addPerformance(performance);
+            this.syncPlayer.addPerformance(performance, false);
     }
 
     /**

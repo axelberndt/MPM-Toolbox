@@ -231,4 +231,13 @@ public class Note {
         out.addAttribute(new Attribute("fixed", Boolean.toString(this.fixed)));
         return out;
     }
+
+    /**
+     * print the note data
+     * @return
+     */
+    @Override
+    public String toString() {
+        return "Note: " + this.getXml().toXML() + "\n      pitch " + this.getPitch() + ", velocity " + this.getVelocity() + ", onset (" + this.getInitialMillisecondsDate() + " ms -> " + this.getMillisecondsDate() + " ms), offset (" + this.getInitialMillisecondsDateEnd() + " ms -> " + this.getMillisecondsDateEnd() + " ms)";
+    }
 }

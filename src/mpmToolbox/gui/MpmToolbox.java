@@ -11,7 +11,6 @@ import com.alee.skin.dark.WebDarkSkin;
 import meico.mei.Mei;
 import meico.midi.Midi;
 import meico.mpm.Mpm;
-import meico.mpm.elements.Performance;
 import meico.msm.Msm;
 import meico.xml.XmlBase;
 import mpmToolbox.Main;

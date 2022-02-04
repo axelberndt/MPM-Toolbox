@@ -1,5 +1,6 @@
 package mpmToolbox.gui.audio.utilities;
 
+import com.alee.api.annotations.NotNull;
 import com.tagtraum.jipes.SignalPump;
 import com.tagtraum.jipes.audio.AudioBuffer;
 import com.tagtraum.jipes.math.WindowFunction;
@@ -27,7 +28,7 @@ public class SpectrogramComputationWorker extends SwingWorker<SpectrogramImage, 
     /**
      * constructor
      */
-    public SpectrogramComputationWorker(WindowFunction windowFunction, int hopSize, float minFreq, float maxFreq, int bins, boolean normalize, SpectrogramComputation parent) {
+    public SpectrogramComputationWorker(@NotNull WindowFunction windowFunction, int hopSize, float minFreq, float maxFreq, int bins, boolean normalize, @NotNull SpectrogramComputation parent) {
         super();
         this.windowFunction = windowFunction;
         this.hopSize = hopSize;

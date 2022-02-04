@@ -19,7 +19,7 @@ import java.awt.event.*;
  */
 public class PianoRollPanel extends WebPanel implements ComponentListener, MouseListener, MouseMotionListener, MouseWheelListener {
     public final AudioDocumentData parent;
-    protected final WebLabel noData;
+    protected final WebLabel noData;                        // to be displayed when no data is there to be visualized
     protected Point mousePosition = null;                   // this is to keep track of the mouse position and draw a cursor on the panel
     protected boolean mouseInThisPanel = false;             // this is set true when the mouse enters this panel and false if the mouse exits
     protected final NoteDrag dragGesture = new NoteDrag();  // this is set true when a track gesture is started, so that even iv the mouse moves over other notes or free space, only the initial note is dragged
@@ -74,6 +74,16 @@ public class PianoRollPanel extends WebPanel implements ComponentListener, Mouse
         PianoRoll pianoRoll = this.retrievePianoRoll(fromMilliseconds, toMilliseconds, this.getWidth(), 128);
         g2d.drawImage(pianoRoll, 0, this.getHeight(), this.getWidth(), -this.getHeight(), this);
     }
+
+//    protected void drawPlaybackCursor(Graphics2D g2d) {
+//        Double pos = this.parent.getRelativePlaybackPosInDisplay();
+//        if (pos == null)
+//            return;
+//
+//        int x = (int) Math.round(this.getWidth() * pos);
+//        g2d.setColor(Color.GRAY);
+//        g2d.drawLine(x, 0, x, this.getHeight());
+//    }
 
     /**
      * retrieve the piano roll from the parent

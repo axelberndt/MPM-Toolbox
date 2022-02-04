@@ -182,13 +182,13 @@ public class PlaybackRunnable implements Runnable {
                 relativePlaybackPosition = (this.syncPlayer.getAudioPlayer().getMicrosecondLength() <= this.microsecAudioOffset) ? 1.0 : (double) (this.syncPlayer.getAudioPlayer().getMicrosecondPosition() - this.microsecAudioOffset) / (double) (this.syncPlayer.getAudioPlayer().getMicrosecondLength() - this.microsecAudioOffset);
             }
 
-            if ((this.syncPlayer.playbackSlider.getValue() == SyncPlayer.sliderMax) || (!this.syncPlayer.getAudioPlayer().isPlaying() && !this.syncPlayer.getMidiPlayer().isPlaying())) {
+            if ((this.syncPlayer.playbackSlider.getValue() == SyncPlayer.AUDIO_SLIDER_MAX) || (!this.syncPlayer.getAudioPlayer().isPlaying() && !this.syncPlayer.getMidiPlayer().isPlaying())) {
                 this.syncPlayer.runnable = null;
                 break;
             }
 
             if (!this.syncPlayer.playbackSlider.getValueIsAdjusting())
-                this.syncPlayer.playbackSlider.setValue((int) (relativePlaybackPosition * SyncPlayer.sliderMax));
+                this.syncPlayer.playbackSlider.setValue((int) (relativePlaybackPosition * SyncPlayer.AUDIO_SLIDER_MAX));
 
             try {
                 Thread.sleep(200L);

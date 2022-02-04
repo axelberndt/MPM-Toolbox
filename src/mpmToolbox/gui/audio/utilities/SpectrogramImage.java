@@ -20,7 +20,7 @@ public class SpectrogramImage extends BufferedImage {
     private final float maxFrequency;
     private final int binsPerSemitone;
     public final boolean normalize;
-    private final int[] sampleLookup;
+//    private final int[] sampleLookup;
 
     public SpectrogramImage(BufferedImage bi, WindowFunction windowFunction, int hopSize, float minFrequency, float maxFrequency, int binsPerSemitone, boolean normalize) {
         super(bi.getColorModel(), bi.getRaster(), bi.getColorModel().isAlphaPremultiplied(), null);
@@ -32,9 +32,9 @@ public class SpectrogramImage extends BufferedImage {
         this.binsPerSemitone = binsPerSemitone;
         this.normalize = normalize;
 
-        this.sampleLookup = new int[this.getWidth()];
-        for (int i = 0; i < this.sampleLookup.length; ++i)
-            this.sampleLookup[i] = i * this.hopSize;
+//        this.sampleLookup = new int[this.getWidth()];
+//        for (int i = 0; i < this.sampleLookup.length; ++i)
+//            this.sampleLookup[i] = i * this.hopSize;
     }
 
     public SpectrogramImage(ArrayList<LogFrequencySpectrum> spectrogram, WindowFunction windowFunction, int hopSize, float minFrequency, float maxFrequency, int binsPerSemitone, boolean normalize) {

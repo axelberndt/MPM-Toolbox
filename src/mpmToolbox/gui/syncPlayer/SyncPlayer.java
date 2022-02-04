@@ -18,6 +18,8 @@ import mpmToolbox.projectData.Audio;
 import mpmToolbox.supplementary.Tools;
 
 import javax.sound.midi.*;
+import javax.sound.sampled.Clip;
+import javax.sound.sampled.FloatControl;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ItemEvent;
@@ -34,8 +36,12 @@ public class SyncPlayer extends WebPanel {
     protected final ProjectPane parent;                                   // a link to the parent project pane to access its data, midi player etc.
 
     protected final WebButton playButton = new WebButton("\u25B6");       //  ◼ "\u25FC", ▶ "\u25B6"
-    protected static final int sliderMax = 1000000;
-    protected final WebSlider playbackSlider = new WebSlider(WebSlider.HORIZONTAL, 0, sliderMax, 0);  // the slider that indicates playback position
+
+    protected static final int AUDIO_SLIDER_MAX = 1000000000;
+    protected final WebSlider playbackSlider = new WebSlider(WebSlider.HORIZONTAL, 0, AUDIO_SLIDER_MAX, 0);  // the slider that indicates playback position
+
+    protected static final int MIDI_MASTER_VOLUME_MAX = 16383;
+    private final WebSlider midiMasterVolume = new WebSlider(WebSlider.VERTICAL, 0, MIDI_MASTER_VOLUME_MAX, MIDI_MASTER_VOLUME_MAX);
 
     private final AudioPlayer audioPlayer = new AudioPlayer();
     private final MidiPlayer midiPlayer = new MidiPlayer();
@@ -111,6 +117,7 @@ public class SyncPlayer extends WebPanel {
 
         // make the MIDI port chooser
         this.updateMidiPortList();
+        this.sendMidiMasterVolume(this.midiMasterVolume.getValue());                        // ensure that the device plays with the correct volume
         this.midiPortChooser.setPadding(Settings.paddingInDialogs / 4);
         this.midiPortChooser.setToolTip("Select the MIDI port to output performance rendering. Default is \"Gervill\".");
         this.midiPortChooser.addActionListener(actionEvent -> {
@@ -122,6 +129,7 @@ public class SyncPlayer extends WebPanel {
                     this.midiPlayer.setMidiOutputPort(this.midiPlayer.getSynthesizer());    // Gervill was chosen, hence, use the midiPlayer's native one instead of a new instance
                 else                                                                        // something else was chosen
                     this.midiPlayer.setMidiOutputPort(MidiSystem.getMidiDevice(item));      // switch to it
+                this.sendMidiMasterVolume(this.midiMasterVolume.getValue());                // ensure that the device plays with the correct master volume (if supported)
             } catch (MidiUnavailableException e) {
                 e.printStackTrace();
             }
@@ -166,9 +174,10 @@ public class SyncPlayer extends WebPanel {
         // make the play button
         this.playButton.setPadding((int) (Settings.paddingInDialogs * 1.5));
         this.playButton.addActionListener(actionEvent -> this.triggerPlayback());
-        Tools.addComponentToGridBagLayout(this, (GridBagLayout) this.getLayout(), this.playButton, 4, 0, 1, 2, 1.0, 1.0, 0, 0, GridBagConstraints.BOTH, GridBagConstraints.LINE_START);
+        Tools.addComponentToGridBagLayout(this, (GridBagLayout) this.getLayout(), this.playButton, 5, 0, 1, 2, 1.0, 1.0, 0, 0, GridBagConstraints.BOTH, GridBagConstraints.LINE_START);
 
-        // make the slider
+        // make the sliders
+        this.makeMidiMasterVolumeSlider();
         this.makeSlider();
     }
 
@@ -222,9 +231,33 @@ public class SyncPlayer extends WebPanel {
     /**
      * add a performance to the performance chooser
      * @param performance
+     * @param select set true to select the newly added item
      */
-    public void addPerformance(Performance performance) {
-        this.performanceChooser.addItem(new PerformanceChooserItem(performance));
+    public void addPerformance(Performance performance, boolean select) {
+        PerformanceChooserItem item = new PerformanceChooserItem(performance);
+        this.performanceChooser.addItem(item);
+        if (select)
+            this.performanceChooser.setSelectedItem(item);
+    }
+
+    /**
+     * select a performance programmatically
+     * @param performance
+     */
+    public void selectPerformance(Performance performance) {
+        for (int i = 0; i < this.performanceChooser.getItemCount(); ++i) {
+            PerformanceChooserItem item = (PerformanceChooserItem) this.performanceChooser.getItemAt(i);
+            if (item.getValue() == performance) {
+                this.performanceChooser.setSelectedItem(item);
+            }
+        }
+    }
+
+    /**
+     * select the alignment to the currently chosen audio object; if no audio is selected, this has no effect
+     */
+    public void selectAlignmentPerformance() {
+        this.performanceChooser.setSelectedItem(this.alignmentPerformance);
     }
 
     /**
@@ -237,6 +270,7 @@ public class SyncPlayer extends WebPanel {
             PerformanceChooserItem item = (PerformanceChooserItem) this.performanceChooser.getItemAt(i);
             if (item.getValue() == performance) {
                 item.setKey(performance.getName());
+                this.performanceChooser.repaint();
                 return;
             }
         }
@@ -344,11 +378,65 @@ public class SyncPlayer extends WebPanel {
     }
 
     /**
+     * reads the current value of the MIDI Master Volume slider and sends it to the currently chosen MIDI player's synthesizer
+     * @param volume value in [0, 16383]
+     */
+    private void sendMidiMasterVolume(int volume) {
+        // create a SysEx Master Volume message, see http://midi.teragonaudio.com/tech/midispec/mastrvol.htm
+        byte[] data = new byte[] {
+                0x7F, 0x7F, 0x04, 0x01,
+                (byte) (volume & 0x7f),                 // Bits 0 to 6 of a 14-bit volume
+                (byte) (volume >> 7)};                  // Bits 7 to 13 of a 14-bit volume
+        try {
+            SysexMessage message = new SysexMessage(0xF0, data, data.length);
+            this.getMidiPlayer().getSynthesizer().getReceiver().send(message, -1);  // send the message now
+        } catch (InvalidMidiDataException | MidiUnavailableException e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * sets the volume of the current audio clip
+     * @param level value in [0.0, 1.0]
+     */
+    private void setAudioVolume(float level) {
+        Clip clip = this.getAudioPlayer().getAudioClip();
+        if (clip == null)
+            return;
+
+        FloatControl volume = (FloatControl) clip.getControl(FloatControl.Type.MASTER_GAIN);
+        if (volume == null)
+            return;
+
+        volume.setValue((level * (volume.getMaximum() - volume.getMinimum()) + volume.getMinimum()));
+    }
+
+    /**
+     * create a MIDI Master Volume slider that sends SysEx messages when changed
+     */
+    private void makeMidiMasterVolumeSlider() {
+        this.midiMasterVolume.setPaintTicks(false);
+        this.midiMasterVolume.setPaintLabels(false);
+        this.midiMasterVolume.setMinimumHeight(1);
+        this.midiMasterVolume.setPreferredHeight(1);
+        this.midiMasterVolume.setMaximumHeight(1);
+        this.midiMasterVolume.setPadding(4);
+        this.midiMasterVolume.setToolTip("<html><center>MIDI Master Volume<br>Not supported by some MIDI devices.</center></html>");
+        this.midiMasterVolume.addChangeListener(changeEvent -> {
+            int midiVolume = this.midiMasterVolume.getValue();
+            this.sendMidiMasterVolume(midiVolume);
+//            float audioVolume = (float) (MIDI_MASTER_VOLUME_MAX - midiVolume) / MIDI_MASTER_VOLUME_MAX;   // TODO: this might be used to fade between MIDI and audio
+//            this.setAudioVolume(audioVolume);
+        });
+        Tools.addComponentToGridBagLayout(this, (GridBagLayout) this.getLayout(), this.midiMasterVolume, 3, 0, 1, 1, 0.1, 0.1, 0, 0, GridBagConstraints.BOTH, GridBagConstraints.LINE_START);
+    }
+
+    /**
      * customize the playback slider
      */
     private void makeSlider() {
-        this.playbackSlider.setMajorTickSpacing(sliderMax / 4);
-        this.playbackSlider.setMinorTickSpacing(sliderMax / 16);
+        this.playbackSlider.setMajorTickSpacing(AUDIO_SLIDER_MAX / 4);
+        this.playbackSlider.setMinorTickSpacing(AUDIO_SLIDER_MAX / 16);
         this.playbackSlider.setPaintTicks(true);
         Tools.makeSliderSetToClickPosition(this.playbackSlider);
 
@@ -363,7 +451,7 @@ public class SyncPlayer extends WebPanel {
             @Override
             public void mouseReleased(MouseEvent mouseEvent) {
                 if (runnable != null) {                             // if music is already playing
-                    runnable.jumpTo(((double) playbackSlider.getValue()) / sliderMax);
+                    runnable.jumpTo(((double) playbackSlider.getValue()) / AUDIO_SLIDER_MAX);
                 }
             }
             @Override
@@ -374,7 +462,23 @@ public class SyncPlayer extends WebPanel {
             }
         });
 
-        Tools.addComponentToGridBagLayout(this, (GridBagLayout) this.getLayout(), this.playbackSlider, 5, 0, 1, 2, 100.0, 1.0, 0, 0, GridBagConstraints.BOTH, GridBagConstraints.LINE_START);
+//        // a change listener that communicates slider changes to the audio component
+//        this.playbackSlider.addChangeListener(changeEvent -> {
+//            // TODO: below code is extremely inefficient and untested
+//            Audio audio = this.getSelectedAudio();
+//            double audioMillis = (audio == null) ? 0.0 : audio.getNumberOfSamples() * audio.getFrameRate() * 1000.0;
+//            double midiMillis = this.getPerformanceRendering().getMicrosecondLength() * 0.001;
+//            double skipMillis = (double) this.skipMillisecondsInAudioPlayback.getValue();
+//            if (skipMillis > 0.0)
+//                audioMillis -= skipMillis;
+//            else if (skipMillis < 0.0)
+//                midiMillis -= skipMillis;
+//            double longestMillis = Math.max(audioMillis, midiMillis);
+//            double relativeSliderPos = (double) this.playbackSlider.getValue() / sliderMax;
+//            this.parent.getAudioFrame().setPlaybackPosition(longestMillis * relativeSliderPos);   // TODO: AudioDocumentData.setPlaybackPosition() must be adapted for milliseconds input
+//        });
+
+        Tools.addComponentToGridBagLayout(this, (GridBagLayout) this.getLayout(), this.playbackSlider, 6, 0, 1, 2, 100.0, 1.0, 0, 0, GridBagConstraints.BOTH, GridBagConstraints.LINE_START);
     }
 
     /**
@@ -388,7 +492,7 @@ public class SyncPlayer extends WebPanel {
             return;
         }
 
-        this.triggerPlayback(((double) this.playbackSlider.getValue()) / sliderMax);
+        this.triggerPlayback(((double) this.playbackSlider.getValue()) / AUDIO_SLIDER_MAX);
     }
 
     /**

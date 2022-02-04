@@ -38,6 +38,7 @@ public class WaveformPanel extends PianoRollPanel {
 
         g2.drawImage(waveformImage, 0, 0, this);        // draw the waveform
         this.drawPianoRoll(g2);
+//        this.drawPlaybackCursor(g2);
 
         // draw the mouse cursor
         if (this.mousePosition != null) {

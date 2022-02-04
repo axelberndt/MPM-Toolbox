@@ -86,6 +86,14 @@ public class Audio extends meico.audio.Audio {
     }
 
     /**
+     * import an alignment and replace the current alignment
+     * @param alignment
+     */
+    public void setAlignment(Alignment alignment) {
+        this.alignment = alignment;
+    }
+
+    /**
      * initialize or reset the alignment data for this Audio object
      * @param msm the Msm instance to be aligned with this Audio object
      */
@@ -201,6 +209,7 @@ public class Audio extends meico.audio.Audio {
 
         int numSamples = this.getAudio().length / (2 * this.getChannels());
         progressBar.setMaximum(numSamples);
+        SwingUtilities.invokeLater(() -> progressBar.setText("Initializing Signal Processing Pipeline ..."));
 
         SignalPipeline<AudioBuffer, LogFrequencySpectrum> cqtPipeline = new SignalPipeline<>(
                 new Mono(),                                             // if there are more than one channel, reduce them to mono
