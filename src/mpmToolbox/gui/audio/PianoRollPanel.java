@@ -2,8 +2,10 @@ package mpmToolbox.gui.audio;
 
 import com.alee.laf.label.WebLabel;
 import com.alee.laf.menu.WebCheckBoxMenuItem;
+import com.alee.laf.menu.WebMenuItem;
 import com.alee.laf.menu.WebPopupMenu;
 import com.alee.laf.panel.WebPanel;
+import mpmToolbox.gui.Settings;
 import mpmToolbox.gui.msmTree.MsmTree;
 import mpmToolbox.gui.msmTree.MsmTreeNode;
 import mpmToolbox.projectData.alignment.Note;
@@ -60,12 +62,45 @@ public class PianoRollPanel extends WebPanel implements ComponentListener, Mouse
     }
 
     /**
-     * draw the piano roll of the currently chosen audio data's alignment into the specified Graphics2D object
+     * draw the lines of the mouse cursor in the Graphics2D object
+     * @param g2
+     * @return true if a valid mouse position was available and the drawing was successful
+     */
+    protected boolean drawMouseCursor(Graphics2D g2) {
+        if (this.mousePosition != null) {
+            g2.setColor(Settings.scoreNoteColorHighlighted);
+            g2.drawLine(this.mousePosition.x, 0, this.mousePosition.x, this.getHeight());
+
+            if (this.mouseInThisPanel)
+                g2.drawLine(0, this.mousePosition.y, this.getWidth(), this.mousePosition.y);
+
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * draw the playback cursor line in the Graphics2D object
      * @param g2d
      */
-    protected void drawPianoRoll(Graphics2D g2d) {
-        if (this.parent.getAlignment() == null)
+    protected void drawPlaybackCursor(Graphics2D g2d) {
+        Double pos = this.parent.getRelativePlaybackPosInDisplay();
+        if (pos == null)
             return;
+
+        int x = (int) Math.round(this.getWidth() * pos);
+        g2d.setColor(Color.GRAY);
+        g2d.drawLine(x, 0, x, this.getHeight());
+    }
+
+    /**
+     * draw the piano roll of the currently chosen audio data's alignment into the specified Graphics2D object
+     * @param g2d
+     * @return success, i.e. false if there was no alignment available to be drawn, otherwise true
+     */
+    protected boolean drawPianoRoll(Graphics2D g2d) {
+        if (this.parent.getAlignment() == null)
+            return false;
 
         // draw piano roll overlay
         double fromMilliseconds = ((double) this.parent.getLeftmostSample() / this.parent.getAudio().getFrameRate()) * 1000.0;
@@ -73,17 +108,9 @@ public class PianoRollPanel extends WebPanel implements ComponentListener, Mouse
 
         PianoRoll pianoRoll = this.retrievePianoRoll(fromMilliseconds, toMilliseconds, this.getWidth(), 128);
         g2d.drawImage(pianoRoll, 0, this.getHeight(), this.getWidth(), -this.getHeight(), this);
-    }
 
-//    protected void drawPlaybackCursor(Graphics2D g2d) {
-//        Double pos = this.parent.getRelativePlaybackPosInDisplay();
-//        if (pos == null)
-//            return;
-//
-//        int x = (int) Math.round(this.getWidth() * pos);
-//        g2d.setColor(Color.GRAY);
-//        g2d.drawLine(x, 0, x, this.getHeight());
-//    }
+        return true;
+    }
 
     /**
      * retrieve the piano roll from the parent
@@ -96,7 +123,7 @@ public class PianoRollPanel extends WebPanel implements ComponentListener, Mouse
     protected PianoRoll retrievePianoRoll(double fromMilliseconds, double toMilliseconds, int width, int height) {
         Integer partNumber = this.parent.getPianoRollPartNumber();
         if (partNumber != null) {       // draw only the selected musical part
-            return this.parent.getAlignment().getPart(partNumber).getPianoRoll(fromMilliseconds, toMilliseconds, this.getWidth(), 128);
+            return this.parent.getAlignment().getPart(partNumber).getPianoRoll(fromMilliseconds, toMilliseconds, this.getWidth(), height);
         }
 
         // draw all musical parts
@@ -183,6 +210,13 @@ public class PianoRollPanel extends WebPanel implements ComponentListener, Mouse
             setFixed.setToolTipText("Pins the note at its position.");
             menu.add(setFixed);
         }
+
+        // play from here
+        WebMenuItem playFromHere = new WebMenuItem("Play from here");
+        playFromHere.addActionListener(actionEvent -> {
+            this.parent.getParent().getSyncPlayer().triggerPlayback(this.getSampleIndex(e.getPoint().getX()));
+        });
+        menu.add(playFromHere);
 
         return menu;
     }
@@ -333,7 +367,6 @@ public class PianoRollPanel extends WebPanel implements ComponentListener, Mouse
         double millisecOffset = (sampleOffset * 1000.0) / this.parent.getAudio().getFrameRate();
 
         this.parent.getAlignment().reposition(this.dragGesture.note, this.dragGesture.note.getMillisecondsDate() + millisecOffset);    // move the note and do the timing transform
-        this.parent.getAlignment().updateTiming();
         this.parent.getAlignment().recomputePianoRoll();
 
         this.parent.communicateMouseEventToAllComponents(e);
@@ -349,6 +382,9 @@ public class PianoRollPanel extends WebPanel implements ComponentListener, Mouse
         this.parent.mouseWheelMoved(e);
     }
 
+    /**
+     * this class is used for drag gestures and provides context data
+     */
     protected static class NoteDrag {
         protected boolean lockedOnNote = false;
         protected Note note = null;

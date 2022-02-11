@@ -4,6 +4,7 @@ import com.alee.api.annotations.NotNull;
 import com.tagtraum.jipes.SignalPump;
 import com.tagtraum.jipes.audio.AudioBuffer;
 import com.tagtraum.jipes.math.WindowFunction;
+import mpmToolbox.projectData.audio.SpectrogramImage;
 
 import javax.swing.*;
 import java.util.concurrent.CancellationException;

@@ -3,8 +3,7 @@ package mpmToolbox.gui.audio;
 import com.alee.laf.menu.WebCheckBoxMenuItem;
 import com.alee.laf.menu.WebMenuItem;
 import com.alee.laf.menu.WebPopupMenu;
-import mpmToolbox.gui.Settings;
-import mpmToolbox.gui.audio.utilities.SpectrogramImage;
+import mpmToolbox.projectData.audio.SpectrogramImage;
 import mpmToolbox.gui.audio.utilities.SpectrogramSpecs;
 
 import java.awt.*;
@@ -60,22 +59,14 @@ public class SpectrogramPanel extends PianoRollPanel {
 
         g2.drawImage(spectrogramImage, this.horizontalOffset, 0, this.imageWidth, this.getHeight(), this);
         this.drawPianoRoll(g2);
-//        this.drawPlaybackCursor(g2);
+        this.drawPlaybackCursor(g2);
 
-        // draw the mouse cursor
-        if (this.mousePosition != null) {
-            g2.setColor(Settings.scoreNoteColorHighlighted);
-            g2.drawLine(this.mousePosition.x, 0, this.mousePosition.x, this.getHeight());
-
-            if (this.mouseInThisPanel) {
-                g2.drawLine(0, this.mousePosition.y, this.getWidth(), this.mousePosition.y);
-
-                // print info text
-                // TODO compute and display frequency of mouse y position
-//                g2.setColor(Color.LIGHT_GRAY);
-//                double relativeYPos = (double)(this.getHeight() - this.mousePosition.y) / this.getHeight();
-//                g2.drawString("Frequency: " + spectrogramImage.getFrequency(relativeYPos) + " Hz", 2, Settings.getDefaultFontSize());
-            }
+        if (this.drawMouseCursor(g2)) {                 // draw the mouse cursor
+            // print info text
+            // TODO compute and display frequency of mouse y position
+//            g2.setColor(Color.LIGHT_GRAY);
+//            double relativeYPos = (double)(this.getHeight() - this.mousePosition.y) / this.getHeight();
+//            g2.drawString("Frequency: " + spectrogramImage.getFrequency(relativeYPos) + " Hz", 2, Settings.getDefaultFontSize());
         }
     }
 
@@ -100,6 +91,7 @@ public class SpectrogramPanel extends PianoRollPanel {
     @Override
     protected void setAudio() {
         if (this.parent.getAudio() == null) {
+            this.remove(this.spectrogramSpecs);
             this.add(this.noData);
             return;
         }
@@ -175,13 +167,6 @@ public class SpectrogramPanel extends PianoRollPanel {
                 break;
             case MouseEvent.BUTTON3:                    // right click = context menu
                 WebPopupMenu menu = this.getContextMenu(e);
-
-                // play from here
-                WebMenuItem playFromHere = new WebMenuItem("Play from here");
-                playFromHere.addActionListener(actionEvent -> {
-                    this.parent.getParent().getSyncPlayer().triggerPlayback(this.parent.getWaveformPanel().getSampleIndex(e.getPoint().getX()));
-                });
-                menu.add(playFromHere);
 
                 // specify new spectrogram
                 WebMenuItem newSpectrogram = new WebMenuItem("New Spectrogram");

@@ -4,11 +4,13 @@ import com.alee.api.annotations.NotNull;
 import com.sun.media.sound.InvalidDataException;
 import meico.mei.Helper;
 import meico.mpm.elements.Performance;
-import meico.mpm.elements.maps.*;
+import meico.mpm.elements.maps.ArticulationMap;
+import meico.mpm.elements.maps.AsynchronyMap;
+import meico.mpm.elements.maps.GenericMap;
+import meico.mpm.elements.maps.TempoMap;
 import meico.mpm.elements.maps.data.ArticulationData;
 import meico.msm.Msm;
-import nu.xom.Attribute;
-import nu.xom.Element;
+import nu.xom.*;
 
 import java.util.ArrayList;
 import java.util.UUID;
@@ -23,6 +25,7 @@ public class Alignment {
     private PianoRoll pianoRoll = null;
     private final Msm msm;
     private final ArrayList<double[]> timingTransformation = new ArrayList<>();   // each element provides the following values {startDate, endDate, toStartDate, toEndDate}, all in milliseconds
+    private Note lastNoteSounding = null;
 
     /**
      * constructor
@@ -86,7 +89,7 @@ public class Alignment {
      * @param part
      * @return
      */
-    public boolean add(@NotNull Part part) {
+    private boolean add(@NotNull Part part) {
         int number = part.getNumber();
         int index = 0;
         for (int i = this.parts.size() - 1; i >= 0; --i) {
@@ -96,6 +99,7 @@ public class Alignment {
             }
         }
         this.parts.add(index, part);
+        this.lastNoteSounding = null;
         return true;
     }
 
@@ -156,6 +160,7 @@ public class Alignment {
     public void updateTiming() {
         this.updateTimingTransformation();
         this.renderTiming();                                    // compute the new milliseconds timing
+        this.lastNoteSounding = null;
     }
 
     /**
@@ -242,7 +247,7 @@ public class Alignment {
     }
 
     /**
-     * apply the current timing transformation to all parts, so their note get new millisecondsDates and millisecondsDateEnds
+     * apply the current timing transformation to all parts, so their notes get new millisecondsDates and millisecondsDateEnds
      */
     private void renderTiming() {
         for (Part part : this.getParts())   // apply the timing transform to each part
@@ -429,7 +434,7 @@ public class Alignment {
 
     /**
      * Sets a new milliseconds date and end date of the note and places it in the note sequence accordingly.
-     * The note is made fixed. The non-fixed notes are not repositioned by this method! This has to be done subsequently.
+     * The note is made fixed. The non-fixed notes are repositioned subsequently.
      * @param note the note to be moved
      * @param toMilliseconds the new onset position of the note
      */
@@ -446,6 +451,8 @@ public class Alignment {
         for (Part part : this.getParts())
             if (part.contains(note))
                 part.reposition(note, toMilliseconds);
+
+        this.updateTiming();
     }
 
     /**
@@ -456,6 +463,7 @@ public class Alignment {
         for (Part part : this.getParts()) {
             part.reset();
         }
+        this.lastNoteSounding = null;
     }
 
     /**
@@ -463,16 +471,23 @@ public class Alignment {
      * @return the last sounding note or null
      */
     private Note getLastNoteSounding() {
-        Note lastNoteSounding = null;
-
-        for (Part part : this.parts) {
-            Note note = part.getLastNoteSounding();
-            if ((lastNoteSounding == null) || (note.getMillisecondsDateEnd() > lastNoteSounding.getMillisecondsDateEnd())) {
-                lastNoteSounding = note;
+        if (this.lastNoteSounding == null) {
+            for (Part part : this.parts) {
+                Note note = part.getLastNoteSounding();
+                if ((this.lastNoteSounding == null) || (note.getMillisecondsDateEnd() > this.lastNoteSounding.getMillisecondsDateEnd())) {
+                    this.lastNoteSounding = note;
+                }
             }
         }
+        return this.lastNoteSounding;
+    }
 
-        return lastNoteSounding;
+    /**
+     * compute the length of the alignment in milliseconds
+     * @return
+     */
+    public double getMillisecondsLength() {
+        return (this.getLastNoteSounding() == null) ? 0.0 : this.getLastNoteSounding().getMillisecondsDateEnd();
     }
 
     /**
@@ -552,12 +567,28 @@ public class Alignment {
         Msm expMsm = this.msm.clone();
         expMsm.setFile(Helper.getFilenameWithoutExtension(expMsm.getFile().getPath()) + "_alignment.msm");
 
+        expMsm.getGlobal().getFirstChildElement("dated").removeChildren();  // only the notes have meaningful dates, other dated stuff must be removed in order not to clash with the duration of the midi sequence
+
         for (Element partElt : expMsm.getParts()) {
             Part part = this.getPart(Integer.parseInt(Helper.getAttributeValue("number", partElt)));
             if (part == null)
                 continue;
 
-            Element score = partElt.getFirstChildElement("dated").getFirstChildElement("score");
+            Element dated = partElt.getFirstChildElement("dated");
+            Element score = null;
+
+            // only the notes have meaningful dates, other dated stuff must be removed in order not to clash with the duration of the midi sequence
+            for (Element rem : dated.getChildElements()) {
+                if (rem.getLocalName().equals("score")) {   // if we stumbled over the score map
+                    score = rem;                            // we keep it; it will be processed afterwards
+                    continue;
+                }
+                dated.removeChild(rem);
+            }
+
+            if (score == null)
+                continue;
+
             for (Element noteElt : score.getChildElements("note")) {
                 Attribute id = noteElt.getAttribute("id", "http://www.w3.org/XML/1998/namespace");
                 if (id == null)

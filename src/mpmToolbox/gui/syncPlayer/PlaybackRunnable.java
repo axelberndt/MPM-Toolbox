@@ -4,7 +4,7 @@ import meico.midi.Midi;
 import meico.mpm.elements.Performance;
 import mpmToolbox.gui.syncPlayer.utilities.AudioChooserItem;
 import mpmToolbox.gui.syncPlayer.utilities.PerformanceChooserItem;
-import mpmToolbox.projectData.Audio;
+import mpmToolbox.projectData.audio.Audio;
 
 import javax.sound.midi.InvalidMidiDataException;
 import javax.sound.sampled.Clip;
@@ -182,13 +182,13 @@ public class PlaybackRunnable implements Runnable {
                 relativePlaybackPosition = (this.syncPlayer.getAudioPlayer().getMicrosecondLength() <= this.microsecAudioOffset) ? 1.0 : (double) (this.syncPlayer.getAudioPlayer().getMicrosecondPosition() - this.microsecAudioOffset) / (double) (this.syncPlayer.getAudioPlayer().getMicrosecondLength() - this.microsecAudioOffset);
             }
 
-            if ((this.syncPlayer.playbackSlider.getValue() == SyncPlayer.AUDIO_SLIDER_MAX) || (!this.syncPlayer.getAudioPlayer().isPlaying() && !this.syncPlayer.getMidiPlayer().isPlaying())) {
+            if ((this.syncPlayer.playbackSlider.getValue() == SyncPlayer.PLAYBACK_SLIDER_MAX) || (!this.syncPlayer.getAudioPlayer().isPlaying() && !this.syncPlayer.getMidiPlayer().isPlaying())) {
                 this.syncPlayer.runnable = null;
                 break;
             }
 
             if (!this.syncPlayer.playbackSlider.getValueIsAdjusting())
-                this.syncPlayer.playbackSlider.setValue((int) (relativePlaybackPosition * SyncPlayer.AUDIO_SLIDER_MAX));
+                this.syncPlayer.playbackSlider.setValue((int) (relativePlaybackPosition * SyncPlayer.PLAYBACK_SLIDER_MAX));
 
             try {
                 Thread.sleep(200L);
@@ -198,8 +198,8 @@ public class PlaybackRunnable implements Runnable {
         }
 
         // playback stops, this thread must terminate, but before that, do some housekeeping
-        SwingUtilities.invokeLater(() -> {      // GUI operations must be done on the Event Dispatch Thread
-            if (!terminate && !this.syncPlayer.playbackSlider.getValueIsAdjusting())   // if we reached the end of the music, i.e. playback was not terminated by interaction
+        SwingUtilities.invokeLater(() -> {                      // GUI operations must be done on the Event Dispatch Thread
+            if (!this.terminate && !this.syncPlayer.playbackSlider.getValueIsAdjusting())   // if we reached the end of the music, i.e. playback was not terminated by interaction
                 this.syncPlayer.playbackSlider.setValue(0);     // set slider to start position ... in any other case just keep the slider position
 
             this.syncPlayer.playButton.setText("\u25B6");       //  ▶ "\u25B6"

@@ -65,6 +65,7 @@ public abstract class EditDialog<E> extends WebDialog<EditDialog<E>> {
      */
     private void makeBaseGui(String title) {
         this.setTitle(title);
+        this.setIconImages(Settings.getIcons(null));
         this.setResizable(Settings.debug);
         this.setModal(true);
         this.initKeyboardShortcuts();

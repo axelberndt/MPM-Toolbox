@@ -1,6 +1,17 @@
 ### Version History
 
 
+#### v0.1.10
+- As of meico v0.8.33, audio export (WAV, MP3) will now use the currently loaded soundfont.
+- The window icon will be displayed also in the title bar of dialog windows.
+- The root element in MPR files was renamed to `mpmToolboxProject` (in method `mpmToolbox.projectData.ProjectData.saveProjectAs()`). This change is backward compatible, the old `mpmToolkitProject` will also work.
+- New method `mpmToolbox.gui.audio.PianoRollPanel.drawMouseCursor()` that simplifies code in the child classes `SpectrogramPanel` and `WaveformPanel`.
+- New method `getMillisecondsLength()` in classes `mpmToolbox.projectData.alignment.Alignment` and `Part`. Furthermore, an optimization has been applied to both classes to more quickly retrieve the last note sounding.
+- Added a playback position indicator to the audio visualizations.
+- In method `mpmToolbox.projectData.alignment.Alignment.getExpressiveMsm()` some cleanup has been added to remove all maps but the `score` elements, as their contents are not affected by the alignment's timing and, after expressive MIDI export, appear at wrong positions.
+- The runtime performance of waveform image computation has been significantly increased by method `mpmToolbox.projectData.audio.Audio.convertWaveform2Image()` and its new helper class `mpmToolbox.projectData.audio.PeakList`.
+
+
 #### v0.1.9
 - Added a MIDI Master Volume slider to the SyncPlayer. It is relevant when audio recording and MIDI performance are played synchronously and the MIDI part is too loud. However, Master Volume Control is a MIDI SysEx message and not all devices support it. MPM Toolbox's default synthesizer, Gervill, fortunately does.
 - Bugfix in method `mpmToolbox.gui.mpmEditingTools.CommentEditor.makeContentPanel()`. It was unable to query the font metrics for proper initialization.

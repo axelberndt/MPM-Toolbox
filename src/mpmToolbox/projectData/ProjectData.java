@@ -7,6 +7,7 @@ import meico.mpm.Mpm;
 import meico.msm.Msm;
 import meico.supplementary.KeyValue;
 import meico.xml.XmlBase;
+import mpmToolbox.projectData.audio.Audio;
 import mpmToolbox.projectData.score.Score;
 import mpmToolbox.projectData.score.ScorePage;
 import nu.xom.*;
@@ -35,7 +36,7 @@ public class ProjectData {
     private final Msm msm;                                      // the MSM document
     private Mpm mpm = null;                                     // the MPM document
     private final Score score;                                  // the music sheets
-    private final ArrayList<mpmToolbox.projectData.Audio> audio = new ArrayList<>();   // a list of audio recordings
+    private final ArrayList<Audio> audio = new ArrayList<>();   // a list of audio recordings
 
     /**
      * constructor
@@ -95,7 +96,7 @@ public class ProjectData {
             for (int i=0; i < audios.size(); ++i) {
                 Element projectAudioData = audios.get(i);
                 try {
-                    this.addAudio(new mpmToolbox.projectData.Audio(projectAudioData, basePath, this.getMsm()));
+                    this.addAudio(new Audio(projectAudioData, basePath, this.getMsm()));
                 } catch (UnsupportedAudioFileException | IOException ex) {
                     ex.printStackTrace();
                 }
@@ -250,7 +251,7 @@ public class ProjectData {
      * access the list of Audio objects
      * @return
      */
-    public synchronized ArrayList<mpmToolbox.projectData.Audio> getAudio() {
+    public synchronized ArrayList<Audio> getAudio() {
         return audio;
     }
 
@@ -258,7 +259,7 @@ public class ProjectData {
      * add an Audio object to the list of audios
      * @param audio
      */
-    public synchronized boolean addAudio(mpmToolbox.projectData.Audio audio) {
+    public synchronized boolean addAudio(Audio audio) {
         if (this.audio.contains(audio))
             return false;
         return this.audio.add(audio);
@@ -294,7 +295,7 @@ public class ProjectData {
         this.xml.setFile(file);
         String basePath = file.getAbsoluteFile().getParent() + File.separator;
 
-        Element root = new Element("mpmToolkitProject");
+        Element root = new Element("mpmToolboxProject");
         Document xml = new Document(root);
         this.xml.setDocument(xml);
 
@@ -329,7 +330,7 @@ public class ProjectData {
         if (!this.audio.isEmpty()) {
             Element audios = new Element("audios");
             root.appendChild(audios);
-            for (mpmToolbox.projectData.Audio aud : this.audio) {
+            for (Audio aud : this.audio) {
 //                Path src = aud.getFile().toPath();
 //                Path dest = Paths.get(path + "\\data\\score\\" + aud.getFile().getName());
 //                try {

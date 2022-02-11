@@ -3,7 +3,6 @@ package mpmToolbox.projectData.alignment;
 import com.alee.api.annotations.NotNull;
 import com.sun.media.sound.InvalidDataException;
 import meico.mei.Helper;
-import meico.supplementary.KeyValue;
 import nu.xom.Attribute;
 import nu.xom.Element;
 
@@ -22,6 +21,7 @@ public class Part {
     private final ArrayList<Note> noteSequence = new ArrayList<>();     // the notes in sequential order of their current date
     private final ArrayList<Note> initialSequence = new ArrayList<>();  // the notes in sequential order of their initial date
     private PianoRoll pianoRoll = null;
+    private Note lastNoteSounding = null;
 
     /**
      * constructor
@@ -80,7 +80,7 @@ public class Part {
             this.noteSequence.remove(out);              // remove it also from the sequences
             this.initialSequence.remove(out);
         }
-        this.addToInitialSequence(note);    // add note to initial sequence
+        this.addToInitialSequence(note);                // add note to initial sequence
         this.addToSequence(note);                       // add the note at the right position to the sequence
 
         return out;
@@ -94,11 +94,15 @@ public class Part {
         // add note to noteSequence
         int i = this.noteSequence.size() - 1;
         for (; i >= 0; --i) {
-            double date = this.noteSequence.get(i).getMillisecondsDate();
+            Note n = this.noteSequence.get(i);
+            double date = n.getMillisecondsDate();
             if (date <= note.getMillisecondsDate())
                 break;
         }
         this.noteSequence.add(i + 1, note);               // insert note also to the sequence
+
+        if ((this.lastNoteSounding == null) || (this.lastNoteSounding.getMillisecondsDateEnd() < note.getMillisecondsDateEnd()))
+            this.lastNoteSounding = note;
     }
 
     /**
@@ -125,6 +129,8 @@ public class Part {
         if (out != null) {
             this.noteSequence.remove(out);
             this.initialSequence.remove(out);
+            if (this.lastNoteSounding == out)
+                this.lastNoteSounding = null;
         }
         return out;
     }
@@ -250,16 +256,23 @@ public class Part {
         if (this.isEmpty())
             return null;
 
-        Note out = null;
-
-        for (int i = this.noteSequence.size() - 1; i >= 0; --i) {
-            Note note = this.noteSequence.get(i);
-            if ((out == null) || (note.getMillisecondsDateEnd() > out.getMillisecondsDateEnd())) {
-                out = note;
+        if (this.lastNoteSounding == null) {
+            for (int i = this.noteSequence.size() - 1; i >= 0; --i) {
+                Note note = this.noteSequence.get(i);
+                if ((this.lastNoteSounding == null) || (note.getMillisecondsDateEnd() > this.lastNoteSounding.getMillisecondsDateEnd())) {
+                    this.lastNoteSounding = note;
+                }
             }
         }
+        return this.lastNoteSounding;
+    }
 
-        return out;
+    /**
+     * compute the length of the part in milliseconds
+     * @return
+     */
+    public double getMillisecondsLength() {
+        return (this.lastNoteSounding == null) ? 0.0 : this.lastNoteSounding.getMillisecondsDateEnd();
     }
 
     /**
@@ -273,6 +286,8 @@ public class Part {
             note.reset();
             this.noteSequence.add(note);
         }
+
+        this.lastNoteSounding = null;
     }
 
     /**

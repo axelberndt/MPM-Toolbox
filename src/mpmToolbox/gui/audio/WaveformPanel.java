@@ -4,7 +4,7 @@ import com.alee.laf.menu.WebMenu;
 import com.alee.laf.menu.WebMenuItem;
 import com.alee.laf.menu.WebPopupMenu;
 import mpmToolbox.gui.Settings;
-import mpmToolbox.gui.audio.utilities.WaveformImage;
+import mpmToolbox.projectData.audio.WaveformImage;
 import mpmToolbox.supplementary.Tools;
 
 import java.awt.*;
@@ -38,7 +38,7 @@ public class WaveformPanel extends PianoRollPanel {
 
         g2.drawImage(waveformImage, 0, 0, this);        // draw the waveform
         this.drawPianoRoll(g2);
-//        this.drawPlaybackCursor(g2);
+        this.drawPlaybackCursor(g2);
 
         // draw the mouse cursor
         if (this.mousePosition != null) {
@@ -106,13 +106,6 @@ public class WaveformPanel extends PianoRollPanel {
                 break;
             case MouseEvent.BUTTON3:                    // right click = context menu
                 WebPopupMenu menu = this.getContextMenu(e);
-
-                // play from here
-                WebMenuItem playFromHere = new WebMenuItem("Play from here");
-                playFromHere.addActionListener(actionEvent -> {
-                    this.parent.getParent().getSyncPlayer().triggerPlayback(this.getSampleIndex(e.getPoint().getX()));
-                });
-                menu.add(playFromHere);
 
                 // choose the channel(s) to be displayed
                 WebMenu chooseChannel = new WebMenu("Display Audio Channel");

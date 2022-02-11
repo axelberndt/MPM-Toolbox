@@ -12,6 +12,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
+import java.util.ArrayList;
 
 /**
  * @author Axel Berndt
@@ -29,10 +30,11 @@ public class SpectrogramComputation extends WebProgressDialog {
         this.parent = parent;
         this.worker = new SpectrogramComputationWorker(windowFunction, hopSize, minFreq, maxFreq, bins, normalize, this);
 
-        this.setText("samples left");
+        this.setText("Initializing Signal Processing Pipeline ...");
+        this.setIconImages(Settings.getIcons(null));
         this.setShowProgressText(true);     // true by default, this is just to be sure
         this.setModal(true);                // block the rest of the program behind this dialog
-        this.setResizable(true);
+        this.setResizable(false);
         this.setPreferredProgressWidth(getFontMetrics(this.getFont()).stringWidth("Computing Spectrogram") * 2);    // this is to ensure that the title text is fully visible
         this.cancelOnEsc();
         this.onClose(runnable -> this.cancel());

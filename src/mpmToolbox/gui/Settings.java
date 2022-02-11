@@ -18,16 +18,17 @@ public class Settings {
     public static String logfile = "mpmToolbox.log";                    // filename of log file
     public static String settingsFile = "mpmToolbox.cfg";               // filename of the settings file
 
-    public static final ArrayList<String> icons = new ArrayList<>(Arrays.asList("/resources/icons/icon5.png",
-                                                                                "/resources/icons/icon5-1.png",
-                                                                                "/resources/icons/icon5-2.png",
-                                                                                "/resources/icons/icon5-3.png",
-                                                                                "/resources/icons/icon5-4.png",
-                                                                                "/resources/icons/icon5-5.png",
-                                                                                "/resources/icons/icon5-6.png",
-                                                                                "/resources/icons/icon5-7.png",
-                                                                                "/resources/icons/icon5-8.png",
-                                                                                "/resources/icons/icon5-9.png"));     // the app icon in different resolutions
+    private static final ArrayList<Image> iconsImages = new ArrayList<>();     // this arraylist will be filled with the icons loaded from the below array
+    private static final ArrayList<String> iconPaths = new ArrayList<>(Arrays.asList("/resources/icons/icon5.png",
+                                                                                    "/resources/icons/icon5-1.png",
+                                                                                    "/resources/icons/icon5-2.png",
+                                                                                    "/resources/icons/icon5-3.png",
+                                                                                    "/resources/icons/icon5-4.png",
+                                                                                    "/resources/icons/icon5-5.png",
+                                                                                    "/resources/icons/icon5-6.png",
+                                                                                    "/resources/icons/icon5-7.png",
+                                                                                    "/resources/icons/icon5-8.png",
+                                                                                    "/resources/icons/icon5-9.png"));     // the app icon in different resolutions
     protected static int windowWidth = 1200;                            // initial window width
     protected static int windowHeight = 800;                            // initial window height
     public static Color foregroundColor = SystemColor.text;             // the foreground/text color, this will be set during initialization according to the underlying style and can be accessed by other classes
@@ -176,5 +177,18 @@ public class Settings {
 //        Font defaultFont = UIManager.getDefaults().getFont("TextPane.font");
 //        return defaultFont.getSize();
         return WebLookAndFeel.globalWindowFont.getSize();
+    }
+
+    /**
+     * reads the icons to be used in the title bar of the window
+     * @param mpmToolbox
+     * @return
+     */
+    public static ArrayList<Image> getIcons(MpmToolbox mpmToolbox) {
+        if (Settings.iconsImages.isEmpty() && (mpmToolbox != null))
+            for (String resource : Settings.iconPaths)
+                Settings.iconsImages.add(Toolkit.getDefaultToolkit().getImage(mpmToolbox.getClass().getResource(resource)));
+
+        return Settings.iconsImages;
     }
 }

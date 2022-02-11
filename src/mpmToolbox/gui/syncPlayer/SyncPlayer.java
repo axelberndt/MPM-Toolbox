@@ -14,7 +14,7 @@ import mpmToolbox.gui.ProjectPane;
 import mpmToolbox.gui.Settings;
 import mpmToolbox.gui.syncPlayer.utilities.AudioChooserItem;
 import mpmToolbox.gui.syncPlayer.utilities.PerformanceChooserItem;
-import mpmToolbox.projectData.Audio;
+import mpmToolbox.projectData.audio.Audio;
 import mpmToolbox.supplementary.Tools;
 
 import javax.sound.midi.*;
@@ -37,8 +37,8 @@ public class SyncPlayer extends WebPanel {
 
     protected final WebButton playButton = new WebButton("\u25B6");       //  ◼ "\u25FC", ▶ "\u25B6"
 
-    protected static final int AUDIO_SLIDER_MAX = 1000000000;
-    protected final WebSlider playbackSlider = new WebSlider(WebSlider.HORIZONTAL, 0, AUDIO_SLIDER_MAX, 0);  // the slider that indicates playback position
+    protected static final int PLAYBACK_SLIDER_MAX = 1000000000;
+    protected final WebSlider playbackSlider = new WebSlider(WebSlider.HORIZONTAL, 0, PLAYBACK_SLIDER_MAX, 0);  // the slider that indicates playback position
 
     protected static final int MIDI_MASTER_VOLUME_MAX = 16383;
     private final WebSlider midiMasterVolume = new WebSlider(WebSlider.VERTICAL, 0, MIDI_MASTER_VOLUME_MAX, MIDI_MASTER_VOLUME_MAX);
@@ -74,6 +74,54 @@ public class SyncPlayer extends WebPanel {
     }
 
     /**
+     * getter for the performance chooser
+     * @return
+     */
+    public WebComboBox getPerformanceChooser() {
+        return this.performanceChooser;
+    }
+
+    /**
+     * getter for the audio chooser
+     * @return
+     */
+    public WebComboBox getAudioChooser() {
+        return this.audioChooser;
+    }
+
+    /**
+     * getter for the offset spinner
+     * @return
+     */
+    public WebSpinner getOffsetSpinner() {
+        return this.skipMillisecondsInAudioPlayback;
+    }
+
+    /**
+     * getter for the playback slider
+     * @return
+     */
+    public WebSlider getPlaybackSlider() {
+        return this.playbackSlider;
+    }
+
+    /**
+     * the relative position of the playback slider
+     * @return value in [0.0, 1.0]
+     */
+    public double getRelativePlaybackSliderPosition() {
+        return ((double) playbackSlider.getValue()) / PLAYBACK_SLIDER_MAX;
+    }
+
+    /**
+     * get the currently set milliseconds offset between MIDI and audio
+     * @return
+     */
+    public double getMillisecondsOffset() {
+        return (double) this.skipMillisecondsInAudioPlayback.getValue();
+    }
+
+    /**
      * a getter for the MIDI player
      * @return
      */
@@ -97,15 +145,6 @@ public class SyncPlayer extends WebPanel {
         this.updatePerformanceList();
         this.performanceChooser.setPadding(Settings.paddingInDialogs / 4);
         this.performanceChooser.setToolTip("Select the performance rendering to be played.");
-        this.performanceChooser.addItemListener(itemEvent -> {
-            if (itemEvent.getStateChange() == ItemEvent.SELECTED) {
-//                System.out.println(itemEvent.toString());
-                if (this.parent.getAudioFrame() != null) {
-                    this.parent.getAudioFrame().updateAlignment(true);
-                }
-                this.parent.getAudioFrame().updateAudioTools();
-            }
-        });
         Tools.addComponentToGridBagLayout(this, (GridBagLayout) this.getLayout(), this.performanceChooser, 0, 0, 1, 1, 1.0, 1.0, 0, 0, GridBagConstraints.BOTH, GridBagConstraints.LINE_START);
 
         // make the MIDI port label
@@ -151,7 +190,7 @@ public class SyncPlayer extends WebPanel {
                 } else {
                     this.updatePerformanceList();                                               // update the performance chooser list to add/delete the alignment performance option
                 }
-                this.parent.getAudioFrame().updateAudio(true);                                  // communicate the selection to the audio analysis frame as this should also display it
+                // any updates in the audio frame (AudioDocumentData etc.) are done by a separate listener that is defined there
             }
         });
         Tools.addComponentToGridBagLayout(this, (GridBagLayout) this.getLayout(), this.audioChooser, 0, 1, 1, 1, 1.0, 1.0, 0, 0, GridBagConstraints.BOTH, GridBagConstraints.LINE_START);
@@ -178,7 +217,7 @@ public class SyncPlayer extends WebPanel {
 
         // make the sliders
         this.makeMidiMasterVolumeSlider();
-        this.makeSlider();
+        this.makePlaybackSlider();
     }
 
     /**
@@ -189,9 +228,10 @@ public class SyncPlayer extends WebPanel {
         PerformanceChooserItem selectedItem = (PerformanceChooserItem) this.performanceChooser.getSelectedItem();   // store the previously selected item
         PerformanceChooserItem selectThis = null;
 
-        // temporarily switch the ItemListener off; otherwise it would always fire when an item is added
-        ItemListener itemListener = this.performanceChooser.getItemListeners()[0];
-        this.performanceChooser.removeItemListener(itemListener);
+        // temporarily switch the ItemListeners off; otherwise it would always fire when an item is added
+        ItemListener[] itemListeners = this.performanceChooser.getItemListeners();
+        for (ItemListener il : itemListeners)
+            this.performanceChooser.removeItemListener(il);
 
         this.performanceChooser.removeAllItems();
         this.performanceChooser.addItem(this.noPerformanceRendering);
@@ -220,7 +260,8 @@ public class SyncPlayer extends WebPanel {
             }
         }
 
-        this.performanceChooser.addItemListener(itemListener);      // switch ItemListener back on
+        for (ItemListener il : itemListeners)
+            this.performanceChooser.addItemListener(il);            // switch ItemListener back on
 
         if (selectThis != null)
             this.performanceChooser.setSelectedItem(selectThis);
@@ -325,7 +366,7 @@ public class SyncPlayer extends WebPanel {
 
         this.audioChooser.removeAllItems();
         this.audioChooser.addItem(new AudioChooserItem("No audio recording"));
-        for (mpmToolbox.projectData.Audio audio : this.parent.getAudio()) {
+        for (Audio audio : this.parent.getAudio()) {
             AudioChooserItem item = new AudioChooserItem(audio);
             this.audioChooser.addItem(item);
 
@@ -434,9 +475,9 @@ public class SyncPlayer extends WebPanel {
     /**
      * customize the playback slider
      */
-    private void makeSlider() {
-        this.playbackSlider.setMajorTickSpacing(AUDIO_SLIDER_MAX / 4);
-        this.playbackSlider.setMinorTickSpacing(AUDIO_SLIDER_MAX / 16);
+    private void makePlaybackSlider() {
+        this.playbackSlider.setMajorTickSpacing(PLAYBACK_SLIDER_MAX / 4);
+        this.playbackSlider.setMinorTickSpacing(PLAYBACK_SLIDER_MAX / 16);
         this.playbackSlider.setPaintTicks(true);
         Tools.makeSliderSetToClickPosition(this.playbackSlider);
 
@@ -451,7 +492,7 @@ public class SyncPlayer extends WebPanel {
             @Override
             public void mouseReleased(MouseEvent mouseEvent) {
                 if (runnable != null) {                             // if music is already playing
-                    runnable.jumpTo(((double) playbackSlider.getValue()) / AUDIO_SLIDER_MAX);
+                    runnable.jumpTo(((double) playbackSlider.getValue()) / PLAYBACK_SLIDER_MAX);
                 }
             }
             @Override
@@ -461,22 +502,6 @@ public class SyncPlayer extends WebPanel {
             public void mouseExited(MouseEvent mouseEvent) {
             }
         });
-
-//        // a change listener that communicates slider changes to the audio component
-//        this.playbackSlider.addChangeListener(changeEvent -> {
-//            // TODO: below code is extremely inefficient and untested
-//            Audio audio = this.getSelectedAudio();
-//            double audioMillis = (audio == null) ? 0.0 : audio.getNumberOfSamples() * audio.getFrameRate() * 1000.0;
-//            double midiMillis = this.getPerformanceRendering().getMicrosecondLength() * 0.001;
-//            double skipMillis = (double) this.skipMillisecondsInAudioPlayback.getValue();
-//            if (skipMillis > 0.0)
-//                audioMillis -= skipMillis;
-//            else if (skipMillis < 0.0)
-//                midiMillis -= skipMillis;
-//            double longestMillis = Math.max(audioMillis, midiMillis);
-//            double relativeSliderPos = (double) this.playbackSlider.getValue() / sliderMax;
-//            this.parent.getAudioFrame().setPlaybackPosition(longestMillis * relativeSliderPos);   // TODO: AudioDocumentData.setPlaybackPosition() must be adapted for milliseconds input
-//        });
 
         Tools.addComponentToGridBagLayout(this, (GridBagLayout) this.getLayout(), this.playbackSlider, 6, 0, 1, 2, 100.0, 1.0, 0, 0, GridBagConstraints.BOTH, GridBagConstraints.LINE_START);
     }
@@ -492,7 +517,7 @@ public class SyncPlayer extends WebPanel {
             return;
         }
 
-        this.triggerPlayback(((double) this.playbackSlider.getValue()) / AUDIO_SLIDER_MAX);
+        this.triggerPlayback(((double) this.playbackSlider.getValue()) / PLAYBACK_SLIDER_MAX);
     }
 
     /**
@@ -516,7 +541,7 @@ public class SyncPlayer extends WebPanel {
      * @param samplePosition the sample position to start playback
      */
     public synchronized void triggerPlayback(int samplePosition) {
-        mpmToolbox.projectData.Audio audio = this.getSelectedAudio();
+        Audio audio = this.getSelectedAudio();
         if (audio == null)
             return;
 
@@ -560,9 +585,10 @@ public class SyncPlayer extends WebPanel {
      * query the Audio instance that is currently selected
      * @return the Audio instance or null
      */
-    public synchronized mpmToolbox.projectData.Audio getSelectedAudio() {
+    public synchronized Audio getSelectedAudio() {
         if (this.audioChooser.getSelectedItem() == null)
             return null;
+
         return ((AudioChooserItem) this.audioChooser.getSelectedItem()).getValue();
     }
 }

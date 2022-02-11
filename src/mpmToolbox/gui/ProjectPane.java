@@ -14,7 +14,7 @@ import meico.midi.MidiPlayer;
 import meico.mpm.Mpm;
 import meico.mpm.elements.Performance;
 import meico.msm.Msm;
-import mpmToolbox.projectData.Audio;
+import mpmToolbox.projectData.audio.Audio;
 import mpmToolbox.projectData.ProjectData;
 import mpmToolbox.gui.audio.AudioDocumentData;
 import mpmToolbox.gui.mpmTree.MpmDockableFrame;
@@ -355,7 +355,7 @@ public class ProjectPane extends WebDockablePane {
      * access the list of Audio objects
      * @return
      */
-    public ArrayList<mpmToolbox.projectData.Audio> getAudio() {
+    public ArrayList<Audio> getAudio() {
         return this.data.getAudio();
     }
 
@@ -363,7 +363,7 @@ public class ProjectPane extends WebDockablePane {
      * add an Audio object to the list of audios
      * @param audio
      */
-    public void addAudio(mpmToolbox.projectData.Audio audio) {
+    public void addAudio(Audio audio) {
         if (this.data.addAudio(audio)) {
             this.syncPlayer.addAudio(audio);
         }

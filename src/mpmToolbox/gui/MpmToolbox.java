@@ -14,6 +14,7 @@ import meico.mpm.Mpm;
 import meico.msm.Msm;
 import meico.xml.XmlBase;
 import mpmToolbox.Main;
+import mpmToolbox.projectData.audio.Audio;
 import mpmToolbox.supplementary.Tools;
 import nu.xom.ParsingException;
 import org.xml.sax.SAXException;
@@ -31,7 +32,6 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.ArrayList;
 
 /**
  * This is the host application for all GUI and functionality.
@@ -54,7 +54,7 @@ public class MpmToolbox {
      */
     public MpmToolbox() {
         // make the main window
-        SwingUtilities.invokeLater (new Runnable() {
+        SwingUtilities.invokeLater(new Runnable() {
             public void run() {
                 MpmToolbox self = MpmToolbox.this;
 
@@ -64,10 +64,10 @@ public class MpmToolbox {
 
                 // assign the icon set to the frame
 //                self.frame.setIconImage(Toolkit.getDefaultToolkit().getImage(this.getClass().getResource(Settings.icon)));
-                ArrayList<Image> icons = new ArrayList<>();
-                for (String resource : Settings.icons)
-                    icons.add(Toolkit.getDefaultToolkit().getImage(this.getClass().getResource(resource)));
-                self.frame.setIconImages(icons);
+//                ArrayList<Image> icons = new ArrayList<>();
+//                for (String resource : Settings.iconPaths)
+//                    icons.add(Toolkit.getDefaultToolkit().getImage(this.getClass().getResource(resource)));
+                self.frame.setIconImages(Settings.getIcons(self));
 
                 self.frame.setSize(1500, 1000);                                                     // initial size in windowed mode
                 self.frame.setExtendedState(Frame.MAXIMIZED_BOTH);                                  // toggle fullscreen mode
@@ -158,12 +158,12 @@ public class MpmToolbox {
         WebMenuItem exportWav = new WebMenuItem("Wave", 'w');
         exportWav.addActionListener(actionEvent -> {
             Midi midi = this.getProjectPane().getSyncPlayer().getPerformanceRendering();
-            midi.exportAudio().writeAudio();
+            midi.exportAudio(this.getProjectPane().getMidiPlayer().getSoundbank()).writeAudio();
         });
         WebMenuItem exportMp3 = new WebMenuItem("MP3", '3');
         exportMp3.addActionListener(actionEvent -> {
             Midi midi = this.getProjectPane().getSyncPlayer().getPerformanceRendering();
-            midi.exportAudio().writeMp3();
+            midi.exportAudio(this.getProjectPane().getMidiPlayer().getSoundbank()).writeMp3();
         });
         this.export = new WebMenu("Export Performance Rendering as");
         this.export.setMnemonic('e');
@@ -171,7 +171,7 @@ public class MpmToolbox {
         this.export.add(exportWav);
         this.export.add(exportMp3);
         this.export.setEnabled(this.projectPane != null);
-        file.add(export);
+        file.add(this.export);
 
         this.close = new WebMenuItem("Close Project", 'c');
         this.close.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_W, InputEvent.CTRL_MASK));
@@ -397,7 +397,7 @@ public class MpmToolbox {
                     if (this.projectPane == null)
                         System.err.println("No project loaded to add the audio.");
                     else
-                        this.projectPane.addAudio(new mpmToolbox.projectData.Audio(file, this.getProjectPane().getMsm()));
+                        this.projectPane.addAudio(new Audio(file, this.getProjectPane().getMsm()));
                     break;
                 case ".jpg":
                 case ".jpeg":

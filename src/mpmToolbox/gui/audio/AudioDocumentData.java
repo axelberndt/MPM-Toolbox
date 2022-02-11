@@ -12,14 +12,15 @@ import meico.mpm.elements.Performance;
 import meico.supplementary.KeyValue;
 import mpmToolbox.gui.ProjectPane;
 import mpmToolbox.gui.Settings;
-import mpmToolbox.gui.audio.utilities.SpectrogramImage;
-import mpmToolbox.gui.audio.utilities.WaveformImage;
+import mpmToolbox.projectData.audio.SpectrogramImage;
+import mpmToolbox.projectData.audio.WaveformImage;
 import mpmToolbox.gui.mpmEditingTools.MpmEditingTools;
-import mpmToolbox.projectData.Audio;
+import mpmToolbox.projectData.audio.Audio;
 import mpmToolbox.projectData.alignment.Alignment;
 import mpmToolbox.supplementary.Tools;
 import nu.xom.Element;
 
+import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ItemEvent;
 import java.awt.event.MouseEvent;
@@ -39,12 +40,11 @@ public class AudioDocumentData extends DocumentData<WebPanel> {
     private int channelNumber = -1;                                 // index of the waveform/channel to be rendered to image; -1 means all channels
     private int leftmostSample = -1;                                // index of the first sample to be rendered to image
     private int rightmostSample = -1;                               // index of the last sample to be rendered to image
-//    private int playbackSamplePos = -1;
+    private int playbackPosSample = 0;                              // the playback position in samples
 
     private Alignment alignment;                                    // this is the alignment with the piano roll overlay used in the sub-panels
 
     private final WebComboBox partChooser = new WebComboBox();      // with this combobox the user can select whether all musical part or only on individual part should be displayed in the piano roll overlay
-//    private final WebSwitch globalLocalSwitch = new WebSwitch();
     private final WebButton resetButton = new WebButton("Reset");   // this button re-initializes the alignment
     private final WebButton perf2AlignConvert = new WebButton("<html>Alignment &rarr; Performance</html>"); // this is the button to convert a performance to an alignment and vice versa
 
@@ -57,7 +57,6 @@ public class AudioDocumentData extends DocumentData<WebPanel> {
         this.parent = parent;
 
         this.makePartChooser();
-//        this.makeGlobalLocalSwitch();
         this.makeResetButton();
         this.makePerf2AlignButton();
 
@@ -69,9 +68,94 @@ public class AudioDocumentData extends DocumentData<WebPanel> {
 
         this.updateAudio(false);
         this.updateAlignment(false);
+        if (this.getAudio() != null)
+            this.updatePlaybackPosSample();
         this.updateAudioTools();
+        this.makeListeners();
 
         this.draw();
+    }
+
+    /**
+     * The audio frame should listen to interactions in the SyncPlayer.
+     * The corresponding listeners are started here.
+     */
+    private void makeListeners() {
+        // a listener for the SyncPlayer's performance chooser
+        this.getParent().getSyncPlayer().getPerformanceChooser().addItemListener(itemEvent -> {
+            if (itemEvent.getStateChange() == ItemEvent.SELECTED) {
+//                System.out.println(itemEvent.toString());
+                this.updateAlignment(true);
+                this.updateAudioTools();
+            }
+        });
+
+        // a listener for the SyncPlayer's audio chooser
+        this.getParent().getSyncPlayer().getAudioChooser().addItemListener(itemEvent -> {
+            if (itemEvent.getStateChange() == ItemEvent.SELECTED) {
+                this.updateAudio(true);                                  // communicate the selection to the audio analysis frame as this should also display it
+            }
+        });
+
+        // a listener for the milliseconds offset spinner
+        this.getParent().getSyncPlayer().getOffsetSpinner().addChangeListener(changeListener -> {
+            SwingUtilities.invokeLater(() -> {
+                this.updatePlaybackPosSample();
+                this.repaintAllComponents();
+            });
+        });
+
+        // a listener for the playback slider to draw a playback position cursor
+        this.getParent().getSyncPlayer().getPlaybackSlider().addChangeListener(changeEvent -> {
+            if (this.getAudio() != null) {
+                SwingUtilities.invokeLater(() -> {
+                    this.updatePlaybackPosSample();
+                    this.repaintAllComponents();
+                });
+            }
+        });
+    }
+
+    /**
+     * A helper method to react on changes of the SyncPlayer's playback slider.
+     * Invoke only if (this.getAudio() != null)!
+     */
+    private void updatePlaybackPosSample() {
+        // if the audio player is playing, we can get the playback position directly from there
+        if (this.getParent().getSyncPlayer().getAudioPlayer().isPlaying()) {
+            this.playbackPosSample = (int) (((double) this.getParent().getSyncPlayer().getAudioPlayer().getMicrosecondPosition() / 1000000.0)  * this.getAudio().getFrameRate());
+            return;
+        }
+
+        // if the midi player is playing (audio player may have finished already), get the playback position from it
+        if (this.getParent().getSyncPlayer().getMidiPlayer().isPlaying()) {
+            this.playbackPosSample = (int) (((double) this.getParent().getSyncPlayer().getMidiPlayer().getMicrosecondPosition() / 1000000.0) * this.getAudio().getFrameRate());
+            return;
+        }
+
+        // if none of the player is playing we compute the position from the source data
+        int audioLength = this.getAudio().getNumberOfSamples();
+        int alignmentLength = (this.getAlignment() == null) ? 0 : (int)((this.getAlignment().getMillisecondsLength() / 1000.0) * this.getAudio().getFrameRate());   // compute the sample count of the MIDI
+
+        double offset = (this.getParent().getSyncPlayer().getMillisecondsOffset() / 1000.0) * this.getAudio().getFrameRate();
+        if (offset < 0.0)   // negative offset is added to midi length
+            alignmentLength += offset;
+
+        this.playbackPosSample = (int) (Math.max(audioLength, alignmentLength) * this.getParent().getSyncPlayer().getRelativePlaybackSliderPosition());
+
+        if (offset > 0.0)
+            this.playbackPosSample += offset;
+    }
+
+    /**
+     * a helper method to compute the position of the playback cursor in the audio visualizations
+     * @return
+     */
+    protected Double getRelativePlaybackPosInDisplay() {
+        if ((this.getAudio() == null) || (this.playbackPosSample < this.getLeftmostSample()) || (this.playbackPosSample > this.getRightmostSample()))
+            return null;
+
+        return (double)(this.playbackPosSample - this.getLeftmostSample()) / (this.getRightmostSample() - this.getLeftmostSample());
     }
 
     /**
@@ -95,26 +179,6 @@ public class AudioDocumentData extends DocumentData<WebPanel> {
             }
         });
     }
-
-//    /**
-//     * helper method for the constructor; it creates the switch between local and global editing mode
-//     */
-//    private void makeGlobalLocalSwitch() {
-//        WebLabel global = new WebLabel("Global");
-//        global.setPadding(Settings.paddingInDialogs);
-//
-//        WebLabel local = new WebLabel("Part");
-//        local.setPadding(Settings.paddingInDialogs);
-//
-//        this.globalLocalSwitch.setSwitchComponents(global, local);
-//
-//        WebLabel gripperLabel = new WebLabel("Edit");
-//        gripperLabel.setPadding(Settings.paddingInDialogs);
-//        gripperLabel.setHorizontalAlignment(WebLabel.CENTER);
-//        this.globalLocalSwitch.getGripper().add(gripperLabel);
-//
-//        this.globalLocalSwitch.setSelected(true);
-//    }
 
     /**
      * define the button to reset the alignment
@@ -161,23 +225,8 @@ public class AudioDocumentData extends DocumentData<WebPanel> {
         });
     }
 
-//    public void setPlaybackPosition(double relativePosition) {
-//        if (this.getAudio() == null)
-//            return;
-//
-//        this.playbackSamplePos = (int) Math.round(this.getAudio().getNumberOfSamples() * relativePosition);
-//        this.repaintAllComponents();
-//    }
-//
-//    protected Double getRelativePlaybackPosInDisplay() {
-//        if ((this.getAudio() == null) || (this.playbackSamplePos < this.getLeftmostSample()) || (this.playbackSamplePos > this.getRightmostSample()))
-//            return null;
-//
-//        return (double)(this.playbackSamplePos - this.getLeftmostSample()) / (this.getRightmostSample() - this.getLeftmostSample());
-//    }
-
     /**
-     * this enables or disables the part chooser according to whether there is a performance selected in the syncPlayer
+     * this enables or disables the part chooser and other controls according to whether there is a performance selected in the syncPlayer
      */
     public void updateAudioTools() {
         boolean enable = (this.getAudio() != null) && (this.alignment != null);
@@ -200,8 +249,6 @@ public class AudioDocumentData extends DocumentData<WebPanel> {
         return ((PartChooserItem) this.partChooser.getSelectedItem()).getValue();
     }
 
-
-
     /**
      * this draws the content of the audio analysis frame
      */
@@ -219,9 +266,8 @@ public class AudioDocumentData extends DocumentData<WebPanel> {
         WebPanel buttonPanel = new WebPanel(new GridBagLayout());
         GridBagLayout buttonLayout = (GridBagLayout) buttonPanel.getLayout();
         Tools.addComponentToGridBagLayout(buttonPanel, buttonLayout, this.partChooser, 0, 1, 1, 1, 1.0, 0.0, 0, 0, GridBagConstraints.NONE, GridBagConstraints.CENTER);
-//        Tools.addComponentToGridBagLayout(buttonPanel, buttonLayout, this.globalLocalSwitch, 1, 1, 1, 1, 1.0, 0.0, 0, 0, GridBagConstraints.NONE, GridBagConstraints.CENTER);
-        Tools.addComponentToGridBagLayout(buttonPanel, buttonLayout, this.resetButton, 2, 1, 1, 1, 1.0, 0.0, 0, 0, GridBagConstraints.NONE, GridBagConstraints.CENTER);
-        Tools.addComponentToGridBagLayout(buttonPanel, buttonLayout, this.perf2AlignConvert, 3, 1, 1, 1, 1.0, 0.0, 0, 0, GridBagConstraints.NONE, GridBagConstraints.CENTER);
+        Tools.addComponentToGridBagLayout(buttonPanel, buttonLayout, this.resetButton, 1, 1, 1, 1, 1.0, 0.0, 0, 0, GridBagConstraints.NONE, GridBagConstraints.CENTER);
+        Tools.addComponentToGridBagLayout(buttonPanel, buttonLayout, this.perf2AlignConvert, 2, 1, 1, 1, 1.0, 0.0, 0, 0, GridBagConstraints.NONE, GridBagConstraints.CENTER);
         Tools.addComponentToGridBagLayout(this.audioPanel, gridBagLayout, buttonPanel, 0, 1, 1, 1, 1.0, 0.0, 0, 0, GridBagConstraints.NONE, GridBagConstraints.CENTER);
     }
 
@@ -278,8 +324,13 @@ public class AudioDocumentData extends DocumentData<WebPanel> {
             this.alignment = (performance == null) ? null : new Alignment(performance.perform(this.parent.getMsm()), null);
         }
 
-        if (doRepaint)
-            this.repaintAllComponents();
+        if (doRepaint) {
+            SwingUtilities.invokeLater(() -> {
+                if (this.getAudio() != null)
+                    this.updatePlaybackPosSample();
+                this.repaintAllComponents();
+            });
+        }
     }
 
     /**
@@ -295,18 +346,20 @@ public class AudioDocumentData extends DocumentData<WebPanel> {
      * @param doRepaint
      */
     public void updateAudio(boolean doRepaint) {
-        Audio audio = this.parent.getSyncPlayer().getSelectedAudio();
+        Audio audio = this.getAudio();
         if (audio != null) {
             this.channelNumber = -1;                                // all channels
             this.leftmostSample = 0;                                // first sample
             this.rightmostSample = audio.getNumberOfSamples() - 1;  // sample count
+            this.updatePlaybackPosSample();
         }
 
         this.waveform.setAudio();
         this.spectrogram.setAudio();
 
-        if (doRepaint)
+        if (doRepaint) {
             this.repaintAllComponents();
+        }
     }
 
     /**
