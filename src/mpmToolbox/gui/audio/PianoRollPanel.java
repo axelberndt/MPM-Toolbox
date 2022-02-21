@@ -5,7 +5,9 @@ import com.alee.laf.menu.WebCheckBoxMenuItem;
 import com.alee.laf.menu.WebMenuItem;
 import com.alee.laf.menu.WebPopupMenu;
 import com.alee.laf.panel.WebPanel;
+import meico.mpm.elements.Performance;
 import mpmToolbox.gui.Settings;
+import mpmToolbox.gui.audio.utilities.ArticulationMenu;
 import mpmToolbox.gui.msmTree.MsmTree;
 import mpmToolbox.gui.msmTree.MsmTreeNode;
 import mpmToolbox.projectData.alignment.Note;
@@ -58,7 +60,11 @@ public class PianoRollPanel extends WebPanel implements ComponentListener, Mouse
     @Override
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
-        // TODO: something meaningful?
+
+//        Graphics2D g2 = (Graphics2D)g;                  // make g a Graphics2D object, so we can use its extended drawing features
+//        this.drawPianoRoll(g2);
+//        this.drawPlaybackCursor(g2);
+//        this.drawMouseCursor(g2);
     }
 
     /**
@@ -200,6 +206,7 @@ public class PianoRollPanel extends WebPanel implements ComponentListener, Mouse
         // make "note fixed" entry
         Note note = this.getNoteAt(e.getPoint().getX() / this.getWidth(), e.getPoint().getY() / this.getHeight());
         if (note != null) {
+            // "Note fixed" checkbox
             WebCheckBoxMenuItem setFixed = new WebCheckBoxMenuItem("Note fixed", note.isFixed());
             setFixed.addActionListener(actionEvent -> {
                 note.setFixed(!note.isFixed());
@@ -209,6 +216,12 @@ public class PianoRollPanel extends WebPanel implements ComponentListener, Mouse
             });
             setFixed.setToolTipText("Pins the note at its position.");
             menu.add(setFixed);
+
+            // articulate note
+            Performance performance = this.parent.getParent().getSyncPlayer().getSelectedPerformance();
+            if (/*(performance == null) ||*/ !this.parent.getParent().getMpm().getAllPerformances().contains(performance))  // we have no performance to create an articulation
+                performance = null;
+            menu.add(new ArticulationMenu(note, performance, this.parent.getParent().getMpmTree()));
         }
 
         // play from here

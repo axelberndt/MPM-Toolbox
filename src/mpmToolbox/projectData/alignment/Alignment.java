@@ -132,6 +132,19 @@ public class Alignment {
     }
 
     /**
+     * retrieve the part that contains the given note
+     * @param note
+     * @return the part or null if no part contains the note
+     */
+    public Part getPart(Note note) {
+        for (Part part : this.parts) {
+            if (part.contains(note))
+                return part;
+        }
+        return null;
+    }
+
+    /**
      * access the list of all parts
      * @return
      */

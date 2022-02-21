@@ -68,8 +68,7 @@ public class AudioDocumentData extends DocumentData<WebPanel> {
 
         this.updateAudio(false);
         this.updateAlignment(false);
-        if (this.getAudio() != null)
-            this.updatePlaybackPosSample();
+        this.updatePlaybackPosSample();
         this.updateAudioTools();
         this.makeListeners();
 
@@ -97,7 +96,7 @@ public class AudioDocumentData extends DocumentData<WebPanel> {
             }
         });
 
-        // a listener for the milliseconds offset spinner
+        // a listener for the milliseconds offset spinner in the SyncPlayer
         this.getParent().getSyncPlayer().getOffsetSpinner().addChangeListener(changeListener -> {
             SwingUtilities.invokeLater(() -> {
                 this.updatePlaybackPosSample();
@@ -105,7 +104,7 @@ public class AudioDocumentData extends DocumentData<WebPanel> {
             });
         });
 
-        // a listener for the playback slider to draw a playback position cursor
+        // a listener for the playback slider in the SyncPlayer to draw a playback position cursor
         this.getParent().getSyncPlayer().getPlaybackSlider().addChangeListener(changeEvent -> {
             if (this.getAudio() != null) {
                 SwingUtilities.invokeLater(() -> {
@@ -121,6 +120,9 @@ public class AudioDocumentData extends DocumentData<WebPanel> {
      * Invoke only if (this.getAudio() != null)!
      */
     private void updatePlaybackPosSample() {
+        if (this.getAudio() == null)
+            return;
+
         // if the audio player is playing, we can get the playback position directly from there
         if (this.getParent().getSyncPlayer().getAudioPlayer().isPlaying()) {
             this.playbackPosSample = (int) (((double) this.getParent().getSyncPlayer().getAudioPlayer().getMicrosecondPosition() / 1000000.0)  * this.getAudio().getFrameRate());
@@ -315,6 +317,7 @@ public class AudioDocumentData extends DocumentData<WebPanel> {
 
     /**
      * update the alignment data according to the currently selected performance in the SyncPlayer
+     * @param doRepaint
      */
     public void updateAlignment(boolean doRepaint) {
         if (this.parent.getSyncPlayer().isAudioAlignmentSelected())
@@ -326,8 +329,7 @@ public class AudioDocumentData extends DocumentData<WebPanel> {
 
         if (doRepaint) {
             SwingUtilities.invokeLater(() -> {
-                if (this.getAudio() != null)
-                    this.updatePlaybackPosSample();
+                this.updatePlaybackPosSample();
                 this.repaintAllComponents();
             });
         }

@@ -4,6 +4,7 @@ import com.sun.media.sound.InvalidDataException;
 import meico.mei.Helper;
 import nu.xom.Attribute;
 import nu.xom.Element;
+import nu.xom.ParentNode;
 
 /**
  * An MSM note element plus some performance data such as milliseconds.date, milliseconds.date.end and velocity.
@@ -159,6 +160,41 @@ public class Note {
      */
     public void setMillisecondsDateEnd(double date) {
         this.millisecondsDateEnd = date;
+    }
+
+    /**
+     * read the tick date of the note
+     * @return
+     */
+    public Double getDate() {
+        Attribute date = Helper.getAttribute("date", xml);
+        if (date == null)
+            return null;
+        return Double.parseDouble(date.getValue());
+    }
+
+    /**
+     * read the tick duration of the note
+     * @return
+     */
+    public Double getDuration() {
+        Attribute dur = Helper.getAttribute("duration", xml);
+        if (dur == null)
+            return null;
+        return Double.parseDouble(dur.getValue());
+    }
+
+    /**
+     * retrieve the MSM part that this note belongs to
+     * @return
+     */
+    public Element getMsmPart() {
+        for (ParentNode parent = this.getXml().getParent().getParent().getParent(); parent != null; parent = parent.getParent()) {
+            Element p = (Element) parent;
+            if (p.getLocalName().equals("part"))
+                return p;
+        }
+        return null;
     }
 
     /**

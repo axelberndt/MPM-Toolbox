@@ -1,6 +1,12 @@
 ### Version History
 
 
+#### v0.1.11
+- New method `mpmToolbox.projectData.alignment.Alignment.getPart(Note note)` to retrieve the part that contains the given note.
+- Class `mpmToolbox.projectData.alignment.Note` has new getters for the MIDI tick date and duration, and MSM part. 
+- New class `mpmToolbox.gui.audio.utilities.ArticulationMenu` that creates a submenu in the piano roll context menu to articulate a note.
+
+
 #### v0.1.10
 - As of meico v0.8.33, audio export (WAV, MP3) will now use the currently loaded soundfont.
 - The window icon will be displayed also in the title bar of dialog windows.

@@ -41,11 +41,7 @@ public class WaveformPanel extends PianoRollPanel {
         this.drawPlaybackCursor(g2);
 
         // draw the mouse cursor
-        if (this.mousePosition != null) {
-            g2.setColor(Settings.scoreNoteColorHighlighted);
-            g2.drawLine(this.mousePosition.x, 0, this.mousePosition.x, this.getHeight());
-//            g2.drawLine(0, this.mousePosition.y, this.getWidth(), this.mousePosition.y);
-
+        if (this.drawMouseCursor(g2)) {
             // print info text
             int sampleIndex = this.getSampleIndex(this.mousePosition.getX());
             double millisec = Tools.round(((double) sampleIndex / this.parent.getAudio().getFrameRate()) * 1000.0, 2);

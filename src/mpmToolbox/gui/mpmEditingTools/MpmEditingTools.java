@@ -1819,7 +1819,7 @@ public class MpmEditingTools {
     }
 
     /**
-     * create an articulation instruction
+     * create an articulation instrucEletion
      * @param mapNode
      * @param mpmTree
      */
