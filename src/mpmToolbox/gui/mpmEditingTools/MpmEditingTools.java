@@ -293,6 +293,25 @@ public class MpmEditingTools {
                 addStyle.addActionListener(actionEvent -> MpmEditingTools.addStyleDef(self, mpmTree));
                 menu.add(addStyle);
 
+                // add default styles
+                switch (((MpmStyleCollection) self.getUserObject()).getType()) {
+                    case "articulationStyles":
+                        WebMenuItem addDefaultArticulationStyle = new WebMenuItem("Add Default Articulation Style");
+                        addDefaultArticulationStyle.addActionListener(actionEvent -> MpmEditingTools.addDefaultArticulationStyle(self, mpmTree));
+                        menu.add(addDefaultArticulationStyle);
+                        break;
+                    case "dynamicsStyles":
+                        WebMenuItem addDefaultDynamicsStyle = new WebMenuItem("Add Default Dynamics Style");
+                        addDefaultDynamicsStyle.addActionListener(actionEvent -> MpmEditingTools.addDefaultDynamicsStyle(self, mpmTree));
+                        menu.add(addDefaultDynamicsStyle);
+                        break;
+                    case "tempoStyles":
+                        WebMenuItem addDefaultTempoStyle = new WebMenuItem("Add Default Tempo Style");
+                        addDefaultTempoStyle.addActionListener(actionEvent -> MpmEditingTools.addDefaultTempoStyle(self, mpmTree));
+                        menu.add(addDefaultTempoStyle);
+                        break;
+                }
+
                 // delete all style definitions
                 WebMenuItem deleteAllStyleDefs = new WebMenuItem("Delete All Style Definitions");
                 deleteAllStyleDefs.addActionListener(actionEvent -> MpmEditingTools.deleteAllStyleDefs(self, mpmTree));
@@ -1179,6 +1198,115 @@ public class MpmEditingTools {
         Header header = (Header) styleCollectionNode.getParent().getUserObject();
         StyleDefEditor styleDefEditor = new StyleDefEditor(collection.getType(), header);
         header.addStyleDef(collection.getType(), (GenericStyle) styleDefEditor.create());
+        mpmTree.reloadNode(styleCollectionNode);
+    }
+
+    /**
+     * create a default articulation style and add it to the style collection node
+     * @param styleCollectionNode this node must be a collection of articulation styles!
+     * @param mpmTree
+     */
+    private static void addDefaultArticulationStyle(@NotNull MpmTreeNode styleCollectionNode, @NotNull MpmTree mpmTree) {
+        Header header = (Header) styleCollectionNode.getParent().getUserObject();
+
+        String styleName = "Default Articulations";
+        if (header.getStyleDef(Mpm.ARTICULATION_STYLE, styleName) != null) {    // if there is already a style with the same name, add a number to it
+            int styleNumber = 1;
+            while (header.getStyleDef(Mpm.ARTICULATION_STYLE, styleName.concat(" " + styleNumber)) != null)
+                styleNumber++;
+            styleName = styleName.concat(" " + styleNumber);
+        }
+
+        // create and fill the default style
+        ArticulationStyle articulationStyle = (ArticulationStyle) header.addStyleDef(Mpm.ARTICULATION_STYLE, styleName);
+        articulationStyle.addDef(ArticulationDef.createDefaultArticulationDef("accent"));
+        articulationStyle.addDef(ArticulationDef.createDefaultArticulationDef("breath"));
+        articulationStyle.addDef(ArticulationDef.createDefaultArticulationDef("legatissimo"));
+        articulationStyle.addDef(ArticulationDef.createDefaultArticulationDef("legato"));
+        articulationStyle.addDef(ArticulationDef.createDefaultArticulationDef("legatostop"));
+        articulationStyle.addDef(ArticulationDef.createDefaultArticulationDef("marcato"));
+        articulationStyle.addDef(ArticulationDef.createDefaultArticulationDef("nonlegato"));
+        articulationStyle.addDef(ArticulationDef.createDefaultArticulationDef("pizzicato"));
+        articulationStyle.addDef(ArticulationDef.createDefaultArticulationDef("portato"));
+        articulationStyle.addDef(ArticulationDef.createDefaultArticulationDef("sforzato"));
+        articulationStyle.addDef(ArticulationDef.createDefaultArticulationDef("snap pizzicato"));
+        articulationStyle.addDef(ArticulationDef.createDefaultArticulationDef("spiccato"));
+        articulationStyle.addDef(ArticulationDef.createDefaultArticulationDef("staccato"));
+        articulationStyle.addDef(ArticulationDef.createDefaultArticulationDef("staccatissimo"));
+        articulationStyle.addDef(ArticulationDef.createDefaultArticulationDef("tenuto"));
+
+        mpmTree.reloadNode(styleCollectionNode);
+    }
+
+    /**
+     * create a default dynamics style and add it to the style collection node
+     * @param styleCollectionNode this node must be a collection of dynamics styles!
+     * @param mpmTree
+     */
+    private static void addDefaultDynamicsStyle(@NotNull MpmTreeNode styleCollectionNode, @NotNull MpmTree mpmTree) {
+        Header header = (Header) styleCollectionNode.getParent().getUserObject();
+
+        String styleName = "Default Dynamics";
+        if (header.getStyleDef(Mpm.DYNAMICS_STYLE, styleName) != null) {    // if there is already a style with the same name, add a number to it
+            int styleNumber = 1;
+            while (header.getStyleDef(Mpm.DYNAMICS_STYLE, styleName.concat(" " + styleNumber)) != null)
+                styleNumber++;
+            styleName = styleName.concat(" " + styleNumber);
+        }
+
+        // create and fill the default style
+        DynamicsStyle dynamicsStyle = (DynamicsStyle) header.addStyleDef(Mpm.DYNAMICS_STYLE, styleName);
+        dynamicsStyle.addDef(DynamicsDef.createDefaultDynamicsDef("pppp"));
+        dynamicsStyle.addDef(DynamicsDef.createDefaultDynamicsDef("ppp"));
+        dynamicsStyle.addDef(DynamicsDef.createDefaultDynamicsDef("pp"));
+        dynamicsStyle.addDef(DynamicsDef.createDefaultDynamicsDef("p"));
+        dynamicsStyle.addDef(DynamicsDef.createDefaultDynamicsDef("mp"));
+        dynamicsStyle.addDef(DynamicsDef.createDefaultDynamicsDef("mf"));
+        dynamicsStyle.addDef(DynamicsDef.createDefaultDynamicsDef("f"));
+        dynamicsStyle.addDef(DynamicsDef.createDefaultDynamicsDef("ff"));
+        dynamicsStyle.addDef(DynamicsDef.createDefaultDynamicsDef("fff"));
+        dynamicsStyle.addDef(DynamicsDef.createDefaultDynamicsDef("ffff"));
+        dynamicsStyle.addDef(DynamicsDef.createDefaultDynamicsDef("sforzato"));
+
+        mpmTree.reloadNode(styleCollectionNode);
+    }
+
+    /**
+     * create a default tempo style and add it to the style collection node
+     * @param styleCollectionNode this node must be a collection of tempo styles!
+     * @param mpmTree
+     */
+    private static void addDefaultTempoStyle(@NotNull MpmTreeNode styleCollectionNode, @NotNull MpmTree mpmTree) {
+        Header header = (Header) styleCollectionNode.getParent().getUserObject();
+
+        String styleName = "Default Tempo";
+        if (header.getStyleDef(Mpm.TEMPO_STYLE, styleName) != null) {    // if there is already a style with the same name, add a number to it
+            int styleNumber = 1;
+            while (header.getStyleDef(Mpm.TEMPO_STYLE, styleName.concat(" " + styleNumber)) != null)
+                styleNumber++;
+            styleName = styleName.concat(" " + styleNumber);
+        }
+
+        // create and fill the default style
+        TempoStyle tempoStyle = (TempoStyle) header.addStyleDef(Mpm.TEMPO_STYLE, styleName);
+        tempoStyle.addDef(TempoDef.createDefaultTempoDef("grave"));
+        tempoStyle.addDef(TempoDef.createDefaultTempoDef("largo"));
+        tempoStyle.addDef(TempoDef.createDefaultTempoDef("lento"));
+        tempoStyle.addDef(TempoDef.createDefaultTempoDef("adagio"));
+        tempoStyle.addDef(TempoDef.createDefaultTempoDef("larghetto"));
+        tempoStyle.addDef(TempoDef.createDefaultTempoDef("adagietto"));
+        tempoStyle.addDef(TempoDef.createDefaultTempoDef("andante"));
+        tempoStyle.addDef(TempoDef.createDefaultTempoDef("andantino"));
+        tempoStyle.addDef(TempoDef.createDefaultTempoDef("maestoso"));
+        tempoStyle.addDef(TempoDef.createDefaultTempoDef("moderato"));
+        tempoStyle.addDef(TempoDef.createDefaultTempoDef("allegretto"));
+        tempoStyle.addDef(TempoDef.createDefaultTempoDef("animato"));
+        tempoStyle.addDef(TempoDef.createDefaultTempoDef("allegro"));
+        tempoStyle.addDef(TempoDef.createDefaultTempoDef("assai"));
+        tempoStyle.addDef(TempoDef.createDefaultTempoDef("vivace"));
+        tempoStyle.addDef(TempoDef.createDefaultTempoDef("presto"));
+        tempoStyle.addDef(TempoDef.createDefaultTempoDef("prestissimo"));
+
         mpmTree.reloadNode(styleCollectionNode);
     }
 

@@ -1,6 +1,10 @@
 ### Version History
 
 
+#### v0.1.12
+- In the MPM tree, the context menus of `articulationStyles`, `dynamicsStyles` and `tempoStyles` have an additional option to create default styles. These serve as convenient starter styles to be further refined.
+
+
 #### v0.1.11
 - New method `mpmToolbox.projectData.alignment.Alignment.getPart(Note note)` to retrieve the part that contains the given note.
 - Class `mpmToolbox.projectData.alignment.Note` has new getters for the MIDI tick date and duration, and MSM part. 

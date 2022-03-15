@@ -18,8 +18,6 @@ import mpmToolbox.projectData.alignment.Note;
 import nu.xom.Attribute;
 import nu.xom.Element;
 
-import java.util.ArrayList;
-
 /**
  * This class creates a submenu in the piano roll context menu to articulate a note.
  */

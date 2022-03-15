@@ -79,13 +79,12 @@ public class PianoRoll extends BufferedImage {
     /**
      * Paint a note to the specified position. If there is already a note, the colors will be added.
      * But only the last added note will be associated.
-     * The invoking method should ensure the following (x < 0) || (x >= this.getWidth()) || (y < 0) || (y >= this.getHeight())
+     * The invoking method should ensure the following (x &lt; 0) || (x &ge; this.getWidth()) || (y &lt; 0) || (y &ge; this.getHeight())
      * as this method does not check this!
      * @param x
      * @param y
      * @param alphaFade a value in [0, 1] that is multiplied with the default alpha value; with this, the fading of the note throughout its duration is realized
      * @param note
-     * @return
      */
     private void add(int x, int y, float alphaFade, @NotNull Note note) {
         // this first check is not necessary as far as the invoking method does this already

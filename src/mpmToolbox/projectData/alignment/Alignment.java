@@ -377,7 +377,6 @@ public class Alignment {
      * This method check the millisecond on- and offsets of all notes in the alignment against their timing
      * in the performance rendering. If correction is needed, it is done via a local articulation.
      * @param performance the performance that will be refined with local articulation maps, if necessary
-     * @return
      */
     private void exportArticulation(Performance performance) {
         for (Element part : performance.perform(this.msm).getParts()) {
