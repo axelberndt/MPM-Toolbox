@@ -1,6 +1,11 @@
 ### Version History
 
 
+#### v0.1.13
+- Meico update to v0.8.35 with added support for MEI element `arpeg` for arpeggios and new MPM features for ornamentation. These, however, are not yet editable in MPM Toolbox. Full integration of MPM ornamentation features is pending. The update further contains a little enhancement in meico's MEI to MSM and MPM export, namely that IDs of MEI `staffDef` elements will recur in MSM and MPM `part` elements.
+- Enhancement in the constructor of class `mpmToolbox.projectData.score.Score` that parses a project file's XML to generate its data structure. Now it is able to handle occurrences of a note or performance instruction on multiple score pages.
+
+
 #### v0.1.12
 - In the MPM tree, the context menus of `articulationStyles`, `dynamicsStyles` and `tempoStyles` have an additional option to create default styles. These serve as convenient starter styles to be further refined.
 

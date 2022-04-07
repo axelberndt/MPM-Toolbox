@@ -56,6 +56,26 @@ public class Score {
         if (overlayElementSizeAtt != null)
             this.overlayElementSize = Integer.parseInt(overlayElementSizeAtt.getValue());
 
+        // make a hashmap for note ids and elements
+        HashMap<String, Element> notes = new HashMap<>();
+        for (Element part : this.parentProject.getMsm().getParts()) {
+            Element score = part.getFirstChildElement("dated").getFirstChildElement("score");   // get the part's score
+            if (score == null)                                                          // if it has none
+                continue;                                                               // we are done with this part
+
+            for (Element note : score.getChildElements("note"))                         // for each note in the MSM part
+                notes.put(Helper.getAttributeValue("id", note), note);                  // add it to the hashmap
+        }
+
+        // make a similar hashmap for performance instructions
+        HashMap<String, Element> perfs = new HashMap<>();
+        Nodes nodes = this.parentProject.getMpm().getRootElement().query("descendant::*[@date and @xml:id]"); // get all children with attributes date and xml:id, i.e. all performance instructions with an id
+        for (Node node : nodes) {
+            Element n = (Element) node;
+            String id = Helper.getAttributeValue("id", n);
+            perfs.put(id, n);
+        }
+
         // parse the score data
         HashMap<String, KeyValue<ScorePage, KeyValue<Double, Double>>> noteAnnotations = new HashMap<>();
         HashMap<String, KeyValue<ScorePage, KeyValue<Double, Double>>> performanceAnnotations = new HashMap<>();
@@ -69,48 +89,24 @@ public class Score {
                 continue;
             }
             this.pages.add(page);
-        }
-
-        // find the MSM note elements that correspond to the above ID strings
-        if (!noteAnnotations.isEmpty()) {
-            HashMap<String, Element> notes = new HashMap<>();
-            for (Element part : this.parentProject.getMsm().getParts()) {
-                Element score = part.getFirstChildElement("dated").getFirstChildElement("score");   // get the part's score
-                if (score == null)                                                          // if it has none
-                    continue;                                                               // we are done with this part
-
-                for (Element note : score.getChildElements("note"))                         // for each note in the MSM part
-                    notes.put(Helper.getAttributeValue("id", note), note);                  // add it to the hashmap
-            }
 
             // for each note annotation make an entry in the corresponding ScorePage data structure
             for (Map.Entry<String, KeyValue<ScorePage, KeyValue<Double, Double>>> noteAnnotation : noteAnnotations.entrySet()) {    // for each note annotation
                 Element note = notes.get(noteAnnotation.getKey());                          // get the corresponding note element
                 if (note == null)                                                           // if there is none
                     continue;                                                               // go on with the next association
-                ScorePage page = noteAnnotation.getValue().getKey();                        // get the page where the note association should be added
                 page.addEntry(noteAnnotation.getValue().getValue().getKey(), noteAnnotation.getValue().getValue().getValue(), note);    // add the note association to the page
             }
-        }
-
-        // find the MPM elements that correspond to the above ID strings
-        if (!performanceAnnotations.isEmpty()) {
-            HashMap<String, Element> perfs = new HashMap<>();
-            Nodes nodes = this.parentProject.getMpm().getRootElement().query("descendant::*[@date and @xml:id]"); // get all children with attributes date and xml:id, i.e. all performance instructions with an id
-            for (Node node : nodes) {
-                Element n = (Element) node;
-                String id = Helper.getAttributeValue("id", n);
-                perfs.put(id, n);
-            }
+            noteAnnotations.clear();
 
             // for each performance annotation make an entry in the corresponding ScorePage data structure
             for (Map.Entry<String, KeyValue<ScorePage, KeyValue<Double, Double>>> perfAssociation : performanceAnnotations.entrySet()) {
                 Element perf = perfs.get(perfAssociation.getKey());
                 if (perf == null)
                     continue;
-                ScorePage page = perfAssociation.getValue().getKey();
                 page.addEntry(perfAssociation.getValue().getValue().getKey(), perfAssociation.getValue().getValue().getValue(), perf);
             }
+            performanceAnnotations.clear();
         }
     }
 
