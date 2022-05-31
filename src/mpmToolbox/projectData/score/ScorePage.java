@@ -44,7 +44,7 @@ public class ScorePage extends OrthantNeighborhoodGraph {
      * @throws IOException
      */
     protected ScorePage(Element pageElement, String basePath, HashMap<String, KeyValue<ScorePage, KeyValue<Double, Double>>> noteAnnotations, HashMap<String, KeyValue<ScorePage, KeyValue<Double, Double>>> performanceAnnotations) throws IOException {
-        this.file = new File(basePath + pageElement.getAttributeValue("file"));     // get the image file
+        this.file = new File(Tools.uniformPath(basePath + pageElement.getAttributeValue("file")));     // get the image file
         if (!file.exists())
             throw new IOException("Score image file " + this.file.getAbsolutePath() + " does not exist.");
 
@@ -80,6 +80,7 @@ public class ScorePage extends OrthantNeighborhoodGraph {
                 case "distribution.triangular":
                 case "distribution.uniform":
                 case "dynamics":
+                case "ornament":
                 case "rubato":
                 case "style":
                 case "tempo":

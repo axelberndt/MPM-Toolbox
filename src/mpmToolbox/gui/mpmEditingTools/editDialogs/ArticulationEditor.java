@@ -430,6 +430,7 @@ public class ArticulationEditor extends EditDialog<ArticulationData> {
         this.fillNoteIdChooser();
 
         this.nameRef.selectAll();
+        this.checkNoteId();     // make sure that the initial note ID, if it was set before displaying the dialog, is tinted correctly
 
         this.setVisible(true);  // start the dialog
 

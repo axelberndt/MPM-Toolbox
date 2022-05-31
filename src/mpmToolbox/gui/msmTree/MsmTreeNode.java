@@ -110,8 +110,8 @@ public class MsmTreeNode extends UniqueNode<MsmTreeNode, Node> implements TextBr
         super(attribute);
 
         this.project = project;
-        this.name = "<html><font size=\"+0\" color=\"silver\">@</font>  " + attribute.getLocalName() + " " + attribute.getValue() + "</html>";
         this.type = XmlNodeType.attribute;
+        this.generateMyName();
     }
 
     /**
@@ -120,18 +120,10 @@ public class MsmTreeNode extends UniqueNode<MsmTreeNode, Node> implements TextBr
     private void generateMyName() {
         switch (this.type) {
             case root:
-//                this.name = "<html><font size=\"+0\" color=\"silver\">&#128462;</font>  " + ((Element)this.getUserObject()).getLocalName() + "</html>";
                 this.name = "<html><font size=\"-2\" color=\"silver\">&lt;/&gt;</font>  " + ((Element)this.getUserObject()).getLocalName() + "</html>";
-                break;
-            case global:
-                this.name = "<html><font size=\"+0\" color=\"silver\">&#127760;</font>  " + ((Element)this.getUserObject()).getLocalName() + "</html>";
                 break;
             case part:
                 this.name = ((Element)this.getUserObject()).getLocalName().concat(" " + ((Element)this.getUserObject()).getAttributeValue("number")).concat(" " + ((Element)this.getUserObject()).getAttributeValue("name"));
-                this.name = "<html><font size=\"+0\" color=\"silver\">&#119066;</font>  " + this.name + "</html>";
-                break;
-            case dated:
-                this.name = "<html><font size=\"+0\" color=\"silver\">&#128340;</font>  " + ((Element)this.getUserObject()).getLocalName() + "</html>";
                 break;
             case score:
                 this.name = "<html><font size=\"+0\" color=\"silver\">&#9835;</font>  " + ((Element)this.getUserObject()).getLocalName() + "</html>";
@@ -173,13 +165,14 @@ public class MsmTreeNode extends UniqueNode<MsmTreeNode, Node> implements TextBr
                 break;
             }
             case lyrics:
-                this.name = "<html><font size=\"-2\" color=\"silver\">&lt;/&gt;</font>  " + ((Element)this.getUserObject()).getLocalName() + " " + ((Element)this.getUserObject()).getValue() + "</html>";
+                this.name = ((Element)this.getUserObject()).getLocalName() + " \"" + ((Element)this.getUserObject()).getValue() + "\"";
                 break;
             case attribute:
                 this.name = "<html><font size=\"+0\" color=\"silver\">@</font>  " + ((Attribute)this.getUserObject()).getLocalName() + " " + this.getUserObject().getValue() + "</html>";
+//                this.name = "@ " + ((Attribute)this.getUserObject()).getLocalName() + ": " + this.getUserObject().getValue();
                 break;
             default:
-                this.name = "<html><font size=\"-2\" color=\"silver\">&lt;/&gt;</font>  " + ((Element)this.getUserObject()).getLocalName() + "</html>";
+                this.name = ((Element)this.getUserObject()).getLocalName();
         }
     }
 

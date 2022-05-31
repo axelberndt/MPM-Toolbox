@@ -10,6 +10,7 @@ import meico.xml.XmlBase;
 import mpmToolbox.projectData.audio.Audio;
 import mpmToolbox.projectData.score.Score;
 import mpmToolbox.projectData.score.ScorePage;
+import mpmToolbox.supplementary.Tools;
 import nu.xom.*;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.rendering.PDFRenderer;
@@ -78,14 +79,14 @@ public class ProjectData {
         this.xml = new XmlBase(file);
         String basePath = this.xml.getFile().getParent() + File.separator;
 
-        String localMsmPath = this.xml.getRootElement().getFirstChildElement("msm").getAttributeValue("file").replaceAll("[\\\\/]", File.separator);    // adapt the filepath separators to the current OS (\, /)
-        this.msm = new Msm(new File(basePath + localMsmPath));
+        String localMsmPath = this.xml.getRootElement().getFirstChildElement("msm").getAttributeValue("file");
+        this.msm = new Msm(new File(Tools.uniformPath(basePath + localMsmPath)));
         this.msmPreprocessing();
 
         Element e = this.xml.getRootElement().getFirstChildElement("mpm");
         if (e != null) {
-            String localMpmPath = e.getAttributeValue("file").replaceAll("[\\\\/]", File.separator);    // adapt the filepath separators to the current OS (\, /)
-            this.setMpm(new Mpm(new File(basePath + localMpmPath)));
+            String localMpmPath = e.getAttributeValue("file");
+            this.setMpm(new Mpm(new File(Tools.uniformPath(basePath + localMpmPath))));
         }
 
         this.score = new Score(this);

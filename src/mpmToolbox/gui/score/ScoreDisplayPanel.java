@@ -232,6 +232,7 @@ public class ScoreDisplayPanel extends WebPanel implements MouseWheelListener, M
 //                case "distribution.triangular":
 //                case "distribution.uniform":
 //                case "dynamics":
+//                case "ornament":
 //                case "rubato":
 //                case "style":
 //                case "tempo":

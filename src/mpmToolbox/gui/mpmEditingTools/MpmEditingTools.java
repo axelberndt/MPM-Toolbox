@@ -201,6 +201,11 @@ public class MpmEditingTools {
                     addMetricalAccentuationStyleCollection.addActionListener(actionEvent -> MpmEditingTools.addStyleCollection(Mpm.METRICAL_ACCENTUATION_STYLE, self, mpmTree));
                     menu.add(addMetricalAccentuationStyleCollection);
                 }
+                if (!allStyleCollections.containsKey(Mpm.ORNAMENTATION_STYLE)) {
+                    WebMenuItem addOrnamentationStyleCollection = new WebMenuItem("Add Ornamentation Style Collection");
+                    addOrnamentationStyleCollection.addActionListener(actionEvent -> MpmEditingTools.addStyleCollection(Mpm.ORNAMENTATION_STYLE, self, mpmTree));
+                    menu.add(addOrnamentationStyleCollection);
+                }
                 if (!allStyleCollections.containsKey(Mpm.RUBATO_STYLE)) {
                     WebMenuItem addRubatoStyleCollection = new WebMenuItem("Add Rubato Style Collection");
                     addRubatoStyleCollection.addActionListener(actionEvent -> MpmEditingTools.addStyleCollection(Mpm.RUBATO_STYLE, self, mpmTree));
@@ -270,6 +275,11 @@ public class MpmEditingTools {
                     addMetricalAccentuationMap.addActionListener(actionEvent -> MpmEditingTools.addMap(Mpm.METRICAL_ACCENTUATION_MAP, self, mpmTree));
                     menu.add(addMetricalAccentuationMap);
                 }
+                if (!allMaps.containsKey(Mpm.ORNAMENTATION_MAP)) {
+                    WebMenuItem addOrnamentationMap = new WebMenuItem("Add Ornamentation Map");
+                    addOrnamentationMap.addActionListener(actionEvent -> MpmEditingTools.addMap(Mpm.ORNAMENTATION_MAP, self, mpmTree));
+                    menu.add(addOrnamentationMap);
+                }
                 if (!allMaps.containsKey(Mpm.RUBATO_MAP)) {
                     WebMenuItem addRubatoMap = new WebMenuItem("Add Rubato Map");
                     addRubatoMap.addActionListener(actionEvent -> MpmEditingTools.addMap(Mpm.RUBATO_MAP, self, mpmTree));
@@ -310,6 +320,11 @@ public class MpmEditingTools {
                         addDefaultTempoStyle.addActionListener(actionEvent -> MpmEditingTools.addDefaultTempoStyle(self, mpmTree));
                         menu.add(addDefaultTempoStyle);
                         break;
+                    case "ornamentationStyles":
+                        WebMenuItem addDefaultOrnamentationStyle = new WebMenuItem("Add Default Ornamentation Style");
+                        addDefaultOrnamentationStyle.addActionListener(actionEvent -> MpmEditingTools.addDefaultOrnamentationStyle(self, mpmTree));
+                        menu.add(addDefaultOrnamentationStyle);
+                        break;
                 }
 
                 // delete all style definitions
@@ -327,6 +342,7 @@ public class MpmEditingTools {
             case metricalAccentuationStyle:
             case dynamicsStyle:
             case genericStyle:
+            case ornamentationStyle:
             case rubatoStyle:
             case tempoStyle:
                 // add definition to styleDef
@@ -419,7 +435,13 @@ public class MpmEditingTools {
                 break;
 
             case ornamentationMap:
-                // TODO ...
+                // add ornament
+                WebMenuItem addOrnament = new WebMenuItem("Add Ornament");
+                addOrnament.addActionListener(actionEvent -> MpmEditingTools.addOrnament(self, mpmTree));
+                menu.add(addOrnament);
+
+                // add style switch
+                menu.add(MpmEditingTools.makeAddStyleSwitchMenuEntry(self, mpmTree));
 
                 // move/merge into another part or global
                 menu.add(MpmEditingTools.makeMoveMergeMapEntry(self, mpmTree));
@@ -519,6 +541,7 @@ public class MpmEditingTools {
             case articulationDef:
             case accentuationPatternDef:
             case dynamicsDef:
+            case ornamentDef:
             case rubatoDef:
             case tempoDef:
                 // edit def
@@ -619,6 +642,27 @@ public class MpmEditingTools {
 
                 // delete entry
                 menu.add(MpmEditingTools.makeDeleteMapEntryMenuItem(self, mpmTree));
+                break;
+
+            case ornament:
+                // edit ornament
+                WebMenuItem editOrnament = new WebMenuItem("Edit Ornament");
+                editOrnament.addActionListener(actionEvent -> MpmEditingTools.editOrnament(self, mpmTree));
+                menu.add(editOrnament);
+
+                // move entry
+                menu.add(MpmEditingTools.makeMoveMapEntry(self, mpmTree));
+
+                // copy entry
+                menu.add(MpmEditingTools.makeCopyMapEntry(self, mpmTree));
+
+                // delete entry
+                menu.add(MpmEditingTools.makeDeleteMapEntryMenuItem(self, mpmTree));
+                break;
+
+            case dynamicsGradient:
+            case temporalSpread:
+                // edit ornamentDef instead
                 break;
 
             case rubato:
@@ -724,6 +768,7 @@ public class MpmEditingTools {
             case metricalAccentuationStyle:
             case dynamicsStyle:
             case genericStyle:
+            case ornamentationStyle:
             case rubatoStyle:
             case tempoStyle:
 //                MpmEditingTools.editStyleDef(self, mpmTree);
@@ -740,6 +785,15 @@ public class MpmEditingTools {
                 break;
             case accentuationPatternDef:
 //                MpmEditingTools.editDef(self, mpmTree);
+                break;
+            case ornamentDef:
+//                MpmEditingTools.editDef(self, mpmTree);
+                break;
+            case dynamicsGradient:
+                // edit the ornamentDef instead of this element
+                break;
+            case temporalSpread:
+                // edit the ornamentDef instead of this element
                 break;
             case articulationDef:
             case dynamicsDef:
@@ -769,6 +823,9 @@ public class MpmEditingTools {
             case distributionCorrelatedCompensatingTriangle:
             case distributionList:
                 MpmEditingTools.editDistribution(self, mpmTree);
+                break;
+            case ornament:
+                MpmEditingTools.editOrnament(self, mpmTree);
                 break;
             case rubato:
                 MpmEditingTools.editRubato(self, mpmTree);
@@ -1311,6 +1368,29 @@ public class MpmEditingTools {
     }
 
     /**
+     * create a default ornamentation style and add it to the style collection node
+     * @param styleCollectionNode this node must be a collection of ornamentation styles!
+     * @param mpmTree
+     */
+    private static void addDefaultOrnamentationStyle(@NotNull MpmTreeNode styleCollectionNode, @NotNull MpmTree mpmTree) {
+        Header header = (Header) styleCollectionNode.getParent().getUserObject();
+
+        String styleName = "Default Ornamentation";
+        if (header.getStyleDef(Mpm.ORNAMENTATION_STYLE, styleName) != null) {    // if there is already a style with the same name, add a number to it
+            int styleNumber = 1;
+            while (header.getStyleDef(Mpm.ORNAMENTATION_STYLE, styleName.concat(" " + styleNumber)) != null)
+                styleNumber++;
+            styleName = styleName.concat(" " + styleNumber);
+        }
+
+        // create and fill the default style
+        OrnamentationStyle ornamentationStyle = (OrnamentationStyle) header.addStyleDef(Mpm.ORNAMENTATION_STYLE, styleName);
+        ornamentationStyle.addDef(OrnamentDef.createDefaultOrnamentDef("arpeggio"));
+
+        mpmTree.reloadNode(styleCollectionNode);
+    }
+
+    /**
      * edit a styleDef
      * @param styleDefNode
      * @param mpmTree
@@ -1357,6 +1437,9 @@ public class MpmEditingTools {
         } else if (styleDefNode.getUserObject() instanceof MetricalAccentuationStyle) {
             MetricalAccentuationStyle styleDef = (MetricalAccentuationStyle) styleDefNode.getUserObject();
             styleDef.addDef((new AccentuationPatternDefEditor(styleDef)).create());
+        } else if (styleDefNode.getUserObject() instanceof OrnamentationStyle) {
+            OrnamentationStyle styleDef = (OrnamentationStyle) styleDefNode.getUserObject();
+            styleDef.addDef((new OrnamentDefEditor(styleDef)).create());
         } else if (styleDefNode.getUserObject() instanceof RubatoStyle) {
             RubatoStyle styleDef = (RubatoStyle) styleDefNode.getUserObject();
             styleDef.addDef((new RubatoDefEditor(styleDef)).create());
@@ -1386,6 +1469,9 @@ public class MpmEditingTools {
         } else if (defNode.getUserObject() instanceof AccentuationPatternDef) {
             AccentuationPatternDefEditor editor = new AccentuationPatternDefEditor((MetricalAccentuationStyle) defNode.getParent().getUserObject());
             editor.edit((AccentuationPatternDef) defNode.getUserObject());
+        } else if (defNode.getUserObject() instanceof OrnamentDef) {
+            OrnamentDefEditor editor = new OrnamentDefEditor((OrnamentationStyle) defNode.getParent().getUserObject());
+            editor.edit((OrnamentDef) defNode.getUserObject());
         } else if (defNode.getUserObject() instanceof RubatoDef) {
             RubatoDefEditor editor = new RubatoDefEditor((RubatoStyle) defNode.getParent().getUserObject());
             editor.edit((RubatoDef) defNode.getUserObject());
@@ -1988,6 +2074,49 @@ public class MpmEditingTools {
         int index = map.addArticulation(newArticulation);   // add the new instruction to the map
         MpmEditingTools.handOverScorePosition(articulationElement, map.getElement(index), mpmTree.getProjectPane().getScore());   // if the old instruction is linked in the score, we have to associate the new now with that score position
         mpmTree.reloadNode(articulationNode.getParent());
+        MpmEditingTools.updateAudioAlignment(performance, mpmTree.getProjectPane());    // update the alignment visualization in the audio frame
+    }
+
+    /**
+     * create an ornament instruction
+     * @param mapNode
+     * @param mpmTree
+     */
+    private static void addOrnament(MpmTreeNode mapNode, MpmTree mpmTree) {
+        OrnamentationMap map = (OrnamentationMap) mapNode.getUserObject();
+
+        OrnamentEditor editor = new OrnamentEditor(map);
+        OrnamentData ornament = editor.create();
+        if (ornament != null) {
+            map.addOrnament(ornament);
+            mpmTree.reloadNode(mapNode);
+            MpmEditingTools.updateAudioAlignment(mapNode.getPerformance(), mpmTree.getProjectPane());    // update the alignment visualization in the audio frame
+        }
+    }
+
+    /**
+     * edit an MPM ornament instruction
+     * @param ornamentNode
+     * @param mpmTree
+     */
+    private static void editOrnament(MpmTreeNode ornamentNode, MpmTree mpmTree) {
+        OrnamentationMap map = (OrnamentationMap) ornamentNode.getParent().getUserObject();
+
+        Element ornamentElement = (Element) ornamentNode.getUserObject();
+        OrnamentData ornament = new OrnamentData(ornamentElement);
+
+        // create and start editor
+        OrnamentEditor editor = new OrnamentEditor(map);
+        OrnamentData newOrnament = editor.edit(ornament);
+
+        if (ornament == newOrnament)                                // no change
+            return;                                                 // no need to do anything
+
+        Performance performance = ornamentNode.getPerformance();
+        map.removeElement(ornamentElement);                         // remove the old instruction from the map
+        int index = map.addOrnament(newOrnament);                   // add the new instruction to the map
+        MpmEditingTools.handOverScorePosition(ornamentElement, map.getElement(index), mpmTree.getProjectPane().getScore());   // if the old instruction is linked in the score, we have to associate the new now with that score position
+        mpmTree.reloadNode(ornamentNode.getParent());
         MpmEditingTools.updateAudioAlignment(performance, mpmTree.getProjectPane());    // update the alignment visualization in the audio frame
     }
 

@@ -8,6 +8,7 @@ import com.alee.laf.menu.WebMenuItem;
 import com.alee.laf.panel.WebPanel;
 import com.alee.laf.window.WebFrame;
 import com.alee.skin.dark.WebDarkSkin;
+import meico.mei.Helper;
 import meico.mei.Mei;
 import meico.midi.Midi;
 import meico.mpm.Mpm;
@@ -265,7 +266,6 @@ public class MpmToolbox {
         WebLabel imageLabel = new WebLabel(new ImageIcon(Toolkit.getDefaultToolkit().getImage(this.getClass().getResource("/resources/icons/icon5-1.png"))), WebLabel.RIGHT);
 //        imageLabel.setAlignmentX(Component.RIGHT_ALIGNMENT);
         Tools.addComponentToGridBagLayout(welcomeMessage, layout, imageLabel, 0, 0, 1, 1, 1.0, 1.0, 0, 0, GridBagConstraints.BOTH, GridBagConstraints.LINE_END);
-
         WebLabel message = new WebLabel("<html><font size='+2'>Welcome to the Music Performance Markup Toolbox," +
                                         "<p style='margin-top:7'>your tool to create and analyse expressive music performances.</p></font>" +
                                         "<p style='margin-top:28'>Open an existing project (MPR file) or initiate a new one by opening or dropping</p>" +
@@ -288,6 +288,7 @@ public class MpmToolbox {
     public void openFile() {
         final JFileChooser fileChooser = new JFileChooser();
         fileChooser.setDialogTitle("Open File");
+        fileChooser.setDialogType(JFileChooser.OPEN_DIALOG);
 
         FileFilter[] ff = fileChooser.getChoosableFileFilters();
         for (FileFilter f : ff)
@@ -305,7 +306,7 @@ public class MpmToolbox {
         if (this.projectPane != null)
             fileChooser.setCurrentDirectory(this.projectPane.getMsm().getFile());
 
-        if (fileChooser.showOpenDialog(this.frame) == 0) {                      // a file has been selected
+        if (fileChooser.showOpenDialog(this.frame) == JFileChooser.APPROVE_OPTION) {    // a file has been selected
             this.loadFile(fileChooser.getSelectedFile());
         }
     }
@@ -464,13 +465,13 @@ public class MpmToolbox {
     private boolean openProject(ProjectPane project) {
         // opening a new project requires to close the current one, ask for closing
         if (this.projectPane != null) {
-            Object[] options = {"Yes, close", "Yes, save first", "No"};
+            Object[] options = {"Save first", "Close without saving", "No"};
             switch (JOptionPane.showOptionDialog(this.frame, "Do want to close the current project and open a new one?", "Confirm to Close Current Project", JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE, null, options, options[2])) {
-                case 0:     // yes
+                case 0:     // yes, but save first
+                    this.saveProject();
                     this.closeProject();
                     break;
-                case 1:     // yes, but save first
-                    this.saveProject();
+                case 1:     // yes
                     this.closeProject();
                     break;
                 case 2:     // no
@@ -561,12 +562,18 @@ public class MpmToolbox {
             fileChooser.removeChoosableFileFilter(f);
 
         fileChooser.setDialogTitle("Save Project As");
+        fileChooser.setDialogType(JFileChooser.SAVE_DIALOG);
         fileChooser.setMultiSelectionEnabled(false);
         fileChooser.addChoosableFileFilter(new FileNameExtensionFilter("MPM Toolbox Project", "mpr"));
-        fileChooser.addChoosableFileFilter(new FileNameExtensionFilter("XML", "xml"));
+//        fileChooser.addChoosableFileFilter(new FileNameExtensionFilter("XML", "xml"));
         fileChooser.setCurrentDirectory(this.projectPane.getMsm().getFile());
-        if (fileChooser.showSaveDialog(this.frame) == 0) {                      // a file has been selected
-            if (this.projectPane.saveProjectAs(fileChooser.getSelectedFile())) {    // if save procedure succeeded
+        fileChooser.setSelectedFile(new File(Helper.getFilenameWithoutExtension(this.projectPane.getMsm().getFile().getName()) + ".mpr"));
+        if (fileChooser.showSaveDialog(this.frame) == JFileChooser.APPROVE_OPTION) {    // a file has been selected
+            String filename = fileChooser.getSelectedFile().toString();
+            if (!filename.endsWith(".mpr"))                                 // make sure that the filename ends with .mpr
+                filename += ".mpr";
+
+            if (this.projectPane.saveProjectAs(new File(filename))) {        // if save procedure succeeded
                 Settings.recentOpened.add(this.projectPane.getFile());
                 this.updateOpenRecent();
                 return true;

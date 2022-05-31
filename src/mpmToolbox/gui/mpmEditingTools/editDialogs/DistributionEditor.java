@@ -572,7 +572,7 @@ public class DistributionEditor extends EditDialog<DistributionData> {
 
                 double lowerLimit = Tools.round((double) this.lowerLimit.getValue(), 10);
                 double upperLimit = Tools.round((double) this.upperLimit.getValue(), 10);
-                Long seed = (this.seedButton.isSelected()) ? (long) ((double) this.seed.getValue()) : null;
+                Long seed = (this.seedButton.isSelected()) ? (long) this.seed.getValue() : null;
                 this.visualizer.setUniform(lowerLimit, upperLimit, seed);
                 break;
             }

@@ -153,6 +153,26 @@ public class MpmTreeDataProvider extends AbstractExTreeDataProvider<MpmTreeNode>
                     childNodes.add(new MpmTreeNode(accentuationPatternDef.getAccentuationXml(i), this.project));
                 break;
 
+            case ornamentationStyle:
+                OrnamentationStyle ornamentationStyle = (OrnamentationStyle) parent.getUserObject();
+                for (Map.Entry<String, OrnamentDef> entry : ornamentationStyle.getAllDefs().entrySet())
+                    childNodes.add(new MpmTreeNode(entry.getValue(), this.project));
+                break;
+
+            case ornamentDef:
+                OrnamentDef ornamentDef = (OrnamentDef) parent.getUserObject();
+                if (ornamentDef.getDynamicsGradient() != null)
+                    childNodes.add(new MpmTreeNode(ornamentDef.getDynamicsGradient(), this.project));
+                if (ornamentDef.getTemporalSpread() != null)
+                    childNodes.add(new MpmTreeNode(ornamentDef.getTemporalSpread(), this.project));
+                break;
+
+            case dynamicsGradient:
+                break;
+
+            case temporalSpread:
+                break;
+
             case rubatoStyle:
                 RubatoStyle rubatoStyle = (RubatoStyle) parent.getUserObject();
                 for (Map.Entry<String, RubatoDef> entry : rubatoStyle.getAllDefs().entrySet())
@@ -242,6 +262,9 @@ public class MpmTreeDataProvider extends AbstractExTreeDataProvider<MpmTreeNode>
                 OrnamentationMap ornamentationMap = (OrnamentationMap) parent.getUserObject();
                 for (int i = 0; i < ornamentationMap.size(); ++i)
                     childNodes.add(new MpmTreeNode(ornamentationMap.getElement(i), this.project));
+                break;
+
+            case ornament:
                 break;
 
             case rubatoMap:

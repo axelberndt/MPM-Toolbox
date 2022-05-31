@@ -4,7 +4,6 @@ import com.alee.laf.slider.WebSlider;
 import com.alee.laf.slider.WebSliderUI;
 import meico.supplementary.KeyValue;
 import mpmToolbox.gui.MpmToolbox;
-import mpmToolbox.gui.ProjectPane;
 
 import javax.imageio.ImageIO;
 import javax.swing.*;
@@ -15,6 +14,7 @@ import java.awt.event.KeyEvent;
 import java.awt.image.BufferedImage;
 import java.io.*;
 import java.util.ArrayList;
+import java.util.regex.Matcher;
 
 /**
  * Some useful functionality to be added here and there.
@@ -201,5 +201,14 @@ public class Tools {
                 this.slider.setValue(value);
             }
         });
+    }
+
+    /**
+     * helper method to handle file paths with different types of separators
+     * @param path
+     * @return
+     */
+    public static String uniformPath(String path) {
+        return path.replaceAll("(/+)|((\\\\)+)", Matcher.quoteReplacement(File.separator));
     }
 }

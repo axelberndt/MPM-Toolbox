@@ -91,6 +91,14 @@ public class MpmTreeNode extends UniqueNode<MpmTreeNode, Object> implements Text
             this.type = MpmNodeType.metricalAccentuationStyle;
         } else if (object.getClass().equals(meico.mpm.elements.styles.defs.AccentuationPatternDef.class)) {
             this.type = MpmNodeType.accentuationPatternDef;
+        } else if (object.getClass().equals(meico.mpm.elements.styles.OrnamentationStyle.class)) {
+            this.type = MpmNodeType.ornamentationStyle;
+        } else if (object.getClass().equals(meico.mpm.elements.styles.defs.OrnamentDef.class)) {
+            this.type = MpmNodeType.ornamentDef;
+        } else if (object.getClass().equals(meico.mpm.elements.styles.defs.OrnamentDef.DynamicsGradient.class)) {
+            this.type = MpmNodeType.dynamicsGradient;
+        } else if (object.getClass().equals(meico.mpm.elements.styles.defs.OrnamentDef.TemporalSpread.class)) {
+            this.type = MpmNodeType.temporalSpread;
         } else if (object.getClass().equals(meico.mpm.elements.styles.RubatoStyle.class)) {
             this.type = MpmNodeType.rubatoStyle;
         } else if (object.getClass().equals(meico.mpm.elements.styles.defs.RubatoDef.class)) {
@@ -153,6 +161,9 @@ public class MpmTreeNode extends UniqueNode<MpmTreeNode, Object> implements Text
                     break;
                 case "dynamics":
                     this.type = MpmNodeType.dynamics;
+                    break;
+                case "ornament":
+                    this.type = MpmNodeType.ornament;
                     break;
                 case "rubato":
                     this.type = MpmNodeType.rubato;
@@ -263,6 +274,41 @@ public class MpmTreeNode extends UniqueNode<MpmTreeNode, Object> implements Text
                 // TODO
                 break;
 
+            case ornamentationStyle:
+                this.name = ((OrnamentationStyle) this.getUserObject()).getName();
+                break;
+
+            case ornamentDef:
+                this.name = ((OrnamentDef) this.getUserObject()).getName();
+                break;
+
+            case dynamicsGradient:
+                OrnamentDef.DynamicsGradient dynamicsGradient = (OrnamentDef.DynamicsGradient) this.getUserObject();
+                this.name = "<html>dynamicsGradient " + dynamicsGradient.transitionFrom + " &#8594; " + dynamicsGradient.transitionTo + "</html>";
+                break;
+
+            case temporalSpread:
+                OrnamentDef.TemporalSpread temporalSpread = (OrnamentDef.TemporalSpread) this.getUserObject();
+                this.name = "temporalSpread [" + temporalSpread.frameStart + ", " + temporalSpread.frameEnd + "]";
+                switch (temporalSpread.frameDomain) {
+                    case Milliseconds:
+                        this.name = this.name.concat(" ms");
+                        break;
+                    case Ticks:
+                    default:
+                        this.name = this.name.concat(" ticks");
+                        break;
+                }
+                switch (temporalSpread.noteOffShift) {
+                    case True:
+                    case False:
+                        break;
+                    case Monophonic:
+                        this.name = this.name.concat(" monophonic");
+                        break;
+                }
+                break;
+
             case rubatoStyle:
                 this.name = ((RubatoStyle) this.getUserObject()).getName();
                 break;
@@ -368,18 +414,24 @@ public class MpmTreeNode extends UniqueNode<MpmTreeNode, Object> implements Text
                 this.name = "ornamentationMap";
                 break;
 
+            case ornament: {
+                Attribute nameRef = ((Element) this.getUserObject()).getAttribute("name.ref");
+                if (nameRef != null)
+                    this.name = "ornament " + nameRef.getValue();
+                break;
+            }
             case rubatoMap:
                 this.name = "rubatoMap";
                 break;
 
-            case rubato:
+            case rubato: {
                 this.name = "rubato";
                 Attribute nameRef = ((Element) this.getUserObject()).getAttribute("name.ref");
                 if (nameRef != null)
                     this.name += " " + nameRef.getValue();
                 // TODO
                 break;
-
+            }
             case tempoMap:
                 this.name = "tempoMap";
                 break;
@@ -419,6 +471,7 @@ public class MpmTreeNode extends UniqueNode<MpmTreeNode, Object> implements Text
             case distributionTriangular:
             case distributionUniform:
             case dynamics:
+            case ornament:
             case rubato:
             case style:
             case tempo:
@@ -460,6 +513,7 @@ public class MpmTreeNode extends UniqueNode<MpmTreeNode, Object> implements Text
             case distributionList:
             case distributionTriangular:
             case distributionUniform:
+            case ornament:
             case dynamics:
             case rubato:
             case style:
@@ -527,6 +581,7 @@ public class MpmTreeNode extends UniqueNode<MpmTreeNode, Object> implements Text
             case metricalAccentuationStyle:
             case dynamicsStyle:
             case genericStyle:
+            case ornamentationStyle:
             case rubatoStyle:
             case tempoStyle:
                 s = ((GenericStyle) this.getUserObject()).toXml();
@@ -551,6 +606,12 @@ public class MpmTreeNode extends UniqueNode<MpmTreeNode, Object> implements Text
                 break;
             case dynamicsDef:
                 return ((DynamicsDef) this.getUserObject()).toXml().trim();
+            case ornamentDef:
+                return ((OrnamentDef) this.getUserObject()).toXml().trim();
+            case dynamicsGradient:
+                return ((OrnamentDef.DynamicsGradient) this.getUserObject()).toXml().trim();
+            case temporalSpread:
+                return ((OrnamentDef.TemporalSpread) this.getUserObject()).toXml().trim();
             case rubatoDef:
                 return ((RubatoDef) this.getUserObject()).toXml().trim();
             case tempoDef:
@@ -566,6 +627,7 @@ public class MpmTreeNode extends UniqueNode<MpmTreeNode, Object> implements Text
             case distributionTriangular:
             case distributionCorrelatedBrownianNoise:
             case distributionCorrelatedCompensatingTriangle:
+            case ornament:
             case rubato:
             case tempo:
             case style:
@@ -612,6 +674,7 @@ public class MpmTreeNode extends UniqueNode<MpmTreeNode, Object> implements Text
             case distributionList:
             case distributionTriangular:
             case distributionUniform:
+            case ornament:
             case dynamics:
             case rubato:
             case style:
@@ -705,6 +768,7 @@ public class MpmTreeNode extends UniqueNode<MpmTreeNode, Object> implements Text
 //            case metricalAccentuationStyle:
 //            case dynamicsStyle:
 //            case genericStyle:
+//            case ornamentationStyle:
 //            case rubatoStyle:
 //            case tempoStyle:
 //            case articulationMap:
@@ -719,6 +783,9 @@ public class MpmTreeNode extends UniqueNode<MpmTreeNode, Object> implements Text
 //            case articulationDef:
 //            case accentuationPatternDef:
 //            case dynamicsDef:
+//            case ornamentDef:
+//            case temporalSpread:
+//            case dynamicsGradient:
 //            case rubatoDef:
 //            case tempoDef:
 //            case articulation:
@@ -731,6 +798,7 @@ public class MpmTreeNode extends UniqueNode<MpmTreeNode, Object> implements Text
 //            case distributionTriangular:
 //            case distributionCorrelatedBrownianNoise:
 //            case distributionCorrelatedCompensatingTriangle:
+//            case ornament:
 //            case rubato:
 //            case tempo:
 //            case style:
@@ -769,6 +837,7 @@ public class MpmTreeNode extends UniqueNode<MpmTreeNode, Object> implements Text
 //            case metricalAccentuationStyle:
 //            case dynamicsStyle:
 //            case genericStyle:
+//            case ornamentationStyle:
 //            case rubatoStyle:
 //            case tempoStyle:
 //            case articulationMap:
@@ -783,6 +852,9 @@ public class MpmTreeNode extends UniqueNode<MpmTreeNode, Object> implements Text
 //            case articulationDef:
 //            case accentuationPatternDef:
 //            case dynamicsDef:
+//            case ornamentDef:
+//            case temporalSpread:
+//            case dynamicsGradient:
 //            case rubatoDef:
 //            case tempoDef:
 //            case articulation:
@@ -795,6 +867,7 @@ public class MpmTreeNode extends UniqueNode<MpmTreeNode, Object> implements Text
 //            case distributionTriangular:
 //            case distributionCorrelatedBrownianNoise:
 //            case distributionCorrelatedCompensatingTriangle:
+//            case ornament:
 //            case rubato:
 //            case tempo:
 //            case style:
@@ -832,6 +905,10 @@ public class MpmTreeNode extends UniqueNode<MpmTreeNode, Object> implements Text
         metricalAccentuationStyle,
         accentuationPatternDef,
         accentuation,
+        ornamentationStyle,
+        ornamentDef,
+        dynamicsGradient,
+        temporalSpread,
         rubatoStyle,
         rubatoDef,
         tempoStyle,
@@ -854,6 +931,7 @@ public class MpmTreeNode extends UniqueNode<MpmTreeNode, Object> implements Text
         metricalAccentuationMap,
         accentuationPattern,
         ornamentationMap,
+        ornament,
         rubatoMap,
         rubato,
         tempoMap,

@@ -10,6 +10,7 @@ import com.tagtraum.jipes.universal.Mapping;
 import meico.msm.Msm;
 import meico.supplementary.KeyValue;
 import mpmToolbox.projectData.alignment.Alignment;
+import mpmToolbox.supplementary.Tools;
 import nu.xom.Attribute;
 import nu.xom.Element;
 
@@ -60,7 +61,7 @@ public class Audio extends meico.audio.Audio {
      * @throws UnsupportedAudioFileException
      */
     public Audio(Element projectAudioData, String projectBasePath, Msm msm) throws IOException, UnsupportedAudioFileException {
-        super(new File(projectBasePath + projectAudioData.getAttributeValue("file").replaceAll("\\\\/", File.separator)));
+        super(new File(Tools.uniformPath(projectBasePath + projectAudioData.getAttributeValue("file"))));
 
         this.waveforms = convertByteArray2DoubleArray(this.getAudio(), this.getFormat());
         for (double[] chan : this.waveforms)

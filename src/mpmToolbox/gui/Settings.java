@@ -14,7 +14,7 @@ import java.util.Arrays;
  */
 public class Settings {
     public static boolean debug = false;                                // set true to run MPM Toolbox in debug mode
-    public static boolean makeLogfile = false;                          // make a logfile
+    public static boolean makeLogfile = true;                           // make a logfile
     public static String logfile = "mpmToolbox.log";                    // filename of log file
     public static String settingsFile = "mpmToolbox.cfg";               // filename of the settings file
 

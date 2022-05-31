@@ -1,6 +1,18 @@
 ### Version History
 
 
+#### v0.1.15
+- Bugfix in method `mpmToolbox.gui.mpmEditingTools.editorDialogs.DistributionEditor.switchDistributionTypeTo()` that crashed when attribute `seed` was activated.
+- Meico update v0.8.37 solves issues with negative event timing from asynchrony and timing imprecision.
+- The save file dialog in method `mpmToolbox.gui.MpmToolbox.saveProjectAs()` will now make sure that the project file will always have extension `.mpr`.
+- Bugfix in constructor `mpmToolbox.projectData.score.Score.Score(@NotNull ProjectData project)` that ran into a `NullPointerException` when loading a project with image data but no MPM data.
+- Bugfix in method `mpmToolbox.gui.mpmTree.MpmTree.gotoFirstMapEntryNode()` that caused an exception when the project's MPM contained no maps.
+- Added a note ID check to method `mpmToolbox.gui.mpmEditingTools.editorDialogs.ArticulationEditor.edit()` to ensure that, if an initial note ID is set before displaying the dialog, the ID is tinted correctly.
+- Added method `mpmToolbox.supplementary.Tools.uniformPath()` to handle differences in path separators on the different operating systems.
+- Added more parsing of ornamentation data for a proper display in the MPM tree widget. Ornamentation support has been added to class `mpmToolbox.gui.mpmEditingTools.MpmEditingTools`. New classes `OrnamentEditor` and `OrnamentDefEditor` have been added to package `mpmToolbox.gui.mpmEditingTools.editDialogs`, not yet functional, though.
+- Little changes in method `mpmToolbox.gui.MpmToolbox.openProject()`. The "Close current project with or without saving?" dialog needed some adjustment.
+
+
 #### v0.1.14
 - Meico update v0.8.36.
 

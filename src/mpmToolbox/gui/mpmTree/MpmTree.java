@@ -119,6 +119,7 @@ public class MpmTree extends WebExTree<MpmTreeNode> implements MouseListener, Tr
         types.add(MpmTreeNode.MpmNodeType.rubato);
         types.add(MpmTreeNode.MpmNodeType.style);
         types.add(MpmTreeNode.MpmNodeType.tempo);
+        types.add(MpmTreeNode.MpmNodeType.ornament);
 //        types.add(MpmTreeNode.MpmNodeType.unknown);
 //        types.add(MpmTreeNode.MpmNodeType.xmlElement);
 
@@ -154,6 +155,7 @@ public class MpmTree extends WebExTree<MpmTreeNode> implements MouseListener, Tr
         types.add(MpmTreeNode.MpmNodeType.rubato);
         types.add(MpmTreeNode.MpmNodeType.style);
         types.add(MpmTreeNode.MpmNodeType.tempo);
+        types.add(MpmTreeNode.MpmNodeType.ornament);
 //        types.add(MpmTreeNode.MpmNodeType.unknown);
 //        types.add(MpmTreeNode.MpmNodeType.xmlElement);
 
@@ -170,7 +172,11 @@ public class MpmTree extends WebExTree<MpmTreeNode> implements MouseListener, Tr
      * find and select the first map entry in the MPM tree
      */
     public void gotoFirstMapEntryNode() {
-        TreePath path = this.getFirstMapEntryNode().getTreePath();
+        MpmTreeNode node = this.getFirstMapEntryNode();
+        if (node == null)
+            return;
+
+        TreePath path = node.getTreePath();
         this.setSelectionPath(path);
         this.scrollPathToVisible(path);
     }

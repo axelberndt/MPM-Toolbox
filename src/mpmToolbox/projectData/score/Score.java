@@ -69,11 +69,13 @@ public class Score {
 
         // make a similar hashmap for performance instructions
         HashMap<String, Element> perfs = new HashMap<>();
-        Nodes nodes = this.parentProject.getMpm().getRootElement().query("descendant::*[@date and @xml:id]"); // get all children with attributes date and xml:id, i.e. all performance instructions with an id
-        for (Node node : nodes) {
-            Element n = (Element) node;
-            String id = Helper.getAttributeValue("id", n);
-            perfs.put(id, n);
+        if (this.parentProject.getMpm() != null) {
+            Nodes nodes = this.parentProject.getMpm().getRootElement().query("descendant::*[@date and @xml:id]"); // get all children with attributes date and xml:id, i.e. all performance instructions with an id
+            for (Node node : nodes) {
+                Element n = (Element) node;
+                String id = Helper.getAttributeValue("id", n);
+                perfs.put(id, n);
+            }
         }
 
         // parse the score data
