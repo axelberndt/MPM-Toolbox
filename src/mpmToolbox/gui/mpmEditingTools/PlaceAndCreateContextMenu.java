@@ -224,7 +224,7 @@ public class PlaceAndCreateContextMenu extends WebPopupMenu {
                 currentNode.setDate(Double.parseDouble(date));                              // set the new date and reorder the parent map accordingly
                 Performance performance = currentNode.getPerformance();                     // get the performance that this node belongs to
                 this.parent.getParentScoreDocumentData().getParent().getMpmTree().reloadNode(currentNode.getParent());      // update MPM subtree
-                MpmEditingTools.updateAudioAlignment(performance, this.parent.getParentScoreDocumentData().getParent());    // the piano roll visualization of this performance in the audio frame must be kept up to date
+                MpmEditingTools.updateAudioAlignment(performance, this.parent.getParentScoreDocumentData().getParent(), instructionType.equals("Tempo"));    // the piano roll visualization of this performance in the audio frame must be kept up to date
             });
             placeAndChangeDate.setToolTipText("The date can be edited later on.");
             placeInstructionHere.add(placeAndChangeDate);
@@ -314,7 +314,7 @@ public class PlaceAndCreateContextMenu extends WebPopupMenu {
             mpmTree.reloadNode(mapNode);                                                // update the MPM tree
             MpmTreeNode newNode = mapNode.findChildNode(map.getElement(index), false);  // get a handle to the MPM tree node of the instruction just added
             PlaceAndCreateContextMenu.repositionPerformanceInstruction(newNode, position, self, false);  // set its position on the score page
-            MpmEditingTools.updateAudioAlignment(datedNode.getPerformance(), mpmTree.getProjectPane());    // update the alignment visualization in the audio frame
+            MpmEditingTools.updateAudioAlignment(datedNode.getPerformance(), mpmTree.getProjectPane(), false);    // update the alignment visualization in the audio frame
         } else if (deleteMapOnCancel) {                                                 // cancel
             ((Dated) datedNode.getUserObject()).removeMap(Mpm.ARTICULATION_MAP);
             mpmTree.reloadNode(mapNode.getParent());
@@ -352,7 +352,7 @@ public class PlaceAndCreateContextMenu extends WebPopupMenu {
         MpmTreeNode mapNode = datedNode.findChildNode(map, false);                              // get a handle to the map node in the MPM tree
         MpmTreeNode newNode = mapNode.findChildNode(map.getElement(index), false);              // get a handle to the MPM tree node of the instruction just added
         PlaceAndCreateContextMenu.repositionPerformanceInstruction(newNode, position, self, false);    // the its position on the score page
-        MpmEditingTools.updateAudioAlignment(datedNode.getPerformance(), mpmTree.getProjectPane());    // update the alignment visualization in the audio frame
+        MpmEditingTools.updateAudioAlignment(datedNode.getPerformance(), mpmTree.getProjectPane(), false);    // update the alignment visualization in the audio frame
     }
 
     /**
@@ -387,7 +387,7 @@ public class PlaceAndCreateContextMenu extends WebPopupMenu {
             mpmTree.reloadNode(mapNode);                                                // update the MPM tree
             MpmTreeNode newNode = mapNode.findChildNode(map.getElement(index), false);  // get a handle to the MPM tree node of the instruction just added
             PlaceAndCreateContextMenu.repositionPerformanceInstruction(newNode, position, self, false);  // the its position on the score page
-            MpmEditingTools.updateAudioAlignment(datedNode.getPerformance(), mpmTree.getProjectPane());    // update the alignment visualization in the audio frame
+            MpmEditingTools.updateAudioAlignment(datedNode.getPerformance(), mpmTree.getProjectPane(), false);    // update the alignment visualization in the audio frame
         } else if (deleteMapOnCancel) {                                                 // cancel
             ((Dated) datedNode.getUserObject()).removeMap(Mpm.DYNAMICS_MAP);
             mpmTree.reloadNode(mapNode.getParent());
@@ -426,7 +426,7 @@ public class PlaceAndCreateContextMenu extends WebPopupMenu {
             mpmTree.reloadNode(mapNode);                                                // update the MPM tree
             MpmTreeNode newNode = mapNode.findChildNode(map.getElement(index), false);  // get a handle to the MPM tree node of the instruction just added
             PlaceAndCreateContextMenu.repositionPerformanceInstruction(newNode, position, self, false);  // the its position on the score page
-            MpmEditingTools.updateAudioAlignment(datedNode.getPerformance(), mpmTree.getProjectPane());    // update the alignment visualization in the audio frame
+            MpmEditingTools.updateAudioAlignment(datedNode.getPerformance(), mpmTree.getProjectPane(), false);    // update the alignment visualization in the audio frame
         } else if (deleteMapOnCancel) {                                                 // cancel
             ((Dated) datedNode.getUserObject()).removeMap(Mpm.METRICAL_ACCENTUATION_MAP);
             mpmTree.reloadNode(mapNode.getParent());
@@ -465,7 +465,7 @@ public class PlaceAndCreateContextMenu extends WebPopupMenu {
             mpmTree.reloadNode(mapNode);                                                // update the MPM tree
             MpmTreeNode newNode = mapNode.findChildNode(map.getElement(index), false);  // get a handle to the MPM tree node of the instruction just added
             PlaceAndCreateContextMenu.repositionPerformanceInstruction(newNode, position, self, false);  // the its position on the score page
-            MpmEditingTools.updateAudioAlignment(datedNode.getPerformance(), mpmTree.getProjectPane());    // update the alignment visualization in the audio frame
+            MpmEditingTools.updateAudioAlignment(datedNode.getPerformance(), mpmTree.getProjectPane(), false);    // update the alignment visualization in the audio frame
         } else if (deleteMapOnCancel) {                                                 // cancel
             ((Dated) datedNode.getUserObject()).removeMap(Mpm.RUBATO_MAP);
             mpmTree.reloadNode(mapNode.getParent());
@@ -504,7 +504,7 @@ public class PlaceAndCreateContextMenu extends WebPopupMenu {
             mpmTree.reloadNode(mapNode);                                                // update the MPM tree
             MpmTreeNode newNode = mapNode.findChildNode(map.getElement(index), false);  // get a handle to the MPM tree node of the instruction just added
             PlaceAndCreateContextMenu.repositionPerformanceInstruction(newNode, position, self, false);  // the its position on the score page
-            MpmEditingTools.updateAudioAlignment(datedNode.getPerformance(), mpmTree.getProjectPane());    // update the alignment visualization in the audio frame
+            MpmEditingTools.updateAudioAlignment(datedNode.getPerformance(), mpmTree.getProjectPane(), true);    // update the alignment visualization in the audio frame
         } else if (deleteMapOnCancel) {                                                 // cancel
             ((Dated) datedNode.getUserObject()).removeMap(Mpm.TEMPO_MAP);
             mpmTree.reloadNode(mapNode.getParent());
@@ -543,11 +543,11 @@ public class PlaceAndCreateContextMenu extends WebPopupMenu {
         MpmTreeNode mapNode = datedNode.findChildNode(map, false);                              // get a handle to the map node in the MPM tree
         MpmTreeNode newNode = mapNode.findChildNode(map.getElement(index), false);              // get a handle to the MPM tree node of the instruction just added
         PlaceAndCreateContextMenu.repositionPerformanceInstruction(newNode, position, self, false);    // the its position on the score page
-        MpmEditingTools.updateAudioAlignment(datedNode.getPerformance(), mpmTree.getProjectPane());    // update the alignment visualization in the audio frame
+        MpmEditingTools.updateAudioAlignment(datedNode.getPerformance(), mpmTree.getProjectPane(), false);    // update the alignment visualization in the audio frame
     }
 
     /**
-     * create an stale switch instruction on the score
+     * create a style switch instruction on the score
      * @param datedNode
      * @param mpmTree
      * @param anchor
@@ -584,7 +584,7 @@ public class PlaceAndCreateContextMenu extends WebPopupMenu {
             mpmTree.reloadNode(mapNode);                                                // update the MPM tree
             MpmTreeNode newNode = mapNode.findChildNode(map.getElement(index), false);  // get a handle to the MPM tree node of the instruction just added
             PlaceAndCreateContextMenu.repositionPerformanceInstruction(newNode, position, self, false);  // the its position on the score page
-            MpmEditingTools.updateAudioAlignment(datedNode.getPerformance(), mpmTree.getProjectPane());    // update the alignment visualization in the audio frame
+            MpmEditingTools.updateAudioAlignment(datedNode.getPerformance(), mpmTree.getProjectPane(), mapType.equals(Mpm.TEMPO_MAP));    // update the alignment visualization in the audio frame
         } else if (deleteMapOnCancel) {                                                 // cancel
             ((Dated) datedNode.getUserObject()).removeMap(mapType);
             mpmTree.reloadNode(mapNode.getParent());

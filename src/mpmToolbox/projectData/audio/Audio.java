@@ -171,7 +171,7 @@ public class Audio extends meico.audio.Audio {
                     BufferedImage img = this.convertWaveform2Image(chan, leftmostSample, rightmostSample, width, heightSubdivision);  // draw the waveform to the image
                     channels.add(img);
                 } catch (ArrayIndexOutOfBoundsException | IllegalArgumentException e) {
-                    e.printStackTrace();
+//                    e.printStackTrace();
                     this.waveformImage = null;
                     return true;
                 }
@@ -201,8 +201,9 @@ public class Audio extends meico.audio.Audio {
      * @param width the width of the image in pixels
      * @param height the height of the image in pixels
      * @return the waveform image or null
+     * @throws ArrayIndexOutOfBoundsException
      */
-    public BufferedImage convertWaveform2Image(int channelNumber, int leftmostSample, int rightmostSample, int width, int height) {
+    public BufferedImage convertWaveform2Image(int channelNumber, int leftmostSample, int rightmostSample, int width, int height) throws ArrayIndexOutOfBoundsException {
         double[] sampleArray = this.waveforms.get(channelNumber);           // the waveform of this channel
         double numSamples = rightmostSample + 1 - leftmostSample;           // how many samples are to be displayed in the panel frame
         double samplesPerPixelColumn = numSamples / width;                  // how many samples are rendered into one pixel

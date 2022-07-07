@@ -9,6 +9,7 @@ import mpmToolbox.supplementary.Tools;
 
 import java.awt.*;
 import java.awt.event.MouseEvent;
+import java.awt.event.MouseWheelEvent;
 
 /**
  * This class represents the waveform display in the audio tab.
@@ -43,7 +44,7 @@ public class WaveformPanel extends PianoRollPanel {
         // draw the mouse cursor
         if (this.drawMouseCursor(g2)) {
             // print info text
-            int sampleIndex = this.getSampleIndex(this.mousePosition.getX());
+            long sampleIndex = this.parent.getMouseCursor().getSample();
             double millisec = Tools.round(((double) sampleIndex / this.parent.getAudio().getFrameRate()) * 1000.0, 2);
             g2.setColor(Color.LIGHT_GRAY);
             g2.drawString("Sample No.: " + sampleIndex, 2, Settings.getDefaultFontSize());
@@ -125,5 +126,15 @@ public class WaveformPanel extends PianoRollPanel {
                 menu.show(this, e.getX() - 25, e.getY());
                 break;
         }
+    }
+
+    /**
+     * on mouse drag event
+     * @param e
+     */
+    @Override
+    public void mouseDragged(MouseEvent e) {
+        if (this.parent.getAudio() != null)
+            super.mouseDragged(e);
     }
 }

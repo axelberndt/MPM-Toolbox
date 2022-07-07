@@ -13,6 +13,7 @@ import nu.xom.ParentNode;
 public class Note {
     private final Element xml;                          // a reference to the original MSM element
 
+    private final double tickDate;                      // the tick date of the note, remains unaltered
     private final double initialMillisecondsDate;       // the initial date of the note will remain unaltered throughout any other transformations
     private final double initialMillisecondsDateEnd;    // the initial end date of the note will remain unaltered throughout any other transformations
 
@@ -30,13 +31,16 @@ public class Note {
      * @throws NumberFormatException
      */
     protected Note(Element xml) throws InvalidDataException, NumberFormatException {
+        // parse the note's tick date
+        Attribute tickDate = Helper.getAttribute("date", xml);
+        if (tickDate == null)
+            throw new InvalidDataException("Invalid MSM element " + xml.toXML() + "; missing attribute date.");
+        this.tickDate = Double.parseDouble(tickDate.getValue());
+
         // parse the note's onset date
         Attribute millisDate = Helper.getAttribute("milliseconds.date", xml);
-        if (millisDate == null) {
-            millisDate = Helper.getAttribute("date", xml);
-            if (millisDate == null)
-                throw new InvalidDataException("Invalid MSM element " + xml.toXML() + "; missing attribute date.");
-        }
+        if (millisDate == null)
+            millisDate = tickDate;
         this.initialMillisecondsDate = Double.parseDouble(millisDate.getValue());
         this.millisecondsDate = this.initialMillisecondsDate;
 
@@ -167,10 +171,7 @@ public class Note {
      * @return
      */
     public Double getDate() {
-        Attribute date = Helper.getAttribute("date", xml);
-        if (date == null)
-            return null;
-        return Double.parseDouble(date.getValue());
+        return this.tickDate;
     }
 
     /**

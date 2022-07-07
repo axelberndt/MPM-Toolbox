@@ -17,9 +17,10 @@ import java.util.HashMap;
 public class Part {
     private final Element xml;                                          // a reference to the original MSM part element
     private final int number;
-    private final HashMap<String, Note> notes = new HashMap<>();
+    private final HashMap<String, Note> notes = new HashMap<>();        // access notes by id
     private final ArrayList<Note> noteSequence = new ArrayList<>();     // the notes in sequential order of their current date
     private final ArrayList<Note> initialSequence = new ArrayList<>();  // the notes in sequential order of their initial date
+    private final ArrayList<Note> tickSequence = new ArrayList<>();     // the notes in sequential order of their tick date
     private PianoRoll pianoRoll = null;
     private Note lastNoteSounding = null;
 
@@ -79,9 +80,11 @@ public class Part {
         if (out != null) {                              // if there was a previous note that we replaced with the above line
             this.noteSequence.remove(out);              // remove it also from the sequences
             this.initialSequence.remove(out);
+            this.tickSequence.remove(out);
         }
-        this.addToInitialSequence(note);                // add note to initial sequence
-        this.addToSequence(note);                       // add the note at the right position to the sequence
+        this.addToInitialSequence(note);                // add the note to initial sequence
+        this.addToSequence(note);                       // add the note to the sequence
+        this.addToTickSequence(note);                   // add the note to the tick sequence
 
         return out;
     }
@@ -103,6 +106,22 @@ public class Part {
 
         if ((this.lastNoteSounding == null) || (this.lastNoteSounding.getMillisecondsDateEnd() < note.getMillisecondsDateEnd()))
             this.lastNoteSounding = note;
+    }
+
+    /**
+     * add the note to the tick sequence
+     * @param note
+     */
+    private void addToTickSequence(Note note) {
+        // add note to noteSequence
+        int i = this.tickSequence.size() - 1;
+        for (; i >= 0; --i) {
+            Note n = this.tickSequence.get(i);
+            double date = n.getDate();
+            if (date <= note.getDate())
+                break;
+        }
+        this.tickSequence.add(i + 1, note);               // insert note also to the sequence
     }
 
     /**
@@ -170,6 +189,14 @@ public class Part {
     }
 
     /**
+     * get the sequence of all notes
+     * @return
+     */
+    public ArrayList<Note> getNoteSequence() {
+        return this.noteSequence;
+    }
+
+    /**
      * checks if the part contains the given note
      * @param note
      * @return
@@ -204,6 +231,144 @@ public class Part {
             mid = (first + last) / 2;
         }
         return -1;
+    }
+
+    /**
+     * this method retrieves the index of the last note before or at the specified milliseconds date
+     * @param milliseconds
+     * @return the index or -1 if there is no note before or at the milliseconds date
+     */
+    private int getNoteIndexBeforeAtMilliseconds(double milliseconds) {
+        if (this.isEmpty() || this.noteSequence.get(0).getMillisecondsDate() > milliseconds)            // if no notes available or all note are after the requested date
+            return -1;
+
+        int last = this.noteSequence.size() - 1;
+        if (this.noteSequence.get(last).getMillisecondsDate() <= milliseconds)  // if the last note in the sequence is already before or at the requested date
+            return last;                                                        // return its index
+
+        // binary search
+        int first = 0;
+        int mid = last / 2;
+        while (first <= last) {
+            if (this.noteSequence.get(mid).getMillisecondsDate() > milliseconds)
+                last = mid - 1;
+            else if (this.noteSequence.get(mid + 1).getMillisecondsDate() > milliseconds)
+                return mid;
+            else
+                first = mid + 1;
+            mid = (first + last) / 2;
+        }
+        return -1;
+    }
+
+    /**
+     * this method retrieves the index of the last note before or at the specified tick date
+     * @param ticks
+     * @return the index or -1 if there is no note before or at the tick date
+     */
+    private int getNoteIndexBeforeAtTicks(double ticks) {
+        if (this.isEmpty() || this.tickSequence.get(0).getDate() > ticks)   // if no notes available or all note are after the requested date
+            return -1;
+
+        int last = this.tickSequence.size() - 1;
+        if (this.tickSequence.get(last).getDate() <= ticks)                 // if the last note in the sequence is already before or at the requested date
+            return last;                                                    // return its index
+
+        // binary search
+        int first = 0;
+        int mid = last / 2;
+        while (first <= last) {
+            if (this.tickSequence.get(mid).getDate() > ticks)
+                last = mid - 1;
+            else if (this.tickSequence.get(mid + 1).getDate() > ticks)
+                return mid;
+            else
+                first = mid + 1;
+            mid = (first + last) / 2;
+        }
+        return -1;
+    }
+
+    /**
+     * Given a milliseconds date, compute the non-performed tick date from it according to this alignment. This is only an approximation.
+     * @param milliseconds
+     * @return
+     */
+    public double getCorrespondingTickDate(double milliseconds) {
+        int beforeAt = this.getNoteIndexBeforeAtMilliseconds(milliseconds);
+        int after = beforeAt + 1;
+
+        double beforeAtMillis;
+        double beforeAtTicks;
+
+        if (beforeAt < 0) {
+            beforeAtMillis = 0.0;
+            beforeAtTicks = 0.0;
+        } else {
+            Note note = this.noteSequence.get(beforeAt);
+            beforeAtMillis = note.getMillisecondsDate();
+            beforeAtTicks = note.getDate();
+        }
+
+        if (beforeAtMillis == milliseconds)
+            return beforeAtTicks;
+
+        double afterMillis;
+        double afterTicks;
+
+        if (after >= this.noteSequence.size()) {
+            afterMillis = this.getMillisecondsLength();
+            afterTicks = this.getLastNoteSounding().getDate() + this.getLastNoteSounding().getDuration();
+        } else {
+            Note note = this.noteSequence.get(after);
+            afterMillis = note.getMillisecondsDate();
+            afterTicks = note.getDate();
+        }
+
+        // compute the relative position of milliseconds between beforeAtMillis and afterMillis and get the corresponding initial position from this; since timing is usually more complex, this is only an approximation!
+        double relativePosition = (milliseconds - beforeAtMillis) / (afterMillis - beforeAtMillis);
+        return ((afterTicks - beforeAtTicks) * relativePosition) + beforeAtTicks;
+    }
+
+    /**
+     * Given a tick date, compute the respective milliseconds date from it according to this alignment. This is only an approximation.
+     * @param ticks
+     * @return
+     */
+    public double getCorrespondingMillisecondsDate(double ticks) {
+        int beforeAt = this.getNoteIndexBeforeAtTicks(ticks);
+        int after = beforeAt + 1;
+
+        double beforeAtMillis;
+        double beforeAtTicks;
+
+        if (beforeAt < 0) {
+            beforeAtMillis = 0.0;
+            beforeAtTicks = 0.0;
+        } else {
+            Note note = this.tickSequence.get(beforeAt);
+            beforeAtMillis = note.getMillisecondsDate();
+            beforeAtTicks = note.getDate();
+        }
+
+        if (beforeAtMillis == ticks)
+            return beforeAtTicks;
+
+        double afterMillis;
+        double afterTicks;
+
+        if (after >= this.tickSequence.size()) {
+            afterMillis = this.getMillisecondsLength();
+            afterTicks = this.getLastNoteSounding().getDate() + this.getLastNoteSounding().getDuration();
+        } else {
+            Note note = this.tickSequence.get(after);
+            afterMillis = note.getMillisecondsDate();
+            afterTicks = note.getDate();
+        }
+
+        // compute the relative position of ticks between beforeAtTicks and afterTicks and get the corresponding initial position from this; since timing is usually more complex, this is only an approximation!
+        double relativePosition = (ticks - beforeAtTicks) / (afterTicks - beforeAtTicks);
+        return ((afterMillis - beforeAtMillis) * relativePosition) + beforeAtMillis;
     }
 
     /**

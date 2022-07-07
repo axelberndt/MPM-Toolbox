@@ -3,7 +3,7 @@
 [![GitHub release](https://img.shields.io/github/v/release/axelberndt/MPM-Toolbox?include_prereleases)](https://github.com/axelberndt/MPM-Toolbox/releases/latest)
 [![documentation](https://img.shields.io/badge/doc-JavaDoc-green.svg)](http://cemfi.github.io/meico/)
 [![LGPL v3](https://img.shields.io/github/license/cemfi/meico.svg)](https://github.com/cemfi/meico/blob/master/LICENSE)
-![Java compatibility](https://img.shields.io/badge/Java-1.8%20--%2015.0.2-blue)
+![Java compatibility](https://img.shields.io/badge/Java-1.8--10-blue)
 
 Author: [Axel Berndt](https://github.com/axelberndt) <br>
 [Center of Music and Film Informatics](http://www.cemfi.de/), Detmold

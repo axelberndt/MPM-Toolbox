@@ -374,7 +374,7 @@ public class Alignment {
     }
 
     /**
-     * This method check the millisecond on- and offsets of all notes in the alignment against their timing
+     * This method checks the millisecond on- and offsets of all notes in the alignment against their timing
      * in the performance rendering. If correction is needed, it is done via a local articulation.
      * @param performance the performance that will be refined with local articulation maps, if necessary
      */
@@ -482,7 +482,7 @@ public class Alignment {
      * retrieve the last sounding note; if there are several, only one is returned
      * @return the last sounding note or null
      */
-    private Note getLastNoteSounding() {
+    public Note getLastNoteSounding() {
         if (this.lastNoteSounding == null) {
             for (Part part : this.parts) {
                 Note note = part.getLastNoteSounding();
@@ -492,6 +492,52 @@ public class Alignment {
             }
         }
         return this.lastNoteSounding;
+    }
+
+    /**
+     * Given a milliseconds date, compute the non-performed date from it according to this alignment. This is only an approximation.
+     * @param milliseconds
+     * @return since the parts can differ in timing, we can only return a range, i.e. a tuple [min, max]
+     */
+    public double[] getCorrespondingTickDate(double milliseconds) {
+        // range value are initialized with inverted extreme values, so the subsequently computed values span the range correctly
+        double min = this.getLastNoteSounding().getDate() + this.getLastNoteSounding().getDuration();
+        double max = 0.0;
+
+        // compute the approximate date for each part and span the range
+        for (Part part : this.getParts()) {
+            double candidate = part.getCorrespondingTickDate(milliseconds);
+            if (candidate < min)
+                min = candidate;
+            if (candidate > max)
+                max = candidate;
+        }
+
+        // make sure the min and max values are in correct order and return the range
+        return (min > max) ? new double[]{max, min} : new double[]{min, max};
+    }
+
+    /**
+     * Given a tick date, compute the respective milliseconds date from it according to this alignment. This is only an approximation.
+     * @param ticks
+     * @return since the parts can differ in timing, we can only return a range, i.e. a tuple [min, max]
+     */
+    public double[] getCorrespondingMillisecondsDate(double ticks) {
+        // range value are initialized with inverted extreme values, so the subsequently computed values span the range correctly
+        double min = Double.MAX_VALUE;
+        double max = 0.0;
+
+        // compute the approximate date for each part and span the range
+        for (Part part : this.getParts()) {
+            double candidate = part.getCorrespondingMillisecondsDate(ticks);
+            if (candidate < min)
+                min = candidate;
+            if (candidate > max)
+                max = candidate;
+        }
+
+        // make sure the min and max values are in correct order and return the range
+        return (min > max) ? new double[]{max, min} : new double[]{min, max};
     }
 
     /**

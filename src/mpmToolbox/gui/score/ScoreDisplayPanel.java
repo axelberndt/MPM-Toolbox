@@ -1,6 +1,7 @@
 package mpmToolbox.gui.score;
 
 import com.alee.extended.window.WebPopup;
+import com.alee.laf.WebLookAndFeel;
 import com.alee.laf.label.WebLabel;
 import com.alee.laf.menu.WebPopupMenu;
 import com.alee.laf.panel.WebPanel;
@@ -56,6 +57,8 @@ public class ScoreDisplayPanel extends WebPanel implements MouseWheelListener, M
     private int yOffset = (int)(this.overlayElementScaleFactor * 2.0);      // vertical offset to center the overlay symbols around its position
     private int xWidth = (int)(this.overlayElementScaleFactor * 6.0);       // the width of the overlay symbols
     private int yWidth = (int)(this.overlayElementScaleFactor * 4.0);       // the height of the overlay symbols
+
+    private Font performanceSymbolFont = WebLookAndFeel.globalWindowFont.deriveFont(Font.BOLD, (float) (72.0 * this.xWidth / Toolkit.getDefaultToolkit().getScreenResolution()));
 
     protected ScoreNode anchorNode = null;                                  // in some modes (edit performance mode) we track the nearest neighboring overlay node to the mouse position and store it in this variable
 
@@ -166,8 +169,11 @@ public class ScoreDisplayPanel extends WebPanel implements MouseWheelListener, M
             }
         }
 
-        // draw the overlay with note annotations
-//        Score score = this.parent.parent.getScore();
+        // generate a font of an appropriate size for the symbols in the performance instruction squares
+        g2.setFont(this.performanceSymbolFont);
+        FontMetrics metrics = g2.getFontMetrics(this.performanceSymbolFont);
+
+        // draw the overlay elements
         for (Map.Entry<Element, ScoreNode> overlayElement : this.scorePage.getAllEntries().entrySet()) {    // go through all overlay elements on the score page
             Element element = overlayElement.getKey();                                                      // get the data of the overlay element
             ONGNode p = overlayElement.getValue();                                                          // get the ONGNode ()
@@ -180,19 +186,19 @@ public class ScoreDisplayPanel extends WebPanel implements MouseWheelListener, M
                 }
                 g2.fillOval(((int)p.getX()) - this.xOffset, ((int)p.getY()) - this.yOffset, this.xWidth, this.yWidth);  // paint the note
             }
-            else {                                                                  // draw a performance overlay
+            else {                                                                                          // draw a performance overlay
                 // set the color
-                if ((selectedMpmNode != null) && (element == selectedMpmNode.getUserObject())) {    // if the node is selected
-                    g2.setColor(Settings.scorePerformanceColorHighlighted);                         // use the highlight color
-                } else {                                                                            // node is not selected
+                if ((selectedMpmNode != null) && (element == selectedMpmNode.getUserObject())) {            // if the node is selected
+                    g2.setColor(Settings.scorePerformanceColorHighlighted);                                 // use the highlight color
+                } else {                                                                                    // node is not selected
                     boolean samePerformance = ScoreDisplayPanel.samePerformance(element, selectedMpmNode);
-                    if (samePerformance) {                                                          // node is in the same performance as the cursor in the MPM tree
-                        g2.setColor(Settings.scorePerformanceColor);                                // use normal performance symbol color
-                    } else {                                                                        // cursor is in another performance than the node to be painted
-                        g2.setColor(Settings.scorePerformanceColorFaded);                           // use the faded color
+                    if (samePerformance) {                                                                  // node is in the same performance as the cursor in the MPM tree
+                        g2.setColor(Settings.scorePerformanceColor);                                        // use normal performance symbol color
+                    } else {                                                                                // cursor is in another performance than the node to be painted
+                        g2.setColor(Settings.scorePerformanceColorFaded);                                   // use the faded color
                     }
                 }
-                if (element.getLocalName().equals("style")) {       // style elements get a different symbol then ...
+                if (element.getLocalName().equals("style")) {                                               // style elements get a different symbol then ...
                     GeneralPath diamond = ScoreDisplayPanel.drawDiamond(p.getX(), p.getY(), this.xWidth, this.xWidth);
                     g2.fill(diamond);
 
@@ -204,8 +210,11 @@ public class ScoreDisplayPanel extends WebPanel implements MouseWheelListener, M
                         g2.setColor(g2.getColor().brighter());
                         g2.draw(diamond);
                     }
-                } else {                                            // a performance instruction
-                    g2.fillRect(((int) p.getX()) - this.xOffset, ((int) p.getY()) - this.xOffset, this.xWidth, this.xWidth);  // paint the note
+                } else {                                                                                    // a performance instruction
+                    int xUpperLeft = (int) p.getX() - this.xOffset;
+                    int yUpperLeft = (int) p.getY() - this.xOffset;
+
+                    g2.fillRect(xUpperLeft, yUpperLeft, this.xWidth, this.xWidth);                          // paint the square
 
                     // global MPM nodes get an additional outline
                     if (ScoreDisplayPanel.isGlobal(element)) {
@@ -215,31 +224,53 @@ public class ScoreDisplayPanel extends WebPanel implements MouseWheelListener, M
                         g2.setColor(g2.getColor().brighter());
                         g2.drawRect(((int) p.getX()) - this.xOffset, ((int) p.getY()) - this.xOffset, this.xWidth, this.xWidth);
                     }
+
+                    // add a symbol in the square that indicates the type of the performance instruction
+                    String performanceSymbol = null;
+                    switch (element.getLocalName()) {
+                        case "note":
+                            break;
+                        case "accentuationPattern":
+                            performanceSymbol = "M";
+                            break;
+                        case "articulation":
+                            performanceSymbol = "A";
+                            break;
+                        case "asynchrony":
+                            performanceSymbol = "\u21C4";   // ⇄
+                            break;
+                        case "distribution.correlated.brownianNoise":
+                        case "distribution.correlated.compensatingTriangle":
+                        case "distribution.gaussian":
+                        case "distribution.list":
+                        case "distribution.triangular":
+                        case "distribution.uniform":
+                            break;
+                        case "dynamics":
+                            performanceSymbol = "D";
+                            break;
+                        case "ornament":
+                            performanceSymbol = "O";
+                            break;
+                        case "rubato":
+                            performanceSymbol = "R";
+                            break;
+                        case "style":
+                            break;
+                        case "tempo":
+                            performanceSymbol = "T";
+                            break;
+                        default:
+                            break;
+                    }
+                    if (performanceSymbol != null) {
+                        g2.setColor(g2.getColor().darker().darker());
+                        int xFont = xUpperLeft + (this.xWidth - metrics.stringWidth(performanceSymbol)) / 2;        // Determine the X coordinate for the text
+                        int yFont = yUpperLeft + ((this.xWidth - metrics.getHeight()) / 2) + metrics.getAscent();   // Determine the Y coordinate for the text (note we add the ascent, as in java 2d 0 is top of the screen)
+                        g.drawString(performanceSymbol, xFont, yFont);                                              // Draw the string
+                    }
                 }
             }
-
-            // this switch code might be used instead of the above if-else to differentiate between more than just note and no note
-//            switch (element.getLocalName()) {
-//                case "note":
-//                    break;
-//                case "accentuationPattern":
-//                case "articulation":
-//                case "asynchrony":
-//                case "distribution.correlated.brownianNoise":
-//                case "distribution.correlated.compensatingTriangle":
-//                case "distribution.gaussian":
-//                case "distribution.list":
-//                case "distribution.triangular":
-//                case "distribution.uniform":
-//                case "dynamics":
-//                case "ornament":
-//                case "rubato":
-//                case "style":
-//                case "tempo":
-//                    break;
-//                default:
-//                    break;
-//            }
 
             // Debug output: this draws the connections of the Orthant Neighborhood Graph
             if (Settings.debug) {
@@ -442,6 +473,9 @@ public class ScoreDisplayPanel extends WebPanel implements MouseWheelListener, M
         this.yOffset = (int)(this.overlayElementScaleFactor * 2.0);      // vertical offset to center the ellipsis around its position
         this.xWidth = (int)(this.overlayElementScaleFactor * 6.0);       // the width of the ellipsis
         this.yWidth = (int)(this.overlayElementScaleFactor * 4.0);       // the height of the ellipsis
+
+        double fontSize = 72.0 * this.xWidth / Toolkit.getDefaultToolkit().getScreenResolution();
+        this.performanceSymbolFont = WebLookAndFeel.globalWindowFont.deriveFont(Font.BOLD, (float) fontSize);
 
         this.repaint();
     }

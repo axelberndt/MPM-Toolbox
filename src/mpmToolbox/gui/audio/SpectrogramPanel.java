@@ -9,6 +9,7 @@ import mpmToolbox.gui.audio.utilities.SpectrogramSpecs;
 import java.awt.*;
 import java.awt.event.ComponentEvent;
 import java.awt.event.MouseEvent;
+import java.awt.event.MouseWheelEvent;
 
 /**
  * This class represents the spectrogram display in the audio tab.
@@ -187,5 +188,29 @@ public class SpectrogramPanel extends PianoRollPanel {
                 menu.show(this, e.getX() - 25, e.getY());
                 break;
         }
+    }
+
+    /**
+     * on mouse drag event
+     * @param e
+     */
+    @Override
+    public void mouseDragged(MouseEvent e) {
+        if (this.noData.isShowing() || this.spectrogramSpecs.isShowing())
+            return;
+
+        super.mouseDragged(e);
+    }
+
+    /**
+     * on mouse wheel event
+     * @param e
+     */
+    @Override
+    public void mouseWheelMoved(MouseWheelEvent e) {
+        if (this.noData.isShowing() || this.spectrogramSpecs.isShowing())
+            return;
+
+        super.mouseWheelMoved(e);
     }
 }

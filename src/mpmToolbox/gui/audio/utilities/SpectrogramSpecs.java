@@ -133,7 +133,7 @@ public class SpectrogramSpecs extends WebPanel {
         Tools.addComponentToGridBagLayout(this, (GridBagLayout) this.getLayout(), this.binsPerSemitone, 2, 6, 1, 1, 1.0, 1.0, 0, 0, GridBagConstraints.BOTH, GridBagConstraints.LINE_START);
 
         // compute button
-        WebButton computeButton = new WebButton("Compute CQT Spectrogram (takes some time!)");
+        WebButton computeButton = new WebButton("Compute CQT Spectrogram");
         computeButton.setPadding(Settings.paddingInDialogs);
         computeButton.addActionListener(actionEvent -> this.updateSpectrogramImage());
         Tools.addComponentToGridBagLayout(this, (GridBagLayout) this.getLayout(), computeButton, 2, 7, 1, 1, 1.0, 1.0, 0, 0, GridBagConstraints.BOTH, GridBagConstraints.LINE_START);

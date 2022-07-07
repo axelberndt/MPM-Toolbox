@@ -8,6 +8,7 @@ import com.alee.laf.panel.WebPanel;
 import meico.mpm.elements.Performance;
 import mpmToolbox.gui.Settings;
 import mpmToolbox.gui.audio.utilities.ArticulationMenu;
+import mpmToolbox.gui.audio.utilities.CursorPositions;
 import mpmToolbox.gui.msmTree.MsmTree;
 import mpmToolbox.gui.msmTree.MsmTreeNode;
 import mpmToolbox.projectData.alignment.Note;
@@ -22,10 +23,9 @@ import java.awt.event.*;
  * @author Axel Berndt
  */
 public class PianoRollPanel extends WebPanel implements ComponentListener, MouseListener, MouseMotionListener, MouseWheelListener {
-    public final AudioDocumentData parent;
+    public final AudioDocumentData parent;                  // the container
     protected final WebLabel noData;                        // to be displayed when no data is there to be visualized
-    protected Point mousePosition = null;                   // this is to keep track of the mouse position and draw a cursor on the panel
-    protected boolean mouseInThisPanel = false;             // this is set true when the mouse enters this panel and false if the mouse exits
+    protected Integer mousePositionY = null;                  // if the mouse is in this panel, this is set to its y pixel coordinate
     protected final NoteDrag dragGesture = new NoteDrag();  // this is set true when a track gesture is started, so that even iv the mouse moves over other notes or free space, only the initial note is dragged
 
     /**
@@ -39,12 +39,14 @@ public class PianoRollPanel extends WebPanel implements ComponentListener, Mouse
     /**
      * constructor
      * @param parent
+     * @param noDataText
      */
     protected PianoRollPanel(AudioDocumentData parent, String noDataText) {
         super();
         this.parent = parent;
 
         this.noData = new WebLabel(noDataText, WebLabel.CENTER);
+        this.noData.setOpaque(false);
         this.add(this.noData);
 
         this.addComponentListener(this);
@@ -69,20 +71,23 @@ public class PianoRollPanel extends WebPanel implements ComponentListener, Mouse
 
     /**
      * draw the lines of the mouse cursor in the Graphics2D object
-     * @param g2
+     * @param g2d
      * @return true if a valid mouse position was available and the drawing was successful
      */
-    protected boolean drawMouseCursor(Graphics2D g2) {
-        if (this.mousePosition != null) {
-            g2.setColor(Settings.scoreNoteColorHighlighted);
-            g2.drawLine(this.mousePosition.x, 0, this.mousePosition.x, this.getHeight());
+    protected boolean drawMouseCursor(Graphics2D g2d) {
+        if (this.parent.getMouseCursor() == null)
+            return false;
 
-            if (this.mouseInThisPanel)
-                g2.drawLine(0, this.mousePosition.y, this.getWidth(), this.mousePosition.y);
+        g2d.setColor(Settings.scoreNoteColorHighlighted);
+        Stroke defaultStroke = g2d.getStroke();                                         // keep the previous stroke settings
+        g2d.setStroke(new BasicStroke(this.parent.getMouseCursor().getAudioXSpread())); // set the stroke
+        g2d.drawLine(this.parent.getMouseCursor().getAudioX(), 0, this.parent.getMouseCursor().getAudioX(), this.getHeight());
+        g2d.setStroke(defaultStroke);                                                   // switch back to the previous stroke settings
 
-            return true;
-        }
-        return false;
+        if (this.mouseInThisPanel())
+            g2d.drawLine(0, this.mousePositionY, this.getWidth(), this.mousePositionY);
+
+        return true;
     }
 
     /**
@@ -90,7 +95,7 @@ public class PianoRollPanel extends WebPanel implements ComponentListener, Mouse
      * @param g2d
      */
     protected void drawPlaybackCursor(Graphics2D g2d) {
-        Double pos = this.parent.getRelativePlaybackPosInDisplay();
+        Double pos = this.parent.getRelativePlaybackPosInAudio();
         if (pos == null)
             return;
 
@@ -136,6 +141,10 @@ public class PianoRollPanel extends WebPanel implements ComponentListener, Mouse
         return this.parent.getAlignment().getPianoRoll(fromMilliseconds, toMilliseconds, width, height);
 //        return this.parent.getAudio().getAlignment().getPianoRoll(fromMilliseconds, toMilliseconds, width, height);
 //        return (new Alignment(this.parent.parent.getSyncPlayer().getSelectedPerformance().perform(this.parent.parent.getMsm()), null)).getPianoRoll(fromMilliseconds, toMilliseconds, width, height);
+    }
+
+    public boolean mouseInThisPanel() {
+        return this.mousePositionY != null;
     }
 
     /**
@@ -185,16 +194,6 @@ public class PianoRollPanel extends WebPanel implements ComponentListener, Mouse
     }
 
     /**
-     * compute which sample the mouse cursor is pointing at
-     * @param x horizontal pixel position in the panel
-     * @return
-     */
-    protected int getSampleIndex(double x) {
-        double relativePosition = x / this.getWidth();
-        return (int) Math.round((relativePosition * (this.parent.getRightmostSample() - this.parent.getLeftmostSample())) + this.parent.getLeftmostSample());
-    }
-
-    /**
      * create a context menu for the position of the mouse click;
      * further entries to the menu may be added by inheritances
      * @param e
@@ -203,46 +202,43 @@ public class PianoRollPanel extends WebPanel implements ComponentListener, Mouse
     protected WebPopupMenu getContextMenu(MouseEvent e) {
         WebPopupMenu menu = new WebPopupMenu();
 
+        // determine the performance currently displayed, or null if it is an alignment
+        Performance performance = this.parent.getParent().getSyncPlayer().getSelectedPerformance();
+        if (/*(performance == null) ||*/ !this.parent.getParent().getMpm().getAllPerformances().contains(performance))  // we have no performance to create an articulation
+            performance = null;
+
         // make "note fixed" entry
         Note note = this.getNoteAt(e.getPoint().getX() / this.getWidth(), e.getPoint().getY() / this.getHeight());
         if (note != null) {
             // "Note fixed" checkbox
-            WebCheckBoxMenuItem setFixed = new WebCheckBoxMenuItem("Note fixed", note.isFixed());
+            WebCheckBoxMenuItem setFixed = new WebCheckBoxMenuItem("Note fixed", (note.isFixed() || (performance != null)));
             setFixed.addActionListener(actionEvent -> {
                 note.setFixed(!note.isFixed());
                 this.parent.getAlignment().updateTiming();
                 this.parent.getAlignment().recomputePianoRoll();
                 this.parent.repaintAllComponents();
             });
-            setFixed.setToolTipText("Pins the note at its position.");
+            if (performance == null) {
+                setFixed.setToolTipText("Pins the note at its position.");
+                setFixed.setEnabled(true);
+            } else {
+                setFixed.setToolTipText("The position of the note is determined by the performance. Therefore, it cannot be dragged.");
+                setFixed.setEnabled(false);
+            }
             menu.add(setFixed);
 
             // articulate note
-            Performance performance = this.parent.getParent().getSyncPlayer().getSelectedPerformance();
-            if (/*(performance == null) ||*/ !this.parent.getParent().getMpm().getAllPerformances().contains(performance))  // we have no performance to create an articulation
-                performance = null;
             menu.add(new ArticulationMenu(note, performance, this.parent.getParent().getMpmTree()));
         }
 
         // play from here
         WebMenuItem playFromHere = new WebMenuItem("Play from here");
         playFromHere.addActionListener(actionEvent -> {
-            this.parent.getParent().getSyncPlayer().triggerPlayback(this.getSampleIndex(e.getPoint().getX()));
+            this.parent.getParent().getSyncPlayer().triggerPlayback(this.parent.getSampleIndex(e.getPoint().getX()));
         });
         menu.add(playFromHere);
 
         return menu;
-    }
-
-    /**
-     * set the mouse position
-     * @param e
-     */
-    protected void setMousePosition(MouseEvent e) {
-        if (e == null)
-            this.mousePosition = null;
-        else
-            this.mousePosition = e.getPoint();
     }
 
     /**
@@ -303,8 +299,8 @@ public class PianoRollPanel extends WebPanel implements ComponentListener, Mouse
      */
     @Override
     public void mouseEntered(MouseEvent e) {
-        this.mouseInThisPanel = true;
-        this.parent.communicateMouseEventToAllComponents(e);
+        this.mousePositionY = e.getY();
+        this.parent.communicateMousePositionToAllComponents(e);
         this.parent.repaintAllComponents();
     }
 
@@ -314,23 +310,25 @@ public class PianoRollPanel extends WebPanel implements ComponentListener, Mouse
      */
     @Override
     public void mouseExited(MouseEvent e) {
-        this.mouseInThisPanel = false;
-        this.parent.communicateMouseEventToAllComponents(null);
+        this.mousePositionY = null;
+        this.parent.communicateMousePositionToAllComponents(null);
         this.parent.repaintAllComponents();
     }
 
     /**
      * on mouse move event
-     *
      * @param e
      */
     @Override
     public void mouseMoved(MouseEvent e) {
-        this.parent.communicateMouseEventToAllComponents(e);
+        this.mousePositionY = e.getY();
+        this.parent.communicateMousePositionToAllComponents(e);
         this.parent.repaintAllComponents();
 
-        Note note = this.getNoteAt(this.mousePosition.getX() / this.getWidth(), this.mousePosition.getY() / this.getHeight());
-        this.setCursor((note == null) ? Cursor.getDefaultCursor() : new Cursor(Cursor.HAND_CURSOR));
+        if (this.parent.getAlignment() != null) {
+            Note note = this.getNoteAt(e.getPoint().getX() / this.getWidth(), e.getPoint().getY() / this.getHeight());
+            this.setCursor((note == null) ? Cursor.getDefaultCursor() : new Cursor(Cursor.HAND_CURSOR));
+        }
     }
 
     /**
@@ -339,7 +337,7 @@ public class PianoRollPanel extends WebPanel implements ComponentListener, Mouse
      */
     @Override
     public void mouseClicked(MouseEvent e) {
-        Note note = this.getNoteAt(this.mousePosition.getX() / this.getWidth(), this.mousePosition.getY() / this.getHeight());
+        Note note = this.getNoteAt(e.getPoint().getX() / this.getWidth(), e.getPoint().getY() / this.getHeight());
         if (note == null)
             return;
 
@@ -358,15 +356,16 @@ public class PianoRollPanel extends WebPanel implements ComponentListener, Mouse
      */
     @Override
     public void mouseDragged(MouseEvent e) {
-        if (this.mousePosition == null)
+        if (this.parent.getMouseCursor() == null)
             return;
 
-        if (!this.dragGesture.lockedOnNote) {               // if no drag gesture currently running, we start a new one
-            this.dragGesture.lockedOnNote = true;           // lock the drag gesture on ...
-            this.dragGesture.note = this.getNoteAt(this.mousePosition.getX() / this.getWidth(), this.mousePosition.getY() / this.getHeight());  // the note that the mouse is currently at or null
+        if (this.parent.getParent().getSyncPlayer().isAudioAlignmentSelected()  // if we display an audio alignment; a performance rendering cannot be altered by note dragging
+                && !this.dragGesture.lockedOnNote) {                            // if no drag gesture currently running, we start a new one
+            this.dragGesture.lockedOnNote = true;                               // lock the drag gesture on ...
+            this.dragGesture.note = this.getNoteAt(((double) this.parent.getMouseCursor().getAudioX()) / this.getWidth(), ((double) this.mousePositionY) / this.getHeight());  // the note that the mouse is currently at or null
         }
 
-        if (this.dragGesture.note == null) {                // if we perform a drag event with no note, it should be interpreted as scrolling
+        if (this.dragGesture.note == null) {                                    // if we perform a drag event with no note, it should be interpreted as scrolling
             this.parent.scroll(e);
             return;
         }
@@ -374,15 +373,15 @@ public class PianoRollPanel extends WebPanel implements ComponentListener, Mouse
         // we perform a drag event on a note
         this.setCursor(new Cursor(Cursor.W_RESIZE_CURSOR));
 
-        double pixelOffset = e.getX() - this.mousePosition.getX();
-        int samplesInFrame = this.parent.getRightmostSample() - this.parent.getLeftmostSample();
+        double pixelOffset = e.getX() - this.parent.getMouseCursor().getAudioX();
+        long samplesInFrame = this.parent.getRightmostSample() - this.parent.getLeftmostSample();
         double sampleOffset = (pixelOffset * samplesInFrame) / this.getWidth();
         double millisecOffset = (sampleOffset * 1000.0) / this.parent.getAudio().getFrameRate();
 
         this.parent.getAlignment().reposition(this.dragGesture.note, this.dragGesture.note.getMillisecondsDate() + millisecOffset);    // move the note and do the timing transform
         this.parent.getAlignment().recomputePianoRoll();
 
-        this.parent.communicateMouseEventToAllComponents(e);
+        this.parent.communicateMousePositionToAllComponents(e);
         this.parent.repaintAllComponents();
     }
 
@@ -397,6 +396,7 @@ public class PianoRollPanel extends WebPanel implements ComponentListener, Mouse
 
     /**
      * this class is used for drag gestures and provides context data
+     * @author Axel Berndt
      */
     protected static class NoteDrag {
         protected boolean lockedOnNote = false;

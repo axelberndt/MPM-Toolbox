@@ -880,9 +880,10 @@ public class MpmEditingTools {
      * changes in the performance should also be visible in the alignment that is currently shown in the audio frame
      * @param performance the performance where the changes were made
      * @param projectPane the project pane from which we get access to all other components, particularly the SyncPlayer and the audio frame/AudioDocumentData object
+     * @param updateTempomapPanel set true if timing was affected and the tempomap panel in the audio tab might be updated
      * @return true if the currently displayed alignment in the audio frame has been updated, otherwise false
      */
-    protected static boolean updateAudioAlignment(Performance performance, ProjectPane projectPane) {
+    protected static boolean updateAudioAlignment(Performance performance, ProjectPane projectPane, boolean updateTempomapPanel) {
         if (performance == null)
             return false;
 
@@ -891,7 +892,11 @@ public class MpmEditingTools {
         if ((selectedPerformance == null) || (selectedPerformance != performance))
             return false;
 
-        projectPane.getAudioFrame().updateAlignment(true);     // update the alignment visualization in the audio frame
+        projectPane.getAudioFrame().updateAlignment(true);      // update the alignment visualization in the audio frame
+
+        if (updateTempomapPanel)
+            projectPane.getAudioFrame().updateTempomapPanel();  // update the tempomap visualization in the audio frame
+
         return true;
     }
 
@@ -1185,7 +1190,7 @@ public class MpmEditingTools {
         ((Performance) performanceNode.getUserObject()).removePart((Part) partNode.getUserObject());
         mpmTree.getProjectPane().getScore().cleanupDeadNodes();
         mpmTree.reloadNode(performanceNode);
-        MpmEditingTools.updateAudioAlignment(performance, mpmTree.getProjectPane());
+        MpmEditingTools.updateAudioAlignment(performance, mpmTree.getProjectPane(), true);
     }
 
     /**
@@ -1210,7 +1215,7 @@ public class MpmEditingTools {
         Header header = (Header) headerNode.getUserObject();
         header.clear();
         mpmTree.reloadNode(headerNode);
-        MpmEditingTools.updateAudioAlignment(performance, mpmTree.getProjectPane());
+        MpmEditingTools.updateAudioAlignment(performance, mpmTree.getProjectPane(), true);
     }
 
     /**
@@ -1228,7 +1233,7 @@ public class MpmEditingTools {
         for (String name : names)
             header.removeStyleDef(collection.getType(), name);
         mpmTree.reloadNode(styleCollectionNode);
-        MpmEditingTools.updateAudioAlignment(performance, mpmTree.getProjectPane());
+        MpmEditingTools.updateAudioAlignment(performance, mpmTree.getProjectPane(), collection.getType().equals("tempoStyles"));
     }
 
     /**
@@ -1242,7 +1247,7 @@ public class MpmEditingTools {
         Header header = (Header) styleCollectionNode.getParent().getUserObject();
         header.removeStyleType(collection.getType());
         mpmTree.reloadNode(styleCollectionNode.getParent());
-        MpmEditingTools.updateAudioAlignment(performance, mpmTree.getProjectPane());
+        MpmEditingTools.updateAudioAlignment(performance, mpmTree.getProjectPane(), collection.getType().equals("tempoStyles"));
     }
 
     /**
@@ -1293,6 +1298,9 @@ public class MpmEditingTools {
         articulationStyle.addDef(ArticulationDef.createDefaultArticulationDef("tenuto"));
 
         mpmTree.reloadNode(styleCollectionNode);
+
+        Performance performance = styleCollectionNode.getPerformance();
+        MpmEditingTools.updateAudioAlignment(performance, mpmTree.getProjectPane(), false);
     }
 
     /**
@@ -1326,6 +1334,9 @@ public class MpmEditingTools {
         dynamicsStyle.addDef(DynamicsDef.createDefaultDynamicsDef("sforzato"));
 
         mpmTree.reloadNode(styleCollectionNode);
+
+        Performance performance = styleCollectionNode.getPerformance();
+        MpmEditingTools.updateAudioAlignment(performance, mpmTree.getProjectPane(), false);
     }
 
     /**
@@ -1365,6 +1376,9 @@ public class MpmEditingTools {
         tempoStyle.addDef(TempoDef.createDefaultTempoDef("prestissimo"));
 
         mpmTree.reloadNode(styleCollectionNode);
+
+        Performance performance = styleCollectionNode.getPerformance();
+        MpmEditingTools.updateAudioAlignment(performance, mpmTree.getProjectPane(), true);
     }
 
     /**
@@ -1388,6 +1402,9 @@ public class MpmEditingTools {
         ornamentationStyle.addDef(OrnamentDef.createDefaultOrnamentDef("arpeggio"));
 
         mpmTree.reloadNode(styleCollectionNode);
+
+        Performance performance = styleCollectionNode.getPerformance();
+        MpmEditingTools.updateAudioAlignment(performance, mpmTree.getProjectPane(), false);
     }
 
     /**
@@ -1403,7 +1420,7 @@ public class MpmEditingTools {
         StyleDefEditor styleDefEditor = new StyleDefEditor(collection.getType(), header);
         styleDefEditor.edit(styleDef);
         mpmTree.reloadNode(styleDefNode.getParent());
-        MpmEditingTools.updateAudioAlignment(performance, mpmTree.getProjectPane());
+        MpmEditingTools.updateAudioAlignment(performance, mpmTree.getProjectPane(), collection.getType().equals("tempoStyles"));
     }
 
     /**
@@ -1418,7 +1435,7 @@ public class MpmEditingTools {
         Header header = (Header) styleDefNode.getParent().getParent().getUserObject();
         header.removeStyleDef(collection.getType(), styleDef.getName());
         mpmTree.reloadNode(styleDefNode.getParent());
-        MpmEditingTools.updateAudioAlignment(performance, mpmTree.getProjectPane());
+        MpmEditingTools.updateAudioAlignment(performance, mpmTree.getProjectPane(), collection.getType().equals("tempoStyles"));
     }
 
     /**
@@ -1428,6 +1445,8 @@ public class MpmEditingTools {
      */
     private static void addDefinition(@NotNull MpmTreeNode styleDefNode, @NotNull MpmTree mpmTree) {
         Performance performance = styleDefNode.getPerformance();
+        boolean updateTempomapPanel = false;
+
         if (styleDefNode.getUserObject() instanceof ArticulationStyle) {
             ArticulationStyle styleDef = (ArticulationStyle) styleDefNode.getUserObject();
             styleDef.addDef((new ArticulationDefEditor(styleDef)).create());
@@ -1445,12 +1464,14 @@ public class MpmEditingTools {
             styleDef.addDef((new RubatoDefEditor(styleDef)).create());
         } else if (styleDefNode.getUserObject() instanceof TempoStyle) {
             TempoStyle styleDef = (TempoStyle) styleDefNode.getUserObject();
-            styleDef.addDef((new TempoDefEditor(styleDef)).create());
+            TempoDef tempoDef = (new TempoDefEditor(styleDef)).create();
+            styleDef.addDef(tempoDef);
+            updateTempomapPanel = tempoDef != null;
         } else {
             return;
         }
         mpmTree.reloadNode(styleDefNode);
-        MpmEditingTools.updateAudioAlignment(performance, mpmTree.getProjectPane());
+        MpmEditingTools.updateAudioAlignment(performance, mpmTree.getProjectPane(), updateTempomapPanel);
     }
 
     /**
@@ -1460,6 +1481,8 @@ public class MpmEditingTools {
      */
     private static void editDef(@NotNull MpmTreeNode defNode, @NotNull MpmTree mpmTree) {
         Performance performance = defNode.getPerformance();
+        boolean updateTempomapPanel = false;
+
         if (defNode.getUserObject() instanceof ArticulationDef) {
             ArticulationDefEditor editor = new ArticulationDefEditor((ArticulationStyle) defNode.getParent().getUserObject());
             editor.edit((ArticulationDef) defNode.getUserObject());
@@ -1478,9 +1501,10 @@ public class MpmEditingTools {
         } else if (defNode.getUserObject() instanceof TempoDef) {
             TempoDefEditor editor = new TempoDefEditor((TempoStyle) defNode.getParent().getUserObject());
             editor.edit((TempoDef) defNode.getUserObject());
+            updateTempomapPanel = true;
         }
         mpmTree.reloadNode(defNode.getParent());
-        MpmEditingTools.updateAudioAlignment(performance, mpmTree.getProjectPane());
+        MpmEditingTools.updateAudioAlignment(performance, mpmTree.getProjectPane(), updateTempomapPanel);
     }
 
     /**
@@ -1493,7 +1517,7 @@ public class MpmEditingTools {
         GenericStyle styleDef = (GenericStyle) defNode.getParent().getUserObject();
         styleDef.removeDef(((AbstractDef) defNode.getUserObject()).getName());
         mpmTree.reloadNode(defNode.getParent());
-        MpmEditingTools.updateAudioAlignment(performance, mpmTree.getProjectPane());
+        MpmEditingTools.updateAudioAlignment(performance, mpmTree.getProjectPane(), styleDef instanceof TempoStyle);
     }
 
     /**
@@ -1507,7 +1531,7 @@ public class MpmEditingTools {
         if (map != null) {
             Performance performance = datedNode.getPerformance();
             mpmTree.reloadNode(datedNode);
-            MpmEditingTools.updateAudioAlignment(performance, mpmTree.getProjectPane());
+            MpmEditingTools.updateAudioAlignment(performance, mpmTree.getProjectPane(), type.equals(Mpm.TEMPO_MAP));
         }
     }
 
@@ -1523,7 +1547,7 @@ public class MpmEditingTools {
             Performance performance = datedNode.getPerformance();
             map.setDetuneUnit(detuneUnit);
             mpmTree.reloadNode(datedNode);
-            MpmEditingTools.updateAudioAlignment(performance, mpmTree.getProjectPane());
+            MpmEditingTools.updateAudioAlignment(performance, mpmTree.getProjectPane(), false);
         }
     }
 
@@ -1535,10 +1559,11 @@ public class MpmEditingTools {
     private static void deleteAllMaps(@NotNull MpmTreeNode datedNode, @NotNull MpmTree mpmTree) {
         Performance performance = datedNode.getPerformance();
         Dated dated = (Dated) datedNode.getUserObject();
+        boolean updateTempoMapPanel = dated.getMap(Mpm.TEMPO_STYLE) != null;
         dated.clear();
         mpmTree.getProjectPane().getScore().cleanupDeadNodes();
         mpmTree.reloadNode(datedNode);
-        MpmEditingTools.updateAudioAlignment(performance, mpmTree.getProjectPane());
+        MpmEditingTools.updateAudioAlignment(performance, mpmTree.getProjectPane(), updateTempoMapPanel);
     }
 
     /**
@@ -1558,7 +1583,7 @@ public class MpmEditingTools {
             dated.removeMap(mapType);
             mpmTree.getProjectPane().getScore().cleanupDeadNodes();
             mpmTree.reloadNode(mapNode.getParent());
-            MpmEditingTools.updateAudioAlignment(performance, mpmTree.getProjectPane());
+            MpmEditingTools.updateAudioAlignment(performance, mpmTree.getProjectPane(), mapType.equals(Mpm.TEMPO_MAP));
         });
 
         return deleteMap;
@@ -1614,8 +1639,9 @@ public class MpmEditingTools {
                     mpmTree.reloadNode(mapNode.getParent());                                        // update the dated node where we removed the map
 
                     // update the alignment visualization in the audio frame; we have to check the performance that gained the map as well as the performance that lost it
-                    if (!MpmEditingTools.updateAudioAlignment(performance, mpmTree.getProjectPane()))       // if the performance that gained the map was not the one to be updated in the audio frame, it could be the performance that lost the map
-                        MpmEditingTools.updateAudioAlignment(originPerformance, mpmTree.getProjectPane());  // try to update the alignment of the origin performance of the map
+                    boolean updateTempomapPanel = map.getType().equals(Mpm.TEMPO_MAP);
+                    if (!MpmEditingTools.updateAudioAlignment(performance, mpmTree.getProjectPane(), updateTempomapPanel))       // if the performance that gained the map was not the one to be updated in the audio frame, it could be the performance that lost the map
+                        MpmEditingTools.updateAudioAlignment(originPerformance, mpmTree.getProjectPane(), updateTempomapPanel);  // try to update the alignment of the origin performance of the map
                 });
                 items.add(item);
             }
@@ -1680,7 +1706,7 @@ public class MpmEditingTools {
                     }
 
                     mpmTree.reloadNode(performanceNode.findChildNode(dated, false));                // update the dated node in the target environment so the new map contents are displayed
-                    MpmEditingTools.updateAudioAlignment(performance, mpmTree.getProjectPane());    // update the alignment visualization in the audio frame
+                    MpmEditingTools.updateAudioAlignment(performance, mpmTree.getProjectPane(), map.getType().equals(Mpm.TEMPO_MAP));    // update the alignment visualization in the audio frame
                 });
                 items.add(item);                                                                    // add the menu item to the context menu
             }
@@ -1749,8 +1775,9 @@ public class MpmEditingTools {
                     mpmTree.reloadNode(mapNode);                                                    // update the map node where we removed the entry
 
                     // update the alignment visualization in the audio frame; we have to check the performance that gained the map as well as the performance that lost it
-                    if (!MpmEditingTools.updateAudioAlignment(performance, mpmTree.getProjectPane()))       // if the performance that gained the map was not the one to be updated in the audio frame, it could be the performance that lost the map
-                        MpmEditingTools.updateAudioAlignment(originPerformance, mpmTree.getProjectPane());  // try to update the alignment of the origin performance of the map
+                    boolean updateTempomapPanel = map.getType().equals(Mpm.TEMPO_MAP);
+                    if (!MpmEditingTools.updateAudioAlignment(performance, mpmTree.getProjectPane(), updateTempomapPanel))       // if the performance that gained the map was not the one to be updated in the audio frame, it could be the performance that lost the map
+                        MpmEditingTools.updateAudioAlignment(originPerformance, mpmTree.getProjectPane(), updateTempomapPanel);  // try to update the alignment of the origin performance of the map
                 });
                 items.add(item);
             }
@@ -1820,7 +1847,7 @@ public class MpmEditingTools {
                     targetMap.addElement(copy);                                                     // add the copy to the target map
 
                     mpmTree.reloadNode(datedNode.findChildNode(targetMap, false));                  // update the target map node so the new entry is displayed
-                    MpmEditingTools.updateAudioAlignment(performance, mpmTree.getProjectPane());    // update the alignment visualization in the audio frame
+                    MpmEditingTools.updateAudioAlignment(performance, mpmTree.getProjectPane(), map.getType().equals(Mpm.TEMPO_MAP));    // update the alignment visualization in the audio frame
                 });
                 items.add(item);
             }
@@ -1861,7 +1888,7 @@ public class MpmEditingTools {
                 map.addStyleSwitch(style.date, style.styleName, style.id);
 
             mpmTree.reloadNode(mapNode);
-            MpmEditingTools.updateAudioAlignment(performance, mpmTree.getProjectPane());    // update the alignment visualization in the audio frame
+            MpmEditingTools.updateAudioAlignment(performance, mpmTree.getProjectPane(), map.getType().equals(Mpm.TEMPO_MAP));    // update the alignment visualization in the audio frame
         });
 
         return addStyleSwitch;
@@ -1897,7 +1924,7 @@ public class MpmEditingTools {
 
         MpmEditingTools.handOverScorePosition(styleElement, map.getElement(index), mpmTree.getProjectPane().getScore());    // if the old style switch is linked in the score, we have to associate the new switch now with that score position
         mpmTree.reloadNode(styleSwitchNode.getParent());
-        MpmEditingTools.updateAudioAlignment(performance, mpmTree.getProjectPane());    // update the alignment visualization in the audio frame
+        MpmEditingTools.updateAudioAlignment(performance, mpmTree.getProjectPane(), map.getType().equals(Mpm.TEMPO_MAP));    // update the alignment visualization in the audio frame
     }
 
     /**
@@ -1915,7 +1942,7 @@ public class MpmEditingTools {
             map.removeElement((Element) mapEntryNode.getUserObject());
             mpmTree.getProjectPane().getScore().cleanupDeadNodes();
             mpmTree.reloadNode(mapEntryNode.getParent());
-            MpmEditingTools.updateAudioAlignment(performance, mpmTree.getProjectPane());    // update the alignment visualization in the audio frame
+            MpmEditingTools.updateAudioAlignment(performance, mpmTree.getProjectPane(), map.getType().equals(Mpm.TEMPO_MAP));    // update the alignment visualization in the audio frame
         });
 
         return deleteMapEntry;
@@ -1931,7 +1958,7 @@ public class MpmEditingTools {
     private static void setDetuneUnite(@NotNull String unit, @NotNull MpmTreeNode imprecisionMapTuningNode, @NotNull MpmTree mpmTree) {
         ((ImprecisionMap) imprecisionMapTuningNode.getUserObject()).setDetuneUnit(unit);
         mpmTree.updateNode(imprecisionMapTuningNode);
-        MpmEditingTools.updateAudioAlignment(imprecisionMapTuningNode.getPerformance(), mpmTree.getProjectPane());    // update the alignment visualization in the audio frame
+        MpmEditingTools.updateAudioAlignment(imprecisionMapTuningNode.getPerformance(), mpmTree.getProjectPane(), false);    // update the alignment visualization in the audio frame
     }
 
     /**
@@ -1950,7 +1977,7 @@ public class MpmEditingTools {
                 map.getElement(index).addAttribute(new Attribute("xml:id", "http://www.w3.org/XML/1998/namespace", asynchrony.id));
 
             mpmTree.reloadNode(mapNode);
-            MpmEditingTools.updateAudioAlignment(mapNode.getPerformance(), mpmTree.getProjectPane());    // update the alignment visualization in the audio frame
+            MpmEditingTools.updateAudioAlignment(mapNode.getPerformance(), mpmTree.getProjectPane(), false);    // update the alignment visualization in the audio frame
         }
     }
 
@@ -1982,7 +2009,7 @@ public class MpmEditingTools {
 
         MpmEditingTools.handOverScorePosition(asynchronyElement, map.getElement(index), mpmTree.getProjectPane().getScore());   // if the old instruction is linked in the score, we have to associate the new now with that score position
         mpmTree.reloadNode(asynchronyNode.getParent());
-        MpmEditingTools.updateAudioAlignment(performance, mpmTree.getProjectPane());    // update the alignment visualization in the audio frame
+        MpmEditingTools.updateAudioAlignment(performance, mpmTree.getProjectPane(), false);    // update the alignment visualization in the audio frame
     }
 
     /**
@@ -2002,7 +2029,7 @@ public class MpmEditingTools {
                 map.getElement(index).addAttribute(new Attribute("xml:id", "http://www.w3.org/XML/1998/namespace", accentuationPattern.xmlId));
 
             mpmTree.reloadNode(mapNode);
-            MpmEditingTools.updateAudioAlignment(mapNode.getPerformance(), mpmTree.getProjectPane());    // update the alignment visualization in the audio frame
+            MpmEditingTools.updateAudioAlignment(mapNode.getPerformance(), mpmTree.getProjectPane(), false);    // update the alignment visualization in the audio frame
         }
     }
 
@@ -2029,7 +2056,7 @@ public class MpmEditingTools {
         int index = map.addAccentuationPattern(newAccentuationPattern); // add the new instruction to the map
         MpmEditingTools.handOverScorePosition(accentuationPatternElement, map.getElement(index), mpmTree.getProjectPane().getScore());   // if the old instruction is linked in the score, we have to associate the new now with that score position
         mpmTree.reloadNode(accentuationPatternNode.getParent());
-        MpmEditingTools.updateAudioAlignment(performance, mpmTree.getProjectPane());    // update the alignment visualization in the audio frame
+        MpmEditingTools.updateAudioAlignment(performance, mpmTree.getProjectPane(), false);    // update the alignment visualization in the audio frame
     }
 
     /**
@@ -2046,7 +2073,7 @@ public class MpmEditingTools {
         if (articulation != null) {
             map.addArticulation(articulation);
             mpmTree.reloadNode(mapNode);
-            MpmEditingTools.updateAudioAlignment(mapNode.getPerformance(), mpmTree.getProjectPane());    // update the alignment visualization in the audio frame
+            MpmEditingTools.updateAudioAlignment(mapNode.getPerformance(), mpmTree.getProjectPane(), false);    // update the alignment visualization in the audio frame
         }
     }
 
@@ -2074,7 +2101,7 @@ public class MpmEditingTools {
         int index = map.addArticulation(newArticulation);   // add the new instruction to the map
         MpmEditingTools.handOverScorePosition(articulationElement, map.getElement(index), mpmTree.getProjectPane().getScore());   // if the old instruction is linked in the score, we have to associate the new now with that score position
         mpmTree.reloadNode(articulationNode.getParent());
-        MpmEditingTools.updateAudioAlignment(performance, mpmTree.getProjectPane());    // update the alignment visualization in the audio frame
+        MpmEditingTools.updateAudioAlignment(performance, mpmTree.getProjectPane(), false);    // update the alignment visualization in the audio frame
     }
 
     /**
@@ -2090,7 +2117,7 @@ public class MpmEditingTools {
         if (ornament != null) {
             map.addOrnament(ornament);
             mpmTree.reloadNode(mapNode);
-            MpmEditingTools.updateAudioAlignment(mapNode.getPerformance(), mpmTree.getProjectPane());    // update the alignment visualization in the audio frame
+            MpmEditingTools.updateAudioAlignment(mapNode.getPerformance(), mpmTree.getProjectPane(), false);    // update the alignment visualization in the audio frame
         }
     }
 
@@ -2117,7 +2144,7 @@ public class MpmEditingTools {
         int index = map.addOrnament(newOrnament);                   // add the new instruction to the map
         MpmEditingTools.handOverScorePosition(ornamentElement, map.getElement(index), mpmTree.getProjectPane().getScore());   // if the old instruction is linked in the score, we have to associate the new now with that score position
         mpmTree.reloadNode(ornamentNode.getParent());
-        MpmEditingTools.updateAudioAlignment(performance, mpmTree.getProjectPane());    // update the alignment visualization in the audio frame
+        MpmEditingTools.updateAudioAlignment(performance, mpmTree.getProjectPane(), false);    // update the alignment visualization in the audio frame
     }
 
     /**
@@ -2133,7 +2160,7 @@ public class MpmEditingTools {
         if (rubato != null) {
             map.addRubato(rubato);
             mpmTree.reloadNode(mapNode);
-            MpmEditingTools.updateAudioAlignment(mapNode.getPerformance(), mpmTree.getProjectPane());    // update the alignment visualization in the audio frame
+            MpmEditingTools.updateAudioAlignment(mapNode.getPerformance(), mpmTree.getProjectPane(), false);    // update the alignment visualization in the audio frame
         }
     }
 
@@ -2160,7 +2187,7 @@ public class MpmEditingTools {
         int index = map.addRubato(newRubato);                       // add the new instruction to the map
         MpmEditingTools.handOverScorePosition(rubatoElement, map.getElement(index), mpmTree.getProjectPane().getScore());   // if the old instruction is linked in the score, we have to associate the new now with that score position
         mpmTree.reloadNode(rubatoNode.getParent());
-        MpmEditingTools.updateAudioAlignment(performance, mpmTree.getProjectPane());    // update the alignment visualization in the audio frame
+        MpmEditingTools.updateAudioAlignment(performance, mpmTree.getProjectPane(), false);    // update the alignment visualization in the audio frame
     }
 
     /**
@@ -2176,7 +2203,7 @@ public class MpmEditingTools {
         if (dynamics != null) {
             map.addDynamics(dynamics);
             mpmTree.reloadNode(mapNode);
-            MpmEditingTools.updateAudioAlignment(mapNode.getPerformance(), mpmTree.getProjectPane());    // update the alignment visualization in the audio frame
+            MpmEditingTools.updateAudioAlignment(mapNode.getPerformance(), mpmTree.getProjectPane(), false);    // update the alignment visualization in the audio frame
         }
     }
 
@@ -2203,7 +2230,7 @@ public class MpmEditingTools {
         int index = map.addDynamics(newDynamics);                   // add the new instruction to the map
         MpmEditingTools.handOverScorePosition(dynamicsElement, map.getElement(index), mpmTree.getProjectPane().getScore());   // if the old instruction is linked in the score, we have to associate the new now with that score position
         mpmTree.reloadNode(dynamicsNode.getParent());
-        MpmEditingTools.updateAudioAlignment(performance, mpmTree.getProjectPane());    // update the alignment visualization in the audio frame
+        MpmEditingTools.updateAudioAlignment(performance, mpmTree.getProjectPane(), false);    // update the alignment visualization in the audio frame
     }
 
     /**
@@ -2219,7 +2246,7 @@ public class MpmEditingTools {
         if (tempo != null) {
             map.addTempo(tempo);
             mpmTree.reloadNode(mapNode);
-            MpmEditingTools.updateAudioAlignment(mapNode.getPerformance(), mpmTree.getProjectPane());    // update the alignment visualization in the audio frame
+            MpmEditingTools.updateAudioAlignment(mapNode.getPerformance(), mpmTree.getProjectPane(), true);    // update the alignment visualization in the audio frame
         }
     }
 
@@ -2246,7 +2273,7 @@ public class MpmEditingTools {
         int index = map.addTempo(newTempo);                         // add the new instruction to the map
         MpmEditingTools.handOverScorePosition(tempoElement, map.getElement(index), mpmTree.getProjectPane().getScore());   // if the old instruction is linked in the score, we have to associate the new now with that score position
         mpmTree.reloadNode(tempoNode.getParent());
-        MpmEditingTools.updateAudioAlignment(performance, mpmTree.getProjectPane());    // update the alignment visualization in the audio frame
+        MpmEditingTools.updateAudioAlignment(performance, mpmTree.getProjectPane(), true);    // update the alignment visualization in the audio frame
     }
 
     /**
@@ -2262,7 +2289,7 @@ public class MpmEditingTools {
         if (distribution != null) {
             map.addDistribution(distribution);
             mpmTree.reloadNode(mapNode);
-            MpmEditingTools.updateAudioAlignment(mapNode.getPerformance(), mpmTree.getProjectPane());    // update the alignment visualization in the audio frame
+            MpmEditingTools.updateAudioAlignment(mapNode.getPerformance(), mpmTree.getProjectPane(), false);    // update the alignment visualization in the audio frame
         }
     }
 
@@ -2289,7 +2316,7 @@ public class MpmEditingTools {
         int index = map.addDistribution(newDistribution);           // add the new instruction to the map
         MpmEditingTools.handOverScorePosition(distributionElement, map.getElement(index), mpmTree.getProjectPane().getScore());   // if the old instruction is linked in the score, we have to associate the new now with that score position
         mpmTree.reloadNode(distributionNode.getParent());
-        MpmEditingTools.updateAudioAlignment(performance, mpmTree.getProjectPane());    // update the alignment visualization in the audio frame
+        MpmEditingTools.updateAudioAlignment(performance, mpmTree.getProjectPane(), false);    // update the alignment visualization in the audio frame
     }
 
     /**

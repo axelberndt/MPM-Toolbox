@@ -540,7 +540,7 @@ public class SyncPlayer extends WebPanel {
      * to relate the sample position to a relative playtime position
      * @param samplePosition the sample position to start playback
      */
-    public synchronized void triggerPlayback(int samplePosition) {
+    public synchronized void triggerPlayback(long samplePosition) {
         Audio audio = this.getSelectedAudio();
         if (audio == null)
             return;

@@ -12,6 +12,7 @@ import meico.mpm.elements.Performance;
 import meico.supplementary.KeyValue;
 import mpmToolbox.gui.ProjectPane;
 import mpmToolbox.gui.Settings;
+import mpmToolbox.gui.audio.utilities.CursorPositions;
 import mpmToolbox.projectData.audio.SpectrogramImage;
 import mpmToolbox.projectData.audio.WaveformImage;
 import mpmToolbox.gui.mpmEditingTools.MpmEditingTools;
@@ -33,16 +34,21 @@ import java.awt.event.MouseWheelEvent;
 public class AudioDocumentData extends DocumentData<WebPanel> {
     protected final ProjectPane parent;
     private final WebPanel audioPanel = new WebPanel(new GridBagLayout());  // the panel that contains everything in this tab
-
+    private final WebMultiSplitPane splitPane  = new WebMultiSplitPane(Orientation.vertical);  // the vertical split pane contains the different visualizations that are going to be aligned (waveform, spectrogram etc.);
     private final WaveformPanel waveform;
     private final SpectrogramPanel spectrogram;
+    private final TempoMapPanel tempoMap;
 
     private int channelNumber = -1;                                 // index of the waveform/channel to be rendered to image; -1 means all channels
-    private int leftmostSample = -1;                                // index of the first sample to be rendered to image
-    private int rightmostSample = -1;                               // index of the last sample to be rendered to image
-    private int playbackPosSample = 0;                              // the playback position in samples
+    private long leftmostSample = -1;                                // index of the first sample to be rendered to image
+    private long rightmostSample = -1;                               // index of the last sample to be rendered to image
+    private double leftmostTick = 0.0;
+    private double rightmostTick;
 
-    private Alignment alignment;                                    // this is the alignment with the piano roll overlay used in the sub-panels
+    private final CursorPositions playbackCursor = new CursorPositions(this);
+    private CursorPositions mouseCursor = null;
+
+    private Alignment alignment;                                    // this is the alignment with the piano roll overlay used in the sub-panels; it points either to the audio alignment or the alignment derived from the currently selected performance
 
     private final WebComboBox partChooser = new WebComboBox();      // with this combobox the user can select whether all musical part or only on individual part should be displayed in the piano roll overlay
     private final WebButton resetButton = new WebButton("Reset");   // this button re-initializes the alignment
@@ -56,12 +62,15 @@ public class AudioDocumentData extends DocumentData<WebPanel> {
         super("Audio", "Audio", null);
         this.parent = parent;
 
+        this.rightmostTick = this.getParent().getMsm().getEndDate();
+
         this.makePartChooser();
         this.makeResetButton();
         this.makePerf2AlignButton();
 
         this.waveform = new WaveformPanel(this);
         this.spectrogram = new SpectrogramPanel(this);
+        this.tempoMap = new TempoMapPanel(this);
 
         this.setComponent(this.audioPanel);
         this.setClosable(false);
@@ -85,6 +94,7 @@ public class AudioDocumentData extends DocumentData<WebPanel> {
             if (itemEvent.getStateChange() == ItemEvent.SELECTED) {
 //                System.out.println(itemEvent.toString());
                 this.updateAlignment(true);
+                this.updateTempomapPanel();
                 this.updateAudioTools();
             }
         });
@@ -92,7 +102,7 @@ public class AudioDocumentData extends DocumentData<WebPanel> {
         // a listener for the SyncPlayer's audio chooser
         this.getParent().getSyncPlayer().getAudioChooser().addItemListener(itemEvent -> {
             if (itemEvent.getStateChange() == ItemEvent.SELECTED) {
-                this.updateAudio(true);                                  // communicate the selection to the audio analysis frame as this should also display it
+                this.updateAudio(true); // communicate the selection to the audio analysis frame as this should also display it
             }
         });
 
@@ -111,6 +121,11 @@ public class AudioDocumentData extends DocumentData<WebPanel> {
                     this.updatePlaybackPosSample();
                     this.repaintAllComponents();
                 });
+            } else if (this.getParent().getSyncPlayer().getSelectedPerformance() != null) {
+                SwingUtilities.invokeLater(() -> {
+                    this.updatePlaybackPosSample();
+                    this.tempoMap.repaint();
+                });
             }
         });
     }
@@ -120,22 +135,28 @@ public class AudioDocumentData extends DocumentData<WebPanel> {
      * Invoke only if (this.getAudio() != null)!
      */
     private void updatePlaybackPosSample() {
-        if (this.getAudio() == null)
+        if (this.getAudio() == null) {      // if no audio selected
+            if (this.getParent().getSyncPlayer().getSelectedPerformance() != null) {    // if only a performance is selected in the SyncPlayer, no audio, we do this
+                double relativePosition = this.getParent().getSyncPlayer().getRelativePlaybackSliderPosition();
+                double offset = Math.min(0.0, this.getParent().getSyncPlayer().getMillisecondsOffset());
+                this.playbackCursor.setMilliseconds((this.getAlignment().getMillisecondsLength() * relativePosition) - offset);
+            }
             return;
+        }
 
         // if the audio player is playing, we can get the playback position directly from there
         if (this.getParent().getSyncPlayer().getAudioPlayer().isPlaying()) {
-            this.playbackPosSample = (int) (((double) this.getParent().getSyncPlayer().getAudioPlayer().getMicrosecondPosition() / 1000000.0)  * this.getAudio().getFrameRate());
+            this.playbackCursor.setMilliseconds((double) this.getParent().getSyncPlayer().getAudioPlayer().getMicrosecondPosition() / 1000.0);
             return;
         }
 
         // if the midi player is playing (audio player may have finished already), get the playback position from it
         if (this.getParent().getSyncPlayer().getMidiPlayer().isPlaying()) {
-            this.playbackPosSample = (int) (((double) this.getParent().getSyncPlayer().getMidiPlayer().getMicrosecondPosition() / 1000000.0) * this.getAudio().getFrameRate());
+            this.playbackCursor.setMilliseconds((double) this.getParent().getSyncPlayer().getMidiPlayer().getMicrosecondPosition() / 1000.0);
             return;
         }
 
-        // if none of the player is playing we compute the position from the source data
+        // if none of the players is playing we compute the position from the source data
         int audioLength = this.getAudio().getNumberOfSamples();
         int alignmentLength = (this.getAlignment() == null) ? 0 : (int)((this.getAlignment().getMillisecondsLength() / 1000.0) * this.getAudio().getFrameRate());   // compute the sample count of the MIDI
 
@@ -143,21 +164,37 @@ public class AudioDocumentData extends DocumentData<WebPanel> {
         if (offset < 0.0)   // negative offset is added to midi length
             alignmentLength += offset;
 
-        this.playbackPosSample = (int) (Math.max(audioLength, alignmentLength) * this.getParent().getSyncPlayer().getRelativePlaybackSliderPosition());
-
         if (offset > 0.0)
-            this.playbackPosSample += offset;
+            this.playbackCursor.setSample(Math.round((Math.max(audioLength, alignmentLength) * this.getParent().getSyncPlayer().getRelativePlaybackSliderPosition()) + offset));
+        else
+            this.playbackCursor.setSample(Math.round(Math.max(audioLength, alignmentLength) * this.getParent().getSyncPlayer().getRelativePlaybackSliderPosition()));
     }
 
     /**
      * a helper method to compute the position of the playback cursor in the audio visualizations
      * @return
      */
-    protected Double getRelativePlaybackPosInDisplay() {
-        if ((this.getAudio() == null) || (this.playbackPosSample < this.getLeftmostSample()) || (this.playbackPosSample > this.getRightmostSample()))
+    protected Double getRelativePlaybackPosInAudio() {
+        if ((this.getAudio() == null) || (this.playbackCursor.getSample() < this.leftmostSample) || (this.playbackCursor.getSample() > this.rightmostSample))
             return null;
 
-        return (double)(this.playbackPosSample - this.getLeftmostSample()) / (this.getRightmostSample() - this.getLeftmostSample());
+        return (double)(this.playbackCursor.getSample() - this.leftmostSample) / (this.rightmostSample - this.leftmostSample);
+    }
+
+    /**
+     * access the playback cursor
+     * @return
+     */
+    protected CursorPositions getPlaybackCursor() {
+        return this.playbackCursor;
+    }
+
+    /**
+     * access the mouse cursor
+     * @return
+     */
+    protected CursorPositions getMouseCursor() {
+        return this.mouseCursor;
     }
 
     /**
@@ -233,7 +270,7 @@ public class AudioDocumentData extends DocumentData<WebPanel> {
     public void updateAudioTools() {
         boolean enable = (this.getAudio() != null) && (this.alignment != null);
 
-        this.partChooser.setEnabled(enable);
+//        this.partChooser.setEnabled(enable);
         this.resetButton.setEnabled(enable);
 
         this.perf2AlignConvert.setEnabled(enable);
@@ -255,14 +292,15 @@ public class AudioDocumentData extends DocumentData<WebPanel> {
      * this draws the content of the audio analysis frame
      */
     private void draw() {
-        WebMultiSplitPane splitPane = new WebMultiSplitPane(Orientation.vertical);  // the vertical split pane contains the different visualizations that are going to be aligned (waveform, spectrogram etc.)
-        splitPane.setOneTouchExpandable(true);                                      // dividers have buttons for maximizing a component
-        splitPane.setContinuousLayout(true);                                        // when the divider is moved the content is continuously redrawn
-        splitPane.add(this.waveform);
-        splitPane.add(this.spectrogram);
+//        WebMultiSplitPane splitPane = new WebMultiSplitPane(Orientation.vertical);  // the vertical split pane contains the different visualizations that are going to be aligned (waveform, spectrogram etc.)
+        this.splitPane.setOneTouchExpandable(true);                                      // dividers have buttons for maximizing a component
+        this.splitPane.setContinuousLayout(true);                                        // when the divider is moved the content is continuously redrawn
+        this.splitPane.add(this.waveform);
+        this.splitPane.add(this.spectrogram);
+        this.splitPane.add(this.tempoMap);
 
         GridBagLayout gridBagLayout = (GridBagLayout) this.audioPanel.getLayout();
-        Tools.addComponentToGridBagLayout(this.audioPanel, gridBagLayout, splitPane, 0, 0, 1, 1, 1.0, 1.0, 0, 0, GridBagConstraints.BOTH, GridBagConstraints.CENTER);
+        Tools.addComponentToGridBagLayout(this.audioPanel, gridBagLayout, this.splitPane, 0, 0, 1, 1, 1.0, 1.0, 0, 0, GridBagConstraints.BOTH, GridBagConstraints.CENTER);
 
         // the panel  with the buttons
         WebPanel buttonPanel = new WebPanel(new GridBagLayout());
@@ -277,7 +315,7 @@ public class AudioDocumentData extends DocumentData<WebPanel> {
      * getter for the waveform panel
      * @return
      */
-    protected WaveformPanel getWaveformPanel() {
+    public WaveformPanel getWaveformPanel() {
         return this.waveform;
     }
 
@@ -285,8 +323,16 @@ public class AudioDocumentData extends DocumentData<WebPanel> {
      * a getter for the spectrogram panel
      * @return
      */
-    protected SpectrogramPanel getSpectrogramPanel() {
+    public SpectrogramPanel getSpectrogramPanel() {
         return this.spectrogram;
+    }
+
+    /**
+     * a getter for the tempomap panel
+     * @return
+     */
+    public TempoMapPanel getTempoMapPanel() {
+        return this.tempoMap;
     }
 
     /**
@@ -296,15 +342,49 @@ public class AudioDocumentData extends DocumentData<WebPanel> {
     protected void repaintAllComponents() {
         this.waveform.repaint();
         this.spectrogram.repaint();
+        this.tempoMap.repaint();
     }
 
     /**
-     * this communicates the mouse event/position to all child components
+     * compute which sample the mouse cursor is pointing at
+     * @param x horizontal pixel position in an audio domain panel
+     * @return
+     */
+    protected long getSampleIndex(double x) {
+        double relativePosition = x / this.getWaveformPanel().getWidth();
+        return Math.round((relativePosition * (this.rightmostSample - this.leftmostSample)) + this.leftmostSample);
+    }
+
+    /**
+     * compute which tick the mouse cursor is pointing at
+     * @param x horizontal pixel position in a tick domain panel
+     * @return
+     */
+    protected double getTickIndex(double x) {
+        double relativePosition = x / this.getTempoMapPanel().getWidth();
+        return (relativePosition * (this.rightmostTick - this.leftmostTick)) + this.leftmostTick;
+    }
+
+    /**
+     * this communicates the mouse position to all child components;
+     * basically it updates the mouse cursor data in this container class, so others can access it
      * @param e
      */
-    protected void communicateMouseEventToAllComponents(MouseEvent e) {
-        this.waveform.setMousePosition(e);
-        this.spectrogram.setMousePosition(e);
+    protected void communicateMousePositionToAllComponents(MouseEvent e) {
+        if (e == null) {
+            this.mouseCursor = null;
+            return;
+        }
+
+        if (this.mouseCursor == null)
+            this.mouseCursor = new CursorPositions(this);
+
+        if (this.getWaveformPanel().mouseInThisPanel() || this.getSpectrogramPanel().mouseInThisPanel()) {
+            this.mouseCursor.setAudioX(e.getX());
+            return;
+        }
+        // corresponds to: if (this.getTempoMapPanel().mouseInThisPanel)
+        this.mouseCursor.setTicksX(e.getX());
     }
 
     /**
@@ -320,11 +400,21 @@ public class AudioDocumentData extends DocumentData<WebPanel> {
      * @param doRepaint
      */
     public void updateAlignment(boolean doRepaint) {
-        if (this.parent.getSyncPlayer().isAudioAlignmentSelected())
+        if (this.parent.getSyncPlayer().isAudioAlignmentSelected()) {
             this.alignment = this.getAudio().getAlignment();
-        else {
+        } else {
             Performance performance = this.parent.getSyncPlayer().getSelectedPerformance();
-            this.alignment = (performance == null) ? null : new Alignment(performance.perform(this.parent.getMsm()), null);
+
+            if (performance != null) {
+                this.alignment = new Alignment(performance.perform(this.parent.getMsm()), null);    // get the performance as an instance of Alignment
+//                for (Part part : this.alignment.getParts()) {                                       // since the alignment is computed from a performance all notes should be marked as fixed
+//                    for (Note note : part.getNoteSequence()) {
+//                        note.setFixed(true);
+//                    }
+//                }
+            } else {
+                this.alignment = null;
+            }
         }
 
         if (doRepaint) {
@@ -333,6 +423,13 @@ public class AudioDocumentData extends DocumentData<WebPanel> {
                 this.repaintAllComponents();
             });
         }
+    }
+
+    /**
+     * update the information that is displayed in the tempomap panel
+     */
+    public void updateTempomapPanel() {
+        this.tempoMap.update();
     }
 
     /**
@@ -378,11 +475,11 @@ public class AudioDocumentData extends DocumentData<WebPanel> {
      * @param height
      * @return
      */
-    protected WaveformImage getWaveformImage(int width, int height) {
+    public WaveformImage getWaveformImage(int width, int height) {
         if (this.getAudio() == null)
             return null;
         Audio audio = this.getAudio();
-        audio.computeWaveformImage(this.channelNumber, this.leftmostSample, this.rightmostSample, width, height);
+        audio.computeWaveformImage(this.channelNumber, (int) this.leftmostSample, (int) this.rightmostSample, width, height);
         return audio.getWaveformImage();
     }
 
@@ -416,7 +513,7 @@ public class AudioDocumentData extends DocumentData<WebPanel> {
      * a getter for the leftmost sample index to be displayed
      * @return
      */
-    protected int getLeftmostSample() {
+    public long getLeftmostSample() {
         return this.leftmostSample;
     }
 
@@ -424,7 +521,7 @@ public class AudioDocumentData extends DocumentData<WebPanel> {
      * sets the index of the leftmost sample to be displayed
      * @param leftmostSample
      */
-    protected void setLeftmostSample(int leftmostSample) {
+    public void setLeftmostSample(long leftmostSample) {
         this.leftmostSample = leftmostSample;
     }
 
@@ -432,7 +529,7 @@ public class AudioDocumentData extends DocumentData<WebPanel> {
      * a getter for the rightmost sample index to be displayed
      * @return
      */
-    protected int getRightmostSample() {
+    public long getRightmostSample() {
         return this.rightmostSample;
     }
 
@@ -440,15 +537,65 @@ public class AudioDocumentData extends DocumentData<WebPanel> {
      * sets the index of the rightmost sample to be displayed
      * @param rightmostSample
      */
-    protected void setRightmostSample(int rightmostSample) {
+    public void setRightmostSample(long rightmostSample) {
         this.rightmostSample = rightmostSample;
+    }
+
+    /**
+     * access the leftmost tick
+     * @return
+     */
+    public double getLeftmostTick() {
+        return this.leftmostTick;
+    }
+
+    /**
+     * set the leftmost tick
+     * @param leftmostTick
+     */
+    public void setLeftmostTick(double leftmostTick) {
+        this.leftmostTick = leftmostTick;
+    }
+
+    /**
+     * access the rightmost tick
+     * @return
+     */
+    public double getRightmostTick() {
+        return this.rightmostTick;
+    }
+
+    /**
+     * set the rightmost tick
+     * @param rightmostTick
+     */
+    public void setRightmostTick(double rightmostTick) {
+        this.rightmostTick = rightmostTick;
+    }
+
+    /**
+     * process a mouse drag event; to be invoked by sub-panels WaveformPanel, SpectrogramPanel
+     * @param e
+     */
+    protected void scroll(MouseEvent e) {
+        if (this.getMouseCursor() == null) {
+            this.getMouseCursor().setAudioX(e.getX());
+            return;
+        }
+
+        long leftmost = this.getLeftmostSample();
+        long rightmost = this.getRightmostSample();
+        double sampleOffset = (double)((rightmost - leftmost) * (this.getMouseCursor().getAudioX() - e.getPoint().x)) / this.getWaveformPanel().getWidth();   // this computes how many horizontal pixels the mouse has moved, than scales it by the amount of samples per horizontal pixel so we know how many pixels we want to move the leftmost and rightmost sample index
+
+        this.communicateMousePositionToAllComponents(e);
+        this.scroll(sampleOffset);
     }
 
     /**
      * this shifts the visualisations left or right by the specified offset
      * @param sampleOffset offset in samples
      */
-    private void scroll(double sampleOffset) {
+    protected void scroll(double sampleOffset) {
         if (this.parent.getAudio() == null)
             return;
 
@@ -462,6 +609,10 @@ public class AudioDocumentData extends DocumentData<WebPanel> {
         this.setRightmostSample((int) (this.rightmostSample + sampleOffset));
         this.spectrogram.updateScroll();
 
+        // update the cursor positions
+//        this.mouseCursor.setSample(this.mouseCursor.getSample());
+        this.playbackCursor.setSample(this.playbackCursor.getSample());
+
         this.repaintAllComponents();
     }
 
@@ -470,13 +621,13 @@ public class AudioDocumentData extends DocumentData<WebPanel> {
      * @param pivotSample
      * @param zoomFactor
      */
-    private void zoom(int pivotSample, double zoomFactor) {
+    private void zoom(long pivotSample, double zoomFactor) {
         if (zoomFactor == 0.0)
             return;
 
         if (zoomFactor < 0.0) {             // zoom in
-            int leftmostSample = pivotSample - (int) ((pivotSample - this.leftmostSample) * zoomFactor);
-            int rightmostSample = (int) ((this.rightmostSample - pivotSample) * zoomFactor) + pivotSample;
+            long leftmostSample = pivotSample - (int) ((pivotSample - this.leftmostSample) * zoomFactor);
+            long rightmostSample = (int) ((this.rightmostSample - pivotSample) * zoomFactor) + pivotSample;
             if ((rightmostSample - leftmostSample) > 1) {   // make sure there are at least two samples to be drawn, if we zoom too far in, left==right, we cannot zoom out again
                 this.setLeftmostSample(leftmostSample);
                 this.setRightmostSample(rightmostSample);
@@ -493,25 +644,11 @@ public class AudioDocumentData extends DocumentData<WebPanel> {
 
         this.spectrogram.updateZoom();
 
+        // update the cursor positions
+//        this.mouseCursor.setSample(this.mouseCursor.getSample());
+        this.playbackCursor.setSample(this.playbackCursor.getSample());
+
         this.repaintAllComponents();
-    }
-
-    /**
-     * process a mouse drag event; to be invoked by sub-panels WaveformPanel, SpectrogramPanel
-     * @param e
-     */
-    protected void scroll(MouseEvent e) {
-        if (this.getWaveformPanel().mousePosition == null) {
-            this.getWaveformPanel().setMousePosition(e);
-            return;
-        }
-
-        int leftmost = this.getLeftmostSample();
-        int rightmost = this.getRightmostSample();
-        double sampleOffset = (double)((rightmost - leftmost) * (this.getWaveformPanel().mousePosition.x - e.getPoint().x)) / this.getWaveformPanel().getWidth();   // this computes how many horizontal pixels the mouse has moved, than scales it by the amount of samples per horizontal pixel so we know how many pixels we want to move the leftmost and rightmost sample index
-
-        this.communicateMouseEventToAllComponents(e);
-        this.scroll(sampleOffset);
     }
 
     /**
@@ -522,10 +659,10 @@ public class AudioDocumentData extends DocumentData<WebPanel> {
         if ((this.getAudio() == null) || (e.getWheelRotation() == 0))
             return;
 
-        int pivotSample = this.getWaveformPanel().getSampleIndex(e.getPoint().getX());
+        long pivotSample = this.getSampleIndex(e.getPoint().getX());
         double zoomFactor = (e.getWheelRotation() < 0) ? 0.9 : 1.1;
 
-        this.communicateMouseEventToAllComponents(e);
+        this.communicateMousePositionToAllComponents(e);
         this.zoom(pivotSample, zoomFactor);
     }
 
@@ -552,5 +689,4 @@ public class AudioDocumentData extends DocumentData<WebPanel> {
             return this.getKey();
         }
     }
-
 }

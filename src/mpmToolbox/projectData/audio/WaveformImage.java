@@ -8,8 +8,8 @@ import java.awt.image.BufferedImage;
  */
 public class WaveformImage extends BufferedImage {
     private final int channelNumber;        // index of the waveform/channel to be rendered to image; -1 means all channels
-    private final int leftmostSample;       // index of the first sample to be rendered to image
-    private final int rightmostSample;      // index of the last sample to be rendered to image
+    private final long leftmostSample;       // index of the first sample to be rendered to image
+    private final long rightmostSample;      // index of the last sample to be rendered to image
 
     /**
      * constructor
@@ -20,7 +20,7 @@ public class WaveformImage extends BufferedImage {
      * @param leftmostSample
      * @param rightmostSample
      */
-    public WaveformImage(int width, int height, int imageType, int channelNumber, int leftmostSample, int rightmostSample) {
+    public WaveformImage(int width, int height, int imageType, int channelNumber, long leftmostSample, long rightmostSample) {
         super(width, height, imageType);
 
         this.channelNumber = channelNumber;
@@ -35,7 +35,7 @@ public class WaveformImage extends BufferedImage {
      * @param leftmostSample
      * @param rightmostSample
      */
-    public WaveformImage(BufferedImage bi, int channelNumber, int leftmostSample, int rightmostSample) {
+    public WaveformImage(BufferedImage bi, int channelNumber, long leftmostSample, long rightmostSample) {
         super(bi.getColorModel(), bi.getRaster(), bi.getColorModel().isAlphaPremultiplied(), null);
 
         this.channelNumber = channelNumber;
@@ -50,7 +50,7 @@ public class WaveformImage extends BufferedImage {
      * @param rightmostSample
      * @return
      */
-    public boolean sameMetrics(int channelNumber, int leftmostSample, int rightmostSample) {
+    public boolean sameMetrics(int channelNumber, long leftmostSample, long rightmostSample) {
         return (this.channelNumber == channelNumber) && (this.leftmostSample == leftmostSample) && (this.rightmostSample == rightmostSample);
     }
 }
