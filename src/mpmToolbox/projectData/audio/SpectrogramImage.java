@@ -53,4 +53,8 @@ public class SpectrogramImage extends BufferedImage {
     public ArrayList<LogFrequencySpectrum> getSpectrogram() {
         return this.spectrogram;
     }
+
+    public WindowFunction getWindowFunction() {
+        return this.windowFunction;
+    }
 }

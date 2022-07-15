@@ -54,7 +54,9 @@ public class SpectrogramPanel extends PianoRollPanel {
             this.updateZoom = false;
         }
         if (this.updateScroll) {
-            this.horizontalOffset = (int) Math.round((double) -this.parent.getLeftmostSample() / this.samplesPerPixel);
+//            this.horizontalOffset = (int) Math.round((double) -this.parent.getLeftmostSample() / this.samplesPerPixel);
+//            this.horizontalOffset += spectrogramImage.getWindowFunction().getLength() / (this.samplesPerPixel * 2.0);
+            this.horizontalOffset = (int) Math.round(((0.5 * spectrogramImage.getWindowFunction().getLength()) - this.parent.getLeftmostSample()) / this.samplesPerPixel);  // same as the above two lines just in one line
             this.updateScroll = false;
         }
 
