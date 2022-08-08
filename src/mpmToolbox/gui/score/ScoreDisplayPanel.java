@@ -17,6 +17,7 @@ import mpmToolbox.gui.msmTree.MsmTreeNode;
 import mpmToolbox.projectData.score.Score;
 import mpmToolbox.projectData.score.ScoreNode;
 import mpmToolbox.projectData.score.ScorePage;
+import mpmToolbox.supplementary.Tools;
 import mpmToolbox.supplementary.orthantNeighborhoodGraph.ONGNode;
 import nu.xom.Element;
 import nu.xom.Node;
@@ -199,7 +200,7 @@ public class ScoreDisplayPanel extends WebPanel implements MouseWheelListener, M
                     }
                 }
                 if (element.getLocalName().equals("style")) {                                               // style elements get a different symbol then ...
-                    GeneralPath diamond = ScoreDisplayPanel.drawDiamond(p.getX(), p.getY(), this.xWidth, this.xWidth);
+                    GeneralPath diamond = Tools.generateDiamondShape(p.getX(), p.getY(), this.xWidth, this.xWidth);
                     g2.fill(diamond);
 
                     // global MPM nodes get an additional outline
@@ -280,28 +281,6 @@ public class ScoreDisplayPanel extends WebPanel implements MouseWheelListener, M
                 }
             }
         }
-    }
-
-    /**
-     * A helper method to draw a diamond shape.
-     * @param x
-     * @param y
-     * @param xWidth
-     * @param yWidth
-     * @return
-     */
-    private static GeneralPath drawDiamond(double x, double y, double xWidth, double yWidth) {
-        double xOffset = xWidth * 0.5;
-        double yOffset = yWidth * 0.5;
-
-        GeneralPath diamond = new GeneralPath();
-        diamond.moveTo(x, y - yOffset);
-        diamond.lineTo(x + xOffset, y);
-        diamond.lineTo(x, y + yOffset);
-        diamond.lineTo(x - xOffset, y);
-        diamond.closePath();
-
-        return diamond;
     }
 
     /**

@@ -82,6 +82,11 @@ public class SpectrogramSpecs extends WebPanel {
 
 //            this.hopSize.setMinimumWidth(width);
 //            this.hopSize.setMaximumWidth(width);
+        this.windowLength.addChangeListener(changeEvent -> {    // prevent the hop size being greater than the window length
+            int windowLengthValue = (int) this.windowLength.getValue();
+            if ((int) this.hopSize.getValue() > windowLengthValue)
+                this.hopSize.setValue(windowLengthValue);
+        });
         Tools.addComponentToGridBagLayout(this, (GridBagLayout) this.getLayout(), this.hopSize, 2, 3, 1, 1, 1.0, 1.0, 0, 0, GridBagConstraints.BOTH, GridBagConstraints.LINE_START);
 
         WebLabel hopSizeUnit = new WebLabel("samples", WebLabel.LEFT);

@@ -11,6 +11,7 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
+import java.awt.geom.GeneralPath;
 import java.awt.image.BufferedImage;
 import java.io.*;
 import java.util.ArrayList;
@@ -211,4 +212,27 @@ public class Tools {
     public static String uniformPath(String path) {
         return path.replaceAll("(/+)|((\\\\)+)", Matcher.quoteReplacement(File.separator));
     }
+
+    /**
+     * A helper method to draw a diamond shape.
+     * @param x
+     * @param y
+     * @param xWidth
+     * @param yWidth
+     * @return
+     */
+    public static GeneralPath generateDiamondShape(double x, double y, double xWidth, double yWidth) {
+        double xOffset = xWidth * 0.5;
+        double yOffset = yWidth * 0.5;
+
+        GeneralPath diamond = new GeneralPath();
+        diamond.moveTo(x, y - yOffset);
+        diamond.lineTo(x + xOffset, y);
+        diamond.lineTo(x, y + yOffset);
+        diamond.lineTo(x - xOffset, y);
+        diamond.closePath();
+
+        return diamond;
+    }
+
 }

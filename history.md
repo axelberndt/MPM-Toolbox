@@ -4,12 +4,13 @@
 #### v0.1.16
 - Addition to method `mpmToolbox.gui.score.ScoreDisplayPanel.paintComponent()`. Performance squares in the score will now contain a symbol indicating the type of the performance instruction.
 - Dragging a note in the piano roll is now only possible when it is an audio alignment. Performance renderings no longer allow note dragging but should be altered by performance instructions.
+- The hop size parameter in the spectrogram specification dialog (class `mpmToolbox.gui.audio.utilities.SpectrogramSpecs`) should not have values greater than the window length. This is now ensured via an additional listener.
 - The spectrogram is now displayed with a horizontal offset of half the window length, so it aligns better with the waveform.
 - Added another panel to the audio analysis tab, the tempomap panel.
   - New classes were added, `mpmToolbox.gui.audio.TempoMapPanel` and `mpmToolbox.gui.audio.utilities.CursorPositions`.
   - The tempomap panel visualizes its data on the symbolic time axis. Class `CursorPositions` does the corresponding conversions to place playback and mouse cursor in all panels at their correct position.
-  - Further conversion methods hav also been added to classes `mpmToolbox.projectData.alignment.Alignment` and `mpmToolbox.projectData.alignment.Part`. Class `mpmToolbox.projectData.alignment.Note` is also slightly expanded.
-
+  - Further conversion methods have also been added to classes `mpmToolbox.projectData.alignment.Alignment` and `mpmToolbox.projectData.alignment.Part`. Class `mpmToolbox.projectData.alignment.Note` is also slightly expanded.
+  - The tempomap panel is not yet interactive, though.
 
 #### v0.1.15
 - Bugfix in method `mpmToolbox.gui.mpmEditingTools.editorDialogs.DistributionEditor.switchDistributionTypeTo()` that crashed when attribute `seed` was activated.

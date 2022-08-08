@@ -214,6 +214,7 @@ public class AudioDocumentData extends DocumentData<WebPanel> {
 
         this.partChooser.addItemListener(itemEvent -> {
             if (itemEvent.getStateChange() == ItemEvent.SELECTED) {
+                this.updateTempomapPanel();
                 this.repaintAllComponents();
             }
         });
