@@ -1,6 +1,10 @@
 ### Version History
 
 
+#### v0.6.17
+- Bugfix in method `mpmToolbox.gui.audio.TempoMapPanel.retrieveTempoMap()`.
+
+
 #### v0.1.16
 - Addition to method `mpmToolbox.gui.score.ScoreDisplayPanel.paintComponent()`. Performance squares in the score will now contain a symbol indicating the type of the performance instruction.
 - Dragging a note in the piano roll is now only possible when it is an audio alignment. Performance renderings no longer allow note dragging but should be altered by performance instructions.

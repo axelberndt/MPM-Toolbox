@@ -261,6 +261,9 @@ public class TempoMapPanel extends PianoRollPanel implements ComponentListener, 
         this.tempoData.clear();                                     // clear the list of tempo instruction data from the previous performance
         for (int i = 0; i < this.tempoMap.size(); ++i) {            // for each tempo instruction in the tempomap
             TempoData data = this.tempoMap.getTempoDataOf(i);       // get its data
+            if (data == null)                                       // the tempomap entry could be a style switch or a malicious entry
+                continue;                                           // go on with the next entry
+
             this.tempoData.add(new KeyValue<>(data, null));         // add it to the tempoData list
 
             // update minimum and maximum tempo values
