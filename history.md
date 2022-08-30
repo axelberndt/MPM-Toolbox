@@ -1,11 +1,11 @@
 ### Version History
 
 
-#### v0.6.18
+#### v0.1.18
 - Adaptations to meico update v0.8.40.
 
 
-#### v0.6.17
+#### v0.1.17
 - Bugfix in method `mpmToolbox.gui.audio.TempoMapPanel.retrieveTempoMap()`.
 
 
