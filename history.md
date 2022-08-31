@@ -1,6 +1,10 @@
 ### Version History
 
 
+#### v0.1.19
+- Meico update v0.8.41.
+
+
 #### v0.1.18
 - Adaptations to meico update v0.8.40.
 
