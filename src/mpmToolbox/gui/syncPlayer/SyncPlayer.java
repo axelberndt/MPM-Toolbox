@@ -44,7 +44,7 @@ public class SyncPlayer extends WebPanel {
     private final WebSlider midiMasterVolume = new WebSlider(WebSlider.VERTICAL, 0, MIDI_MASTER_VOLUME_MAX, MIDI_MASTER_VOLUME_MAX);
 
     private final AudioPlayer audioPlayer = new AudioPlayer();
-    private final MidiPlayer midiPlayer = new MidiPlayer();
+    private final MidiPlayer midiPlayer;// = new MidiPlayer();
 
     protected final WebComboBox performanceChooser = new WebComboBox();
     private final PerformanceChooserItem noPerformanceRendering = new PerformanceChooserItem("No performance rendering");
@@ -65,10 +65,11 @@ public class SyncPlayer extends WebPanel {
         super(new GridBagLayout());
         this.parent = parent;
 
-        if (Settings.getSoundbank() != null)
-            this.midiPlayer.loadSoundbank(Settings.getSoundbank());
-        else
-            this.midiPlayer.loadDefaultSoundbank();
+        this.midiPlayer = this.parent.getParentMpmToolbox().getMidiPlayerSyncPlayer();
+//        if (Settings.getSoundbank() != null)
+//            this.midiPlayer.loadSoundbank(Settings.getSoundbank());
+//        else
+//            this.midiPlayer.loadDefaultSoundbank();
 
         this.makeGui();
     }

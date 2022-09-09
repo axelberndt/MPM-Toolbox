@@ -11,6 +11,7 @@ import com.alee.skin.dark.WebDarkSkin;
 import meico.mei.Helper;
 import meico.mei.Mei;
 import meico.midi.Midi;
+import meico.midi.MidiPlayer;
 import meico.mpm.Mpm;
 import meico.msm.Msm;
 import meico.xml.XmlBase;
@@ -21,6 +22,7 @@ import nu.xom.ParsingException;
 import org.xml.sax.SAXException;
 
 import javax.sound.midi.InvalidMidiDataException;
+import javax.sound.midi.MidiUnavailableException;
 import javax.sound.sampled.UnsupportedAudioFileException;
 import javax.swing.*;
 import javax.swing.filechooser.FileFilter;
@@ -41,6 +43,10 @@ import java.net.URISyntaxException;
 public class MpmToolbox {
     private WebFrame frame = null;              // the main window frame
     private ProjectPane projectPane = null;     // the gui and project data that is worked on here
+
+    private MidiPlayer midiPlayerMsmTree = null;        // this midi player plays notes when clicked/selected in the MSM tree
+
+    private MidiPlayer midiPlayerSyncPlayer = null;     // this is the midi player that the syncPlayer uses for playback
     private WebPanel welcomeMessage;
     private WebMenu openRecent;
     private WebMenuItem close;
@@ -54,6 +60,8 @@ public class MpmToolbox {
      * constructor
      */
     public MpmToolbox() {
+        this.initMidiPlayers();
+
         // make the main window
         SwingUtilities.invokeLater(new Runnable() {
             public void run() {
@@ -102,6 +110,48 @@ public class MpmToolbox {
      */
     private void shutdownHook() {
         Settings.writeSettingsFile();   // Save the current state of the settings to the settings file
+    }
+
+    /**
+     * initialize MIDI player
+     * @return
+     */
+    private boolean initMidiPlayers() {
+        try {
+            this.midiPlayerMsmTree = new MidiPlayer();
+            this.midiPlayerSyncPlayer = new MidiPlayer();
+        } catch (MidiUnavailableException e) {
+            e.printStackTrace();
+            return false;
+        }
+
+        if (Settings.getSoundbank() != null) {      // the soundbank will only be used by the syncPlayer's MIDI player
+//            this.midiPlayerMsmTree.loadSoundbank(Settings.getSoundbank());
+            this.midiPlayerSyncPlayer.loadSoundbank(Settings.getSoundbank());
+        }
+        else {
+            this.midiPlayerSyncPlayer.loadDefaultSoundbank();
+        }
+
+        this.midiPlayerMsmTree.loadDefaultSoundbank();  // the MSM tree's MIDI player keeps the default soundfont
+
+        return true;
+    }
+
+    /**
+     * a getter for the MIDI player of the MSM tree
+     * @return
+     */
+    public MidiPlayer getMidiPlayerMsmTree() {
+        return this.midiPlayerMsmTree;
+    }
+
+    /**
+     * a getter for the MIDI player of the SyncPlayer
+     * @return
+     */
+    public MidiPlayer getMidiPlayerSyncPlayer() {
+        return this.midiPlayerSyncPlayer;
     }
 
     /**
@@ -159,12 +209,12 @@ public class MpmToolbox {
         WebMenuItem exportWav = new WebMenuItem("Wave", 'w');
         exportWav.addActionListener(actionEvent -> {
             Midi midi = this.getProjectPane().getSyncPlayer().getPerformanceRendering();
-            midi.exportAudio(this.getProjectPane().getMidiPlayer().getSoundbank()).writeAudio();
+            midi.exportAudio(this.getMidiPlayerMsmTree().getSoundbank()).writeAudio();
         });
         WebMenuItem exportMp3 = new WebMenuItem("MP3", '3');
         exportMp3.addActionListener(actionEvent -> {
             Midi midi = this.getProjectPane().getSyncPlayer().getPerformanceRendering();
-            midi.exportAudio(this.getProjectPane().getMidiPlayer().getSoundbank()).writeMp3();
+            midi.exportAudio(this.getMidiPlayerMsmTree().getSoundbank()).writeMp3();
         });
         this.export = new WebMenu("Export Performance Rendering as");
         this.export.setMnemonic('e');
@@ -200,7 +250,7 @@ public class MpmToolbox {
             Settings.setSoundbank(null);
             if (this.projectPane != null) {
                 this.getProjectPane().getSyncPlayer().getMidiPlayer().loadDefaultSoundbank();
-                this.getProjectPane().getMidiPlayer().loadDefaultSoundbank();
+//                this.getMidiPlayerMsmTree().loadDefaultSoundbank();
             }
         });
         edit.add(useDefaultSoundfont);
@@ -332,7 +382,7 @@ public class MpmToolbox {
                 case ".xml":                                                            // xml could be anything
                     XmlBase xml = new XmlBase(file);                                    // parse the xml file into an instance of XmlBase
                     switch (xml.getRootElement().getLocalName()) {                      // get the name of the root element in the xml tree
-                        case "mpmToolkitProject":                                       // seems to be an MPM Toolkit project
+                        case "mpmToolboxProject":                                       // seems to be an MPM Toolbox project
                             projectPane = new ProjectPane(file, this);
                             if (this.openProject(projectPane))
                                 Tools.fileDrop(this, projectPane);
@@ -423,8 +473,8 @@ public class MpmToolbox {
                 case ".sf2":
                     Settings.setSoundbank(file);
                     if (this.projectPane != null) {
-                        this.getProjectPane().getSyncPlayer().getMidiPlayer().loadSoundbank(file);
-                        this.getProjectPane().getMidiPlayer().loadSoundbank(file);
+                        this.getMidiPlayerSyncPlayer().loadSoundbank(file);
+//                        this.getMidiPlayerMsmTree().loadSoundbank(file);
                     }
                     break;
                 default:

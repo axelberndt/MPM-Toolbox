@@ -40,7 +40,6 @@ import java.util.ArrayList;
 public class ProjectPane extends WebDockablePane {
     private final MpmToolbox parent;
 
-    private MidiPlayer midiPlayer = null;
     private final ProjectData data;                                                         // the actual project data
 
     private final WebDocumentPane<DocumentData<WebPanel>> tabs = new WebDocumentPane<>();   // this contains the components displayed in the center under certain tabs
@@ -63,7 +62,6 @@ public class ProjectPane extends WebDockablePane {
         this.data = new ProjectData(msm);
         this.msmTree = new MsmTree(this);
         this.mpmDockableFrame = new MpmDockableFrame(this);
-        this.initMidiPlayer();
         this.makeGUI();
     }
 
@@ -78,7 +76,6 @@ public class ProjectPane extends WebDockablePane {
         this.data = new ProjectData(midi.exportMsm());
         this.msmTree = new MsmTree(this);
         this.mpmDockableFrame = new MpmDockableFrame(this);
-        this.initMidiPlayer();
         this.makeGUI();
     }
 
@@ -95,7 +92,6 @@ public class ProjectPane extends WebDockablePane {
         this.data = new ProjectData(mei);
         this.msmTree = new MsmTree(this);
         this.mpmDockableFrame = new MpmDockableFrame(this);
-        this.initMidiPlayer();
         this.makeGUI();
     }
 
@@ -110,28 +106,7 @@ public class ProjectPane extends WebDockablePane {
         this.data = new ProjectData(file);
         this.msmTree = new MsmTree(this);
         this.mpmDockableFrame = new MpmDockableFrame(this);
-        this.initMidiPlayer();
         this.makeGUI();
-    }
-
-    /**
-     * initialize MIDI player
-     * @return
-     */
-    private boolean initMidiPlayer() {
-        try {
-            this.midiPlayer = new MidiPlayer();
-        } catch (MidiUnavailableException e) {
-            e.printStackTrace();
-            return false;
-        }
-
-        if (Settings.getSoundbank() != null)
-            this.midiPlayer.loadSoundbank(Settings.getSoundbank());
-        else
-            this.midiPlayer.loadDefaultSoundbank();
-
-        return true;
     }
 
     /**
@@ -140,14 +115,6 @@ public class ProjectPane extends WebDockablePane {
      */
     public MpmToolbox getParentMpmToolbox() {
         return this.parent;
-    }
-
-    /**
-     * a getter for the MIDI player
-     * @return
-     */
-    public MidiPlayer getMidiPlayer() {
-        return this.midiPlayer;
     }
 
     /**
@@ -258,8 +225,7 @@ public class ProjectPane extends WebDockablePane {
         this.getProjectData().setMpm(mpm);
         this.mpmDockableFrame.setMpm(mpm);
 
-        for (Performance performance : mpm.getAllPerformances())
-            this.syncPlayer.addPerformance(performance, false);
+        this.syncPlayer.updatePerformanceList();
     }
 
     /**

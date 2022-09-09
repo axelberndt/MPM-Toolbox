@@ -1,6 +1,12 @@
 ### Version History
 
 
+#### v0.1.20
+- The MIDI player of the `mpmToolbox.gui.ProjectPane` has been moved to class `mpmToolbox.gui.MpmToolbox`, so it does not have to be reinitialized when loading a new project. The same has been done with the `mpmToolbox.gui.syncPlayer.SyncPlayer`'s MIDI player. When loading a soundfont, only the latter will change. The MSM tree's MIDI player does play only with piano sounds anyway.
+- Minor bugfix in method `mpmToolbox.gui.MpmToolbox.loadFile()`.
+- Another minor fix in method `mpmToolbox.gui.ProjectPane.setMpm()`, so the SyncPlayer's list of performances no longer contains elements for a previous MPM after loading another MPM into the project.
+
+
 #### v0.1.19
 - Meico update v0.8.41.
 
