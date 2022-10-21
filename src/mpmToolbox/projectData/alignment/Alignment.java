@@ -486,12 +486,36 @@ public class Alignment {
         if (this.lastNoteSounding == null) {
             for (Part part : this.parts) {
                 Note note = part.getLastNoteSounding();
+                if (note == null)
+                    continue;
                 if ((this.lastNoteSounding == null) || (note.getMillisecondsDateEnd() > this.lastNoteSounding.getMillisecondsDateEnd())) {
                     this.lastNoteSounding = note;
                 }
             }
         }
         return this.lastNoteSounding;
+    }
+
+    /**
+     * get the first note in the alignment
+     * @return
+     */
+    public Note getFirstNote() {
+        Note first = null;
+        for (Part part : this.parts) {
+            if (part.getNoteSequence().size() == 0)
+                continue;
+            Note candidate = part.getNoteSequence().get(0);
+            if (candidate == null)
+                continue;
+            if (first == null) {
+                first = candidate;
+                continue;
+            }
+            if (first.getDate() > candidate.getDate())
+                first = candidate;
+        }
+        return first;
     }
 
     /**

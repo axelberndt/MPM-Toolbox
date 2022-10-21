@@ -13,6 +13,7 @@ import meico.supplementary.KeyValue;
 import mpmToolbox.gui.ProjectPane;
 import mpmToolbox.gui.Settings;
 import mpmToolbox.gui.audio.utilities.CursorPositions;
+import mpmToolbox.projectData.alignment.Note;
 import mpmToolbox.projectData.audio.SpectrogramImage;
 import mpmToolbox.projectData.audio.WaveformImage;
 import mpmToolbox.gui.mpmEditingTools.MpmEditingTools;
@@ -232,8 +233,7 @@ public class AudioDocumentData extends DocumentData<WebPanel> {
             // in case of audio alignment being reset, scale the initial alignment to the milliseconds length of the audio; so all notes are visible and in a good starting position
             if (this.getParent().getSyncPlayer().isAudioAlignmentSelected()) {
                 Audio audio = this.getParent().getSyncPlayer().getSelectedAudio();
-                double milliseconds = ((double) audio.getNumberOfSamples() / audio.getFrameRate()) * 1000.0;
-                this.alignment.scaleOverallTiming(milliseconds);
+                audio.initAlignment(this.getParent().getMsm());
             }
 
             this.alignment.recomputePianoRoll();

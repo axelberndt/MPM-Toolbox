@@ -1,6 +1,10 @@
 ### Version History
 
 
+#### v0.1.21
+- When initializing an `Alignment` (in the audio tab) not only will the last note be fixed but now also the first note. So wherever we start shifting notes, it will act more comprehensible now.
+
+
 #### v0.1.20
 - The MIDI player of the `mpmToolbox.gui.ProjectPane` has been moved to class `mpmToolbox.gui.MpmToolbox`, so it does not have to be reinitialized when loading a new project. The same has been done with the `mpmToolbox.gui.syncPlayer.SyncPlayer`'s MIDI player. When loading a soundfont, only the latter will change. The MSM tree's MIDI player does play only with piano sounds anyway.
 - Minor bugfix in method `mpmToolbox.gui.MpmToolbox.loadFile()`.

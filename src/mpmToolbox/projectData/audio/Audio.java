@@ -10,6 +10,7 @@ import com.tagtraum.jipes.universal.Mapping;
 import meico.msm.Msm;
 import meico.supplementary.KeyValue;
 import mpmToolbox.projectData.alignment.Alignment;
+import mpmToolbox.projectData.alignment.Note;
 import mpmToolbox.supplementary.Tools;
 import nu.xom.Attribute;
 import nu.xom.Element;
@@ -69,8 +70,9 @@ public class Audio extends meico.audio.Audio {
 
         Element alignmentData = projectAudioData.getFirstChildElement("alignment");
         this.alignment = new Alignment(msm, alignmentData);
-        if (alignmentData == null)      // if we had no alignment data from the project file, an initial alignment was generated with a default tempo that will potentially not fit the audio length
-            this.alignment.scaleOverallTiming(((double) this.getNumberOfSamples() / this.getFrameRate()) * 1000.0);    // scale the initial alignment to the milliseconds length of the audio; so all notes are visible and in a good starting position
+        if (alignmentData == null) {     // if we had no alignment data from the project file, an initial alignment was generated with a default tempo that will potentially not fit the audio length
+            this.initAlignment(msm);
+        }
     }
 
     /**
@@ -106,7 +108,14 @@ public class Audio extends meico.audio.Audio {
      * @param msm the Msm instance to be aligned with this Audio object
      */
     public void initAlignment(Msm msm) {
-        this.alignment = new Alignment(msm, null);
+        if (this.alignment == null)
+            this.alignment = new Alignment(msm, null);
+
+        Note firstNote = this.alignment.getFirstNote();
+        if (firstNote != null) {
+            firstNote.setFixed(true);
+        }
+
         this.alignment.scaleOverallTiming(((double) this.getNumberOfSamples() / this.getFrameRate()) * 1000.0);    // scale the initial alignment to the milliseconds length of the audio; so all notes are visible and in a good starting position
     }
 
