@@ -249,7 +249,7 @@ public class AudioDocumentData extends DocumentData<WebPanel> {
         this.perf2AlignConvert.setToolTip("<html>Convert audio alignment to performance or vice versa.</html>");
         this.perf2AlignConvert.addActionListener(actionEvent -> {
             if (this.getParent().getSyncPlayer().isAudioAlignmentSelected()) {          // if an audio alignment is selected, we create a performance from the current timing data
-                Performance performance = MpmEditingTools.createPerformanceDialog();    // open dialog for performance creation
+                Performance performance = MpmEditingTools.createPerformanceDialog(this.getParent().getMsm());    // open dialog for performance creation
                 if (!this.getParent().getMpm().addPerformance(performance))             // add the performance to the MPM
                     return;                                                             // if performance adding failed, cancel
 

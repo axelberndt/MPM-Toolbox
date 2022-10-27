@@ -520,11 +520,11 @@ public class ArticulationEditor extends EditDialog<ArticulationData> {
         for (Element score : scores) {
             for (Element note : score.getChildElements("note")) {
                 double noteDate = Double.parseDouble(note.getAttributeValue("date"));
-                if (noteDate < date)
+                if (noteDate < this.msmDate)
                     continue;
-                if (noteDate > date)
+                if (noteDate > this.msmDate)
                     break;
-                if ((noteDate == date) && (note.getAttribute("id", "http://www.w3.org/XML/1998/namespace") != null))    // if the note has no ID we cannot refer it
+                if ((noteDate == this.msmDate) && (note.getAttribute("id", "http://www.w3.org/XML/1998/namespace") != null))    // if the note has no ID we cannot refer it
                     this.noteIds.add(note.getAttributeValue("id", "http://www.w3.org/XML/1998/namespace"));
             }
         }
@@ -548,7 +548,7 @@ public class ArticulationEditor extends EditDialog<ArticulationData> {
     }
 
     /**
-     * This method finds the parts that this' map applies to and collects their score elements. Be sure that this.map != null.
+     * This method finds the parts that this map applies to and collects their score elements. Be sure that this.map != null.
      * @return a list of MSM score elements
      */
     private ArrayList<Element> getMsmScores() {

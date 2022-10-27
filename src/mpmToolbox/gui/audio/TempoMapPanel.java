@@ -26,10 +26,10 @@ public class TempoMapPanel extends PianoRollPanel implements ComponentListener, 
     private final Alignment alignment;
     private TempoMap tempoMap = null;
     private final ArrayList<KeyValue<TempoData, Point2D.Double>> tempoData = new ArrayList<>();
-    private double minTempo = Double.MAX_VALUE;                         // used to properly scale the visualization; this gets a meaningful value when a tempomap is read
-    private double maxTempo = 0.0;                                      // used to properly scale the visualization; this gets a meaningful value when a tempomap is read
-    private long leftmostSample;    // just a copy of the eponymous value in the parent to keep track of whether it changed and the tick values have to be computed anew
-    private long rightmostSample;   // just a copy of the eponymous value in the parent to keep track of whether it changed and the tick values have to be computed anew
+    private double minTempo = Double.MAX_VALUE; // used to properly scale the visualization; this gets a meaningful value when a tempomap is read
+    private double maxTempo = 0.0;              // used to properly scale the visualization; this gets a meaningful value when a tempomap is read
+    private long leftmostSample;                // just a copy of the eponymous value in the parent to keep track of whether it changed and the tick values have to be computed anew
+    private long rightmostSample;               // just a copy of the eponymous value in the parent to keep track of whether it changed and the tick values have to be computed anew
 
     /**
      * constructor
@@ -123,7 +123,20 @@ public class TempoMapPanel extends PianoRollPanel implements ComponentListener, 
             }
         }
 
-        PianoRoll pianoRoll = this.retrievePianoRoll(this.parent.getLeftmostTick(), this.parent.getRightmostTick(), this.getWidth(), 128);
+        // scale the piano roll according to the difference between the PPQ value of the MSM and the performance
+        double leftMostTick, rightMostTick;
+        int ppqMsm = this.parent.getParent().getMsm().getPPQ();
+        int ppqPerf = this.parent.getParent().getSyncPlayer().getSelectedPerformance().getPPQ();
+        if (ppqMsm != ppqPerf) {
+            leftMostTick = (this.parent.getLeftmostTick() * ppqMsm) / ppqPerf;
+            rightMostTick = (this.parent.getRightmostTick() * ppqMsm) / ppqPerf;
+        } else {
+            leftMostTick = this.parent.getLeftmostTick();
+            rightMostTick = this.parent.getRightmostTick();
+        }
+
+        // generate and draw image
+        PianoRoll pianoRoll = this.retrievePianoRoll(leftMostTick, rightMostTick, this.getWidth(), 128);
         g2d.drawImage(pianoRoll, 0, this.getHeight(), this.getWidth(), -this.getHeight(), this);
         return true;
     }
@@ -282,11 +295,18 @@ public class TempoMapPanel extends PianoRollPanel implements ComponentListener, 
                 this.maxTempo = tempo;
         }
 
+        // add and subtract some headroom from minTempo and maxTempo, so it does not go to the vertical extremes of the panel
+        if (this.minTempo == this.maxTempo)
+            this.minTempo = this.maxTempo / 2.0;
+        double headroom = (this.maxTempo - this.minTempo) * 0.1;
+        this.minTempo = Math.max(0.0, this.minTempo - headroom);
+        this.maxTempo += headroom;
+
         // give the tempo instructions relative positions in a unity square (date, tempo)
         double lengthTicks = this.alignment.getMillisecondsLength();    // in this particular alignment ticks = milliseconds
         for (KeyValue<TempoData, Point2D.Double> tempoDatum : this.tempoData) {
             double relativeX = tempoDatum.getKey().startDate / lengthTicks;
-            double relativeY = tempoDatum.getKey().bpm / this.maxTempo;
+            double relativeY = (tempoDatum.getKey().bpm - this.minTempo) / (this.maxTempo - this.minTempo);
             tempoDatum.setValue(new Point2D.Double(relativeX, relativeY));
         }
     }
@@ -383,7 +403,7 @@ public class TempoMapPanel extends PianoRollPanel implements ComponentListener, 
         // do the scrolling only in this panel
         double leftmost = this.parent.getLeftmostTick();
         double rightmost = this.parent.getRightmostTick();
-        double tickOffset = ((rightmost - leftmost) * (this.parent.getMouseCursor().getTicksX() - e.getPoint().x)) / this.getWidth();   // this computes how many horizontal pixels the mouse has moved, than scales it by the amount of tick per horizontal pixel so we know how many pixels we want to move the leftmost and rightmost tick index
+        double tickOffset = ((rightmost - leftmost) * (this.parent.getMouseCursor().getTicksX() - e.getPoint().x)) / this.getWidth();   // this computes how many horizontal pixels the mouse has moved, then scales it by the amount of ticks per horizontal pixel, so we know how many pixels we want to move the leftmost and rightmost tick index
 
         this.parent.communicateMousePositionToAllComponents(e);
 

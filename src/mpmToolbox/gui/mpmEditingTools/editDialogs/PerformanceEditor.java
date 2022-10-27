@@ -46,18 +46,30 @@ public class PerformanceEditor extends EditDialog<Performance> {
         timingBasisLabel.setHorizontalAlignment(WebLabel.RIGHT);
         timingBasisLabel.setPadding(Settings.paddingInDialogs);
         this.addToContentPanel(timingBasisLabel, 0, 2, 1, 1, 1.0, 1.0, 0, 0, GridBagConstraints.BOTH);
+        timingBasisLabel.addToolTip("Value should match the MSM's pulsesPerQuarter value.");
 
         this.ppq = new WebSpinner(new SpinnerNumberModel(720, 1, Integer.MAX_VALUE, 1));
         int width = getFontMetrics(this.ppq.getFont()).stringWidth("999.999.999");
         this.ppq.setMinimumWidth(width);
         this.ppq.setMaximumWidth(width);
         this.addToContentPanel(this.ppq, 1, 2, 1, 1, 0.03, 1.0, 5, 5, GridBagConstraints.BOTH);
+        this.ppq.addToolTip("Value should match the MSM's pulsesPerQuarter value.");
 
         WebLabel ppqLabel = new WebLabel("pulses per quarter note");
         ppqLabel.setHorizontalAlignment(WebLabel.LEFT);
         ppqLabel.setPadding(Settings.paddingInDialogs);
         this.addToContentPanel(ppqLabel, 2, 2, 1, 1, 1.0, 1.0, 0, 0, GridBagConstraints.HORIZONTAL);
+        ppqLabel.addToolTip("Value should match the MSM's pulsesPerQuarter value.");
     }
+
+    /**
+     * set the pulses per quarter value
+     * @param ppq
+     */
+    public void setPpq(int ppq) {
+        this.ppq.setValue(ppq);
+    }
+
     /**
      * Open the performance editing dialog.
      * @param performance the performance to be edited or null if a new one should be created

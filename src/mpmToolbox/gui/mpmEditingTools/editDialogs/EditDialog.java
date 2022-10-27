@@ -37,6 +37,7 @@ public abstract class EditDialog<E> extends WebDialog<EditDialog<E>> {
     protected WebTextField id = null;
     protected GenericMap map = null;
     protected GenericStyle style = null;
+    protected double msmDate;     // as the usual date attribute is set on the basis of the performance's PPQ value, this attribute is used to keep the original MSM date
 
 
     /**
@@ -232,6 +233,16 @@ public abstract class EditDialog<E> extends WebDialog<EditDialog<E>> {
         if (this.date != null)
             this.date.setValue(date);
     }
+
+    /**
+     * While this.date holds the date according to the performance's PPQ, this.msmDate holds the date according to the MSM's PPQ.
+     * @param date
+     */
+    public void setMsmDate(double date) {
+        this.msmDate = date;
+    }
+
+
 
     /**
      * This is a prefabricated method to add name.ref input to the GUI.

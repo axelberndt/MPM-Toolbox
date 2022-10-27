@@ -1078,8 +1078,9 @@ public class MpmEditingTools {
      * this method triggers the dialog for performance creation and returns the performance newly created or null (cancel)
      * @return
      */
-    public static Performance createPerformanceDialog() {
+    public static Performance createPerformanceDialog(Msm msm) {
         PerformanceEditor performanceEditor = new PerformanceEditor();              // create performance edit dialog
+        performanceEditor.setPpq(msm.getPPQ());                                     // preset the pulses per quarter value
         return performanceEditor.create();                                          // open it to create a performance
     }
 
@@ -1089,7 +1090,7 @@ public class MpmEditingTools {
      * @param mpmTree
      */
     private static void addPerformance(@NotNull MpmTreeNode mpmNode, @NotNull MpmTree mpmTree) {
-        Performance performance = MpmEditingTools.createPerformanceDialog();                // show the performance edit dialog and get the performance it generates, or null
+        Performance performance = MpmEditingTools.createPerformanceDialog(mpmTree.getProjectPane().getMsm());   // show the performance edit dialog and get the performance it generates, or null
         if (((Mpm) mpmNode.getUserObject()).addPerformance(performance)) {                  // if the performance was successfully added to the MPM
             mpmTree.reloadNode(mpmNode);                                                    // reload the MPM node to see the result
             mpmTree.getProjectPane().getSyncPlayer().addPerformance(performance, false);    // the SyncPlayer must update its performance chooser

@@ -95,7 +95,7 @@ public class AccentuationDefComponent extends WebPanel {
     }
 
     /**
-     *
+     * create the slider panel
      * @return
      */
     private WebPanel makeSliderPanel() {

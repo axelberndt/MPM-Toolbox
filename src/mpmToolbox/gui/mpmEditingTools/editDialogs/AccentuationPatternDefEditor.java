@@ -78,7 +78,7 @@ public class AccentuationPatternDefEditor extends EditDialog<AccentuationPattern
 
         ///////////////////
 
-        WebLabel patterLabel = new WebLabel("Accentuation Pattern");
+        WebLabel patterLabel = new WebLabel("Specify Accentuation Pattern");
         patterLabel.setHorizontalAlignment(WebLabel.LEFT);
         patterLabel.setPadding(Settings.paddingInDialogs, 0, Settings.paddingInDialogs, 0);
         this.addToContentPanel(patterLabel, 0, 2, 4, 1, 1.0, 1.0, 0, 0, GridBagConstraints.BOTH);

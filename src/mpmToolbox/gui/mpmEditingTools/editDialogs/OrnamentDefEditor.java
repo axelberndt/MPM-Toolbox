@@ -1,14 +1,38 @@
 package mpmToolbox.gui.mpmEditingTools.editDialogs;
 
+import com.alee.laf.button.WebButton;
+import com.alee.laf.label.WebLabel;
+import com.alee.laf.panel.WebPanel;
+import com.alee.laf.slider.WebSlider;
+import com.alee.laf.spinner.WebSpinner;
+import com.alee.laf.text.WebTextField;
 import meico.mpm.elements.styles.OrnamentationStyle;
 import meico.mpm.elements.styles.defs.OrnamentDef;
+import mpmToolbox.gui.Settings;
+import mpmToolbox.gui.mpmEditingTools.editDialogs.ornamentDef.DynamicsGradientPanel;
+import mpmToolbox.gui.mpmEditingTools.editDialogs.supplementary.EditDialogToggleButton;
+import mpmToolbox.gui.mpmEditingTools.editDialogs.visualizers.DynamicsGradientVisualizer;
+import mpmToolbox.supplementary.Tools;
+
+import javax.swing.*;
+import javax.swing.border.EmptyBorder;
+import javax.swing.border.LineBorder;
+import java.awt.*;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
+import java.util.Hashtable;
+import java.util.UUID;
 
 /**
  * The ornamentDef editor.
  * @author Axel Berndt
  */
 public class OrnamentDefEditor extends EditDialog<OrnamentDef> {
+    private WebTextField name;
     private final OrnamentationStyle styleDef;
+    private EditDialogToggleButton temporalSpreadButton;
+    private EditDialogToggleButton dynamicsGradientButton;
+    private DynamicsGradientPanel dynamicsGradientPanel;
 
     /**
      * constructor
@@ -24,7 +48,38 @@ public class OrnamentDefEditor extends EditDialog<OrnamentDef> {
      */
     @Override
     public void makeContentPanel() {
+        WebLabel nameLabel = new WebLabel("Ornament Name:");
+        nameLabel.setHorizontalAlignment(WebLabel.RIGHT);
+        nameLabel.setPadding(Settings.paddingInDialogs);
+        this.addToContentPanel(nameLabel, 0, 0, 1, 1, 1.0, 1.0, 0, 0, GridBagConstraints.BOTH);
 
+        this.name = new WebTextField("ornament name");
+        this.name.setHorizontalAlignment(WebTextField.LEFT);
+        this.name.setPadding(Settings.paddingInDialogs);
+        this.addToContentPanel(this.name, 1, 0, 3, 1, 1.0, 1.0, 0, 0, GridBagConstraints.BOTH);
+
+        ///////////////////
+
+        WebLabel transformersLabel = new WebLabel("Specify Ornament by Transformers");
+        transformersLabel.setHorizontalAlignment(WebLabel.LEFT);
+        transformersLabel.setPadding(Settings.paddingInDialogs, 0, Settings.paddingInDialogs, 0);
+        this.addToContentPanel(transformersLabel, 0, 2, 4, 1, 1.0, 1.0, 0, 0, GridBagConstraints.BOTH);
+
+        // temporalSpread
+        WebPanel temporalSpreadPanel = new WebPanel();
+        this.addToContentPanel(temporalSpreadPanel, 1, 3, 4, 1, 1.0, 1.0, 0, 0, GridBagConstraints.BOTH);
+        this.temporalSpreadButton = new EditDialogToggleButton("Temporal Spread:", new JComponent[]{}, false);
+        this.addToContentPanel(this.temporalSpreadButton, 0, 3, 1, 1, 1.0, 1.0, 0, 0, GridBagConstraints.BOTH);
+
+        // dynamicsGradient
+        this.dynamicsGradientPanel = new DynamicsGradientPanel();
+        this.addToContentPanel(dynamicsGradientPanel, 1, 4, 4, 1, 1.0, 1.0, 0, 0, GridBagConstraints.BOTH);
+        this.dynamicsGradientButton = new EditDialogToggleButton("Dynamics Gradient:", new JComponent[]{this.dynamicsGradientPanel}, false);
+        this.addToContentPanel(this.dynamicsGradientButton, 0, 4, 1, 1, 1.0, 1.0, 0, 0, GridBagConstraints.BOTH);
+
+        ///////////////////
+
+        this.addIdInput(5);
     }
 
     /**
@@ -34,6 +89,67 @@ public class OrnamentDefEditor extends EditDialog<OrnamentDef> {
      */
     @Override
     public OrnamentDef edit(OrnamentDef def) {
+        if (def != null) {
+            this.name.setText(def.getName());
+            this.id.setText(def.getId());
+
+            if (def.getTemporalSpread() != null) {
+                this.temporalSpreadButton.setSelected(true);
+                // TODO ...
+            }
+
+            if (def.getDynamicsGradient() != null) {
+                this.dynamicsGradientButton.setSelected(true);
+                this.dynamicsGradientPanel.setId(def.getDynamicsGradient().getId());
+                this.dynamicsGradientPanel.setTransitionFrom(def.getDynamicsGradient().transitionFrom);
+                this.dynamicsGradientPanel.setTransitionTo(def.getDynamicsGradient().transitionTo);
+            }
+        }
+
+        this.name.selectAll();
+
+        this.setVisible(true);      // start the dialog
+
+        // after the dialog closed do the following
+
+        if (!this.isOk())           // if input was canceled
+            return def;             // return the input unchanged
+
+        String id = this.id.getText();
+        if (id.isEmpty())
+            id = null;
+
+        if (def == null)
+            def = OrnamentDef.createOrnamentDef(this.name.getText());
+        else {
+            this.styleDef.removeDef(def.getName());
+            def = OrnamentDef.createOrnamentDef(this.name.getText());
+            this.styleDef.addDef(def);
+        }
+
+        // read and add the ornament transformers to the def
+        if (this.temporalSpreadButton.isSelected()) {
+            OrnamentDef.TemporalSpread temporalSpread = new OrnamentDef.TemporalSpread();
+            // TODO ...
+            def.setTemporalSpread(temporalSpread);
+        } else {
+            def.setTemporalSpread(null);
+        }
+
+        if (this.dynamicsGradientButton.isSelected()) {
+            OrnamentDef.DynamicsGradient dynamicsGradient = new OrnamentDef.DynamicsGradient();
+            dynamicsGradient.transitionFrom = this.dynamicsGradientPanel.getTransitionFrom();
+            dynamicsGradient.transitionTo = this.dynamicsGradientPanel.getTransitionTo();
+            String dgId = this.dynamicsGradientPanel.getId();
+            if ((dgId != null) && !dgId.isEmpty())
+                dynamicsGradient.setId(dgId);
+            def.setDynamicsGradient(dynamicsGradient);
+        } else {
+            def.setDynamicsGradient(null);
+        }
+
+        def.setId(id);
+
         return def;
     }
 }

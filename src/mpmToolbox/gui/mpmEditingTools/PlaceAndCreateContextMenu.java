@@ -276,9 +276,10 @@ public class PlaceAndCreateContextMenu extends WebPopupMenu {
         boolean deleteMapOnCancel = false;  // if there is no map of the desired type in the dated environment and we have to create a new map but cancel the editor dialog, we should remove the map as well; this flag will be set true for this situation
 
         // get the map or create one if there is none of the desired type
-        ArticulationMap map = (ArticulationMap) ((Dated) datedNode.getUserObject()).getMap(Mpm.ARTICULATION_MAP);
+        Dated dated = ((Dated) datedNode.getUserObject());
+        ArticulationMap map = (ArticulationMap) dated.getMap(Mpm.ARTICULATION_MAP);
         if (map == null) {
-            map = (ArticulationMap) ((Dated) datedNode.getUserObject()).addMap(Mpm.ARTICULATION_MAP);
+            map = (ArticulationMap) dated.addMap(Mpm.ARTICULATION_MAP);
             mpmTree.reloadNode(datedNode);  // update the MPM tree display to show the newly created map
             deleteMapOnCancel = true;
         }
@@ -303,7 +304,11 @@ public class PlaceAndCreateContextMenu extends WebPopupMenu {
                 break;
             }
 
-            editor.setDate(Double.parseDouble(Helper.getAttributeValue("date", anchorElement)));
+            double date = Double.parseDouble(Helper.getAttributeValue("date", anchorElement));
+            int ppqMsm = mpmTree.getProjectPane().getMsm().getPPQ();
+            int ppqMpm = datedNode.getPerformance().getPPQ();
+            editor.setDate((date * ppqMpm) / ppqMsm);
+            editor.setMsmDate(date);
         }
 
         ArticulationData articulation = editor.create();
@@ -333,9 +338,13 @@ public class PlaceAndCreateContextMenu extends WebPopupMenu {
         AsynchronyEditor editor = new AsynchronyEditor();   // initialize the editor dialog
 
         // if there is an anchor node, we set its date in the editor dialog
-        if (anchor != null)
-            editor.setDate(Double.parseDouble(Helper.getAttributeValue("date", anchor.getAssociatedElements().get(0))));
-
+        if (anchor != null) {
+            double date = Double.parseDouble(Helper.getAttributeValue("date", anchor.getAssociatedElements().get(0)));
+            int ppqMsm = mpmTree.getProjectPane().getMsm().getPPQ();
+            int ppqMpm = datedNode.getPerformance().getPPQ();
+            editor.setDate((date * ppqMpm) / ppqMsm);
+            editor.setMsmDate(date);
+        }
         AsynchronyEditor.AsynchronyData asynchrony = editor.create();
 
         if (asynchrony == null)
@@ -376,9 +385,13 @@ public class PlaceAndCreateContextMenu extends WebPopupMenu {
 
         DynamicsEditor editor = new DynamicsEditor(map);   // initialize the editor dialog
 
-        if (anchor != null)
-            editor.setDate(Double.parseDouble(Helper.getAttributeValue("date", anchor.getAssociatedElements().get(0))));
-
+        if (anchor != null) {
+            double date = Double.parseDouble(Helper.getAttributeValue("date", anchor.getAssociatedElements().get(0)));
+            int ppqMsm = mpmTree.getProjectPane().getMsm().getPPQ();
+            int ppqMpm = datedNode.getPerformance().getPPQ();
+            editor.setDate((date * ppqMpm) / ppqMsm);
+            editor.setMsmDate(date);
+        }
         DynamicsData dynamics = editor.create();
 
         MpmTreeNode mapNode = datedNode.findChildNode(map, false);
@@ -415,9 +428,13 @@ public class PlaceAndCreateContextMenu extends WebPopupMenu {
 
         AccentuationPatternEditor editor = new AccentuationPatternEditor(map);   // initialize the editor dialog
 
-        if (anchor != null)
-            editor.setDate(Double.parseDouble(Helper.getAttributeValue("date", anchor.getAssociatedElements().get(0))));
-
+        if (anchor != null) {
+            double date = Double.parseDouble(Helper.getAttributeValue("date", anchor.getAssociatedElements().get(0)));
+            int ppqMsm = mpmTree.getProjectPane().getMsm().getPPQ();
+            int ppqMpm = datedNode.getPerformance().getPPQ();
+            editor.setDate((date * ppqMpm) / ppqMsm);
+            editor.setMsmDate(date);
+        }
         MetricalAccentuationData accentuationPattern = editor.create();
 
         MpmTreeNode mapNode = datedNode.findChildNode(map, false);
@@ -454,9 +471,13 @@ public class PlaceAndCreateContextMenu extends WebPopupMenu {
 
         RubatoEditor editor = new RubatoEditor(map);   // initialize the editor dialog
 
-        if (anchor != null)
-            editor.setDate(Double.parseDouble(Helper.getAttributeValue("date", anchor.getAssociatedElements().get(0))));
-
+        if (anchor != null) {
+            double date = Double.parseDouble(Helper.getAttributeValue("date", anchor.getAssociatedElements().get(0)));
+            int ppqMsm = mpmTree.getProjectPane().getMsm().getPPQ();
+            int ppqMpm = datedNode.getPerformance().getPPQ();
+            editor.setDate((date * ppqMpm) / ppqMsm);
+            editor.setMsmDate(date);
+        }
         RubatoData rubato = editor.create();
 
         MpmTreeNode mapNode = datedNode.findChildNode(map, false);
@@ -493,9 +514,13 @@ public class PlaceAndCreateContextMenu extends WebPopupMenu {
 
         TempoEditor editor = new TempoEditor(map);   // initialize the editor dialog
 
-        if (anchor != null)
-            editor.setDate(Double.parseDouble(Helper.getAttributeValue("date", anchor.getAssociatedElements().get(0))));
-
+        if (anchor != null) {
+            double date = Double.parseDouble(Helper.getAttributeValue("date", anchor.getAssociatedElements().get(0)));
+            int ppqMsm = mpmTree.getProjectPane().getMsm().getPPQ();
+            int ppqMpm = datedNode.getPerformance().getPPQ();
+            editor.setDate((date * ppqMpm) / ppqMsm);
+            editor.setMsmDate(date);
+        }
         TempoData tempo = editor.create();
 
         MpmTreeNode mapNode = datedNode.findChildNode(map, false);
@@ -524,9 +549,13 @@ public class PlaceAndCreateContextMenu extends WebPopupMenu {
         DistributionEditor editor = new DistributionEditor();   // initialize the editor dialog
 
         // if there is an anchor node, we set its date in the editor dialog
-        if (anchor != null)
-            editor.setDate(Double.parseDouble(Helper.getAttributeValue("date", anchor.getAssociatedElements().get(0))));
-
+        if (anchor != null) {
+            double date = Double.parseDouble(Helper.getAttributeValue("date", anchor.getAssociatedElements().get(0)));
+            int ppqMsm = mpmTree.getProjectPane().getMsm().getPPQ();
+            int ppqMpm = datedNode.getPerformance().getPPQ();
+            editor.setDate((date * ppqMpm) / ppqMsm);
+            editor.setMsmDate(date);
+        }
         DistributionData distribution = editor.create();
 
         if (distribution == null)
@@ -568,9 +597,13 @@ public class PlaceAndCreateContextMenu extends WebPopupMenu {
 
         StyleSwitchEditor editor = new StyleSwitchEditor(map);   // initialize the editor dialog
 
-        if (anchor != null)
-            editor.setDate(Double.parseDouble(Helper.getAttributeValue("date", anchor.getAssociatedElements().get(0))));
-
+        if (anchor != null) {
+            double date = Double.parseDouble(Helper.getAttributeValue("date", anchor.getAssociatedElements().get(0)));
+            int ppqMsm = mpmTree.getProjectPane().getMsm().getPPQ();
+            int ppqMpm = datedNode.getPerformance().getPPQ();
+            editor.setDate((date * ppqMpm) / ppqMsm);
+            editor.setMsmDate(date);
+        }
         StyleSwitchEditor.StyleSwitchData style = editor.create();
 
         MpmTreeNode mapNode = datedNode.findChildNode(map, false);

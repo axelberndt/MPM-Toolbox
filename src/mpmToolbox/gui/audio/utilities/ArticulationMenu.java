@@ -28,7 +28,9 @@ public class ArticulationMenu extends WebMenu {
 
     /**
      * constructor
-     * @param note
+     * @param note The note is from an Alignment that was computed from the performance as given subsequently! This is important as the note's date will be converted to the MSM PPQ here.
+     * @param performance
+     * @param mpmTree
      */
     public ArticulationMenu(Note note, Performance performance, MpmTree mpmTree) {
         super("Articulate");
@@ -45,17 +47,25 @@ public class ArticulationMenu extends WebMenu {
 
 //        this.setEnabled(true);
 
+        // get the dates of the note according to PPQ in the performance and in MSM
+//        double msmDate = this.note.getDate();
+        int ppqMsm = mpmTree.getProjectPane().getMsm().getPPQ();
+        int ppqMpm = performance.getPPQ();
+//        double mpmPerformanceDate = (msmDate * ppqMpm) / ppqMsm;
+        double mpmPerformanceDate = this.note.getDate();
+        double msmDate = (mpmPerformanceDate * ppqMsm) / ppqMpm;
+
         // submenu to create a global articulation
         WebMenu globalArticulations = (WebMenu) this.add(new WebMenu("Global"));
         GenericStyle style;
         GenericMap globalMap = performance.getGlobal().getDated().getMap(Mpm.ARTICULATION_MAP);
         if (globalMap != null) {
-            style = globalMap.getStyleAt(this.note.getDate(), Mpm.ARTICULATION_STYLE);
+            style = globalMap.getStyleAt(mpmPerformanceDate, Mpm.ARTICULATION_STYLE);
             if (style != null) {
                 for (Object def : style.getAllDefs().keySet()) {
                     String defName = (String) def;
                     globalArticulations.add(defName).addActionListener(actionEvent -> {
-                        Element articulationElement = globalMap.getElement(((ArticulationMap) globalMap).addArticulation(this.note.getDate(), defName, "#" + this.note.getId(), null));
+                        Element articulationElement = globalMap.getElement(((ArticulationMap) globalMap).addArticulation(mpmPerformanceDate, defName, "#" + this.note.getId(), null));
                         MpmTreeNode mapNode = this.mpmTree.findNode(globalMap, false);
                         this.updateMpmTreeAndAlignment(mapNode, articulationElement);
                     });
@@ -67,7 +77,10 @@ public class ArticulationMenu extends WebMenu {
            ArticulationMap map = (ArticulationMap) ((globalMap != null) ? globalMap : this.performance.getGlobal().getDated().addMap(Mpm.ARTICULATION_MAP));
             ArticulationEditor editor = new ArticulationEditor(map, mpmTree.getProjectPane().getMsm());
             editor.setNoteId(this.note.getId());
-            editor.setDate(this.note.getDate());
+
+            editor.setDate(mpmPerformanceDate);
+            editor.setMsmDate(msmDate);
+
             ArticulationData articulation = editor.create();
             if (articulation != null) {
                 Element articulationElement = map.getElement(map.addArticulation(articulation));
@@ -85,12 +98,12 @@ public class ArticulationMenu extends WebMenu {
         Part mpmPart = performance.getPart(partNumber);
         GenericMap localMap = (mpmPart == null) ? null : mpmPart.getDated().getMap(Mpm.ARTICULATION_MAP);
         if (localMap != null) {
-            style = localMap.getStyleAt(this.note.getDate(), Mpm.ARTICULATION_STYLE);
+            style = localMap.getStyleAt(mpmPerformanceDate, Mpm.ARTICULATION_STYLE);
             if (style != null) {
                 for (Object def : style.getAllDefs().keySet()) {
                     String defName = (String) def;
                     localArticulations.add(defName).addActionListener(actionEvent -> {
-                        Element articulationElement = localMap.getElement(((ArticulationMap) localMap).addArticulation(this.note.getDate(), defName, "#" + this.note.getId(), null));
+                        Element articulationElement = localMap.getElement(((ArticulationMap) localMap).addArticulation(mpmPerformanceDate, defName, "#" + this.note.getId(), null));
                         MpmTreeNode mapNode = this.mpmTree.findNode(localMap, false);
                         this.updateMpmTreeAndAlignment(mapNode, articulationElement);
                     });
@@ -107,7 +120,10 @@ public class ArticulationMenu extends WebMenu {
             ArticulationMap map = (ArticulationMap) ((localMap != null) ? localMap : tempPart.getDated().addMap(Mpm.ARTICULATION_MAP));
             ArticulationEditor editor = new ArticulationEditor(map, mpmTree.getProjectPane().getMsm());
             editor.setNoteId(this.note.getId());
-            editor.setDate(this.note.getDate());
+
+            editor.setDate(mpmPerformanceDate);
+            editor.setMsmDate(msmDate);
+
             ArticulationData articulation = editor.create();
             if (articulation != null) {
                 Element articulationElement = map.getElement(map.addArticulation(articulation));
@@ -128,7 +144,7 @@ public class ArticulationMenu extends WebMenu {
             boolean updateAlignment = false;
             if (globalMap != null) {
                 boolean update = false;
-                for (KeyValue<Double, Element> artic : globalMap.getAllElementsAt(this.note.getDate())) {
+                for (KeyValue<Double, Element> artic : globalMap.getAllElementsAt(mpmPerformanceDate)) {
                     Attribute idAtt = artic.getValue().getAttribute("noteid");
                     if ((idAtt != null) && (idAtt.getValue().equals(noteId))) {
                         globalMap.removeElement(artic.getValue());
@@ -142,7 +158,7 @@ public class ArticulationMenu extends WebMenu {
             }
             if (localMap != null) {
                 boolean update = false;
-                for (KeyValue<Double, Element> artic : localMap.getAllElementsAt(this.note.getDate())) {
+                for (KeyValue<Double, Element> artic : localMap.getAllElementsAt(mpmPerformanceDate)) {
                     Attribute idAtt = artic.getValue().getAttribute("noteid");
                     if ((idAtt != null) && (idAtt.getValue().equals(noteId))) {
                         localMap.removeElement(artic.getValue());

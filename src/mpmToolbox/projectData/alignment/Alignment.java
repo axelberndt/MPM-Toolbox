@@ -3,6 +3,7 @@ package mpmToolbox.projectData.alignment;
 import com.alee.api.annotations.NotNull;
 import com.sun.media.sound.InvalidDataException;
 import meico.mei.Helper;
+import meico.mpm.Mpm;
 import meico.mpm.elements.Performance;
 import meico.mpm.elements.maps.ArticulationMap;
 import meico.mpm.elements.maps.AsynchronyMap;
@@ -10,6 +11,7 @@ import meico.mpm.elements.maps.GenericMap;
 import meico.mpm.elements.maps.TempoMap;
 import meico.mpm.elements.maps.data.ArticulationData;
 import meico.msm.Msm;
+import meico.supplementary.KeyValue;
 import nu.xom.*;
 
 import java.util.ArrayList;
@@ -278,13 +280,31 @@ public class Alignment {
 
         this.importMsmPartsToPerformance(performance);
 
-        this.updateTimingTransformation();      // read the positioning of all the fixed notes into the timing transformation list
+        this.updateTimingTransformation();                      // read the positioning of all the fixed notes into the timing transformation list
+
+        int ppqMsm = this.msm.getPPQ();
+        int ppqPerf = performance.getPPQ();
 
         // export the timing into MPM tempo and asynchrony maps and add them to the performance
-        for (GenericMap map : this.exportTiming())
+        for (GenericMap map : this.exportTiming()) {
             performance.getGlobal().getDated().addMap(map);
+            if (ppqPerf != ppqMsm) {                            // convert the dates etc. from MSM PPQ to the performance's PPQ
+                for (KeyValue<Double, Element> e : map.getAllElements()) {
+                    e.setKey((e.getKey() * ppqPerf) / ppqMsm);
+                    e.getValue().addAttribute(new Attribute("date", Double.toString(e.getKey())));
+                }
+            }
+        }
 
-        this.exportArticulation(performance);   // check all notes and correct those with divergent onsets/offsets via articulation
+        ArrayList<ArticulationMap> articulationMaps = this.exportArticulation(performance); // check all notes and correct those with divergent onsets/offsets via articulation
+        if (ppqPerf != ppqMsm) {                                // convert the dates etc. from MSM PPQ to the performance's PPQ
+            for (ArticulationMap map : articulationMaps) {
+                for (KeyValue<Double, Element> e : map.getAllElements()) {
+                    e.setKey((e.getKey() * ppqPerf) / ppqMsm);
+                    e.getValue().addAttribute(new Attribute("date", Double.toString(e.getKey())));
+                }
+            }
+        }
 
         return performance;
     }
@@ -377,8 +397,11 @@ public class Alignment {
      * This method checks the millisecond on- and offsets of all notes in the alignment against their timing
      * in the performance rendering. If correction is needed, it is done via a local articulation.
      * @param performance the performance that will be refined with local articulation maps, if necessary
+     * @return the articulationMaps
      */
-    private void exportArticulation(Performance performance) {
+    private ArrayList<ArticulationMap> exportArticulation(Performance performance) {
+        ArrayList<ArticulationMap> maps = new ArrayList<>();
+
         for (Element part : performance.perform(this.msm).getParts()) {
             Element dated = Helper.getFirstChildElement("dated", part);
             if (dated == null)
@@ -440,8 +463,10 @@ public class Alignment {
             if (!articulationMap.isEmpty()) {
                 meico.mpm.elements.Part perfPart = performance.getPart(alignPart.getNumber());
                 perfPart.getDated().addMap(articulationMap);
+                maps.add(articulationMap);
             }
         }
+        return maps;
     }
 
     /**
