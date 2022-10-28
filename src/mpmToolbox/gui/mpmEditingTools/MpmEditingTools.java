@@ -2069,7 +2069,7 @@ public class MpmEditingTools {
         ArticulationMap map = (ArticulationMap) mapNode.getUserObject();
         Msm msm = mpmTree.getProjectPane().getMsm();
 
-        ArticulationEditor editor = new ArticulationEditor(map, msm);
+        ArticulationEditor editor = new ArticulationEditor(map, msm, mapNode.getPerformance());
         ArticulationData articulation = editor.create();
         if (articulation != null) {
             map.addArticulation(articulation);
@@ -2091,7 +2091,7 @@ public class MpmEditingTools {
         ArticulationData articulation = new ArticulationData(articulationElement);
 
         // create and start editor
-        ArticulationEditor editor = new ArticulationEditor(map, msm);
+        ArticulationEditor editor = new ArticulationEditor(map, msm, articulationNode.getPerformance());
         ArticulationData newArticulation = editor.edit(articulation);
 
         if (articulation == newArticulation)                // no change

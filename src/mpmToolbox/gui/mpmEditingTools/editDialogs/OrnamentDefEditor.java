@@ -1,27 +1,16 @@
 package mpmToolbox.gui.mpmEditingTools.editDialogs;
 
-import com.alee.laf.button.WebButton;
 import com.alee.laf.label.WebLabel;
-import com.alee.laf.panel.WebPanel;
-import com.alee.laf.slider.WebSlider;
-import com.alee.laf.spinner.WebSpinner;
 import com.alee.laf.text.WebTextField;
 import meico.mpm.elements.styles.OrnamentationStyle;
 import meico.mpm.elements.styles.defs.OrnamentDef;
 import mpmToolbox.gui.Settings;
 import mpmToolbox.gui.mpmEditingTools.editDialogs.ornamentDef.DynamicsGradientPanel;
+import mpmToolbox.gui.mpmEditingTools.editDialogs.ornamentDef.TemporalSpreadPanel;
 import mpmToolbox.gui.mpmEditingTools.editDialogs.supplementary.EditDialogToggleButton;
-import mpmToolbox.gui.mpmEditingTools.editDialogs.visualizers.DynamicsGradientVisualizer;
-import mpmToolbox.supplementary.Tools;
 
 import javax.swing.*;
-import javax.swing.border.EmptyBorder;
-import javax.swing.border.LineBorder;
 import java.awt.*;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
-import java.util.Hashtable;
-import java.util.UUID;
 
 /**
  * The ornamentDef editor.
@@ -31,6 +20,7 @@ public class OrnamentDefEditor extends EditDialog<OrnamentDef> {
     private WebTextField name;
     private final OrnamentationStyle styleDef;
     private EditDialogToggleButton temporalSpreadButton;
+    private TemporalSpreadPanel temporalSpreadPanel;
     private EditDialogToggleButton dynamicsGradientButton;
     private DynamicsGradientPanel dynamicsGradientPanel;
 
@@ -66,14 +56,14 @@ public class OrnamentDefEditor extends EditDialog<OrnamentDef> {
         this.addToContentPanel(transformersLabel, 0, 2, 4, 1, 1.0, 1.0, 0, 0, GridBagConstraints.BOTH);
 
         // temporalSpread
-        WebPanel temporalSpreadPanel = new WebPanel();
-        this.addToContentPanel(temporalSpreadPanel, 1, 3, 4, 1, 1.0, 1.0, 0, 0, GridBagConstraints.BOTH);
-        this.temporalSpreadButton = new EditDialogToggleButton("Temporal Spread:", new JComponent[]{}, false);
+        this.temporalSpreadPanel = new TemporalSpreadPanel();
+        this.addToContentPanel(this.temporalSpreadPanel, 1, 3, 4, 1, 1.0, 1.0, 0, 0, GridBagConstraints.BOTH);
+        this.temporalSpreadButton = new EditDialogToggleButton("Temporal Spread:", new JComponent[]{this.temporalSpreadPanel}, false);
         this.addToContentPanel(this.temporalSpreadButton, 0, 3, 1, 1, 1.0, 1.0, 0, 0, GridBagConstraints.BOTH);
 
         // dynamicsGradient
         this.dynamicsGradientPanel = new DynamicsGradientPanel();
-        this.addToContentPanel(dynamicsGradientPanel, 1, 4, 4, 1, 1.0, 1.0, 0, 0, GridBagConstraints.BOTH);
+        this.addToContentPanel(this.dynamicsGradientPanel, 1, 4, 4, 1, 1.0, 1.0, 0, 0, GridBagConstraints.BOTH);
         this.dynamicsGradientButton = new EditDialogToggleButton("Dynamics Gradient:", new JComponent[]{this.dynamicsGradientPanel}, false);
         this.addToContentPanel(this.dynamicsGradientButton, 0, 4, 1, 1, 1.0, 1.0, 0, 0, GridBagConstraints.BOTH);
 
@@ -95,7 +85,12 @@ public class OrnamentDefEditor extends EditDialog<OrnamentDef> {
 
             if (def.getTemporalSpread() != null) {
                 this.temporalSpreadButton.setSelected(true);
-                // TODO ...
+                this.temporalSpreadPanel.setId(def.getTemporalSpread().getId());
+                this.temporalSpreadPanel.setNoteOffShift(def.getTemporalSpread().noteOffShift);
+                this.temporalSpreadPanel.setTimeDomain(def.getTemporalSpread().frameDomain);
+                this.temporalSpreadPanel.setFrameStart(def.getTemporalSpread().frameStart);
+                this.temporalSpreadPanel.setFrameLength(def.getTemporalSpread().getFrameLength());
+                this.temporalSpreadPanel.setIntensity(def.getTemporalSpread().intensity);
             }
 
             if (def.getDynamicsGradient() != null) {
@@ -128,15 +123,22 @@ public class OrnamentDefEditor extends EditDialog<OrnamentDef> {
         }
 
         // read and add the ornament transformers to the def
-        if (this.temporalSpreadButton.isSelected()) {
+        if (this.temporalSpreadButton.isSelected()) {           // create the temporalSpread element
             OrnamentDef.TemporalSpread temporalSpread = new OrnamentDef.TemporalSpread();
-            // TODO ...
+            temporalSpread.frameStart = this.temporalSpreadPanel.getFrameStart();
+            temporalSpread.setFrameLength(this.temporalSpreadPanel.getFrameLength());
+            temporalSpread.frameDomain = this.temporalSpreadPanel.getTimeDomain();
+            temporalSpread.intensity = this.temporalSpreadPanel.getIntensity();
+            temporalSpread.noteOffShift = this.temporalSpreadPanel.getNoteOffShift();
+            String tsId = this.temporalSpreadPanel.getId();
+            if ((tsId != null) && !tsId.isEmpty())
+                temporalSpread.setId(tsId);
             def.setTemporalSpread(temporalSpread);
         } else {
             def.setTemporalSpread(null);
         }
 
-        if (this.dynamicsGradientButton.isSelected()) {
+        if (this.dynamicsGradientButton.isSelected()) {         // create the dynamicsGradient element
             OrnamentDef.DynamicsGradient dynamicsGradient = new OrnamentDef.DynamicsGradient();
             dynamicsGradient.transitionFrom = this.dynamicsGradientPanel.getTransitionFrom();
             dynamicsGradient.transitionTo = this.dynamicsGradientPanel.getTransitionTo();

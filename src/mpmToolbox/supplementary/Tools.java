@@ -176,6 +176,56 @@ public class Tools {
     }
 
     /**
+     * make the color brighter
+     * @param color
+     * @param factor [0.0, 1.0]
+     * @return
+     */
+    public static Color brighter(Color color, double factor) {
+        if (factor <= 0.0)
+            return color;
+
+        if (factor >= 1.0)
+            return Color.WHITE;
+
+        int red = color.getRed();
+        red += (255 - red) * factor;
+
+        int green = color.getGreen();
+        green += (255 - green) * factor;
+
+        int blue = color.getBlue();
+        blue += (255 - blue) * factor;
+
+        return new Color(red, green, blue, color.getAlpha());
+    }
+
+    /**
+     * make the color darker
+     * @param color
+     * @param factor [0.0, 1.0]
+     * @return
+     */
+    public static Color darker(Color color, double factor) {
+        if (factor <= 0.0)
+            return color;
+
+        if (factor >= 1.0)
+            return Color.BLACK;
+
+        int red = color.getRed();
+        red -= red * factor;
+
+        int green = color.getGreen();
+        green -= green * factor;
+
+        int blue = color.getBlue();
+        blue -= blue * factor;
+
+        return new Color(red, green, blue, color.getAlpha());
+    }
+
+    /**
      * round a double value to the given number of decimal points
      * @param value
      * @param decimalPoints

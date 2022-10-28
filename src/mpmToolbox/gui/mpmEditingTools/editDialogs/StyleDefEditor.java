@@ -86,6 +86,7 @@ public class StyleDefEditor<E extends GenericStyle> extends EditDialog<E> {
                 case Mpm.TEMPO_STYLE:
                     return (E) TempoStyle.createTempoStyle(this.name.getText(), id);
                 case Mpm.ORNAMENTATION_STYLE:
+                    return (E) OrnamentationStyle.createOrnamentationStyle(this.name.getText(), id);
                 default:
                     return (E) GenericStyle.createGenericStyle(this.name.getText(), id);
             }

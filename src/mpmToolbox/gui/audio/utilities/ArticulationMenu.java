@@ -75,11 +75,10 @@ public class ArticulationMenu extends WebMenu {
         // Edit Articulation Dialog
         globalArticulations.add("New Articulation").addActionListener(actionEvent -> {
            ArticulationMap map = (ArticulationMap) ((globalMap != null) ? globalMap : this.performance.getGlobal().getDated().addMap(Mpm.ARTICULATION_MAP));
-            ArticulationEditor editor = new ArticulationEditor(map, mpmTree.getProjectPane().getMsm());
+            ArticulationEditor editor = new ArticulationEditor(map, mpmTree.getProjectPane().getMsm(), this.performance);
             editor.setNoteId(this.note.getId());
 
             editor.setDate(mpmPerformanceDate);
-            editor.setMsmDate(msmDate);
 
             ArticulationData articulation = editor.create();
             if (articulation != null) {
@@ -118,11 +117,10 @@ public class ArticulationMenu extends WebMenu {
                 this.performance.addPart(tempPart);
             }
             ArticulationMap map = (ArticulationMap) ((localMap != null) ? localMap : tempPart.getDated().addMap(Mpm.ARTICULATION_MAP));
-            ArticulationEditor editor = new ArticulationEditor(map, mpmTree.getProjectPane().getMsm());
+            ArticulationEditor editor = new ArticulationEditor(map, mpmTree.getProjectPane().getMsm(), this.performance);
             editor.setNoteId(this.note.getId());
 
             editor.setDate(mpmPerformanceDate);
-            editor.setMsmDate(msmDate);
 
             ArticulationData articulation = editor.create();
             if (articulation != null) {

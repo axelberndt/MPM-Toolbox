@@ -9,6 +9,7 @@ import com.alee.laf.spinner.WebSpinner;
 import com.alee.laf.text.WebTextField;
 import meico.mei.Helper;
 import meico.mpm.Mpm;
+import meico.mpm.elements.Performance;
 import meico.mpm.elements.maps.ArticulationMap;
 import meico.mpm.elements.maps.data.ArticulationData;
 import meico.msm.Msm;
@@ -30,6 +31,7 @@ import java.util.ArrayList;
  */
 public class ArticulationEditor extends EditDialog<ArticulationData> {
     private Msm msm;
+    private Performance performance;
 
     private WebTextField noteId;
     private WebSplitButton noteIdChooser;
@@ -76,9 +78,10 @@ public class ArticulationEditor extends EditDialog<ArticulationData> {
      * @param map the map that gets or holds the articulation element
      * @param msm the MSM to which the performance applies, so we can access noteIds
      */
-    public ArticulationEditor(ArticulationMap map, Msm msm) {
+    public ArticulationEditor(ArticulationMap map, Msm msm, Performance performance) {
         super("Edit Articulation", map);
         this.msm = msm;
+        this.performance = performance;
     }
 
     /**
@@ -97,6 +100,7 @@ public class ArticulationEditor extends EditDialog<ArticulationData> {
         this.addDateInput(0);
         this.date.addChangeListener(changeEvent -> {
             this.fullNameRefUpdate(Mpm.ARTICULATION_STYLE);
+            this.updateMsmDate();
             this.fillNoteIdChooser();
             this.checkNoteId();
         });
@@ -426,6 +430,7 @@ public class ArticulationEditor extends EditDialog<ArticulationData> {
             this.id.setText(input.xmlId);
         }
 
+        this.updateMsmDate();
         this.fullNameRefUpdate(Mpm.ARTICULATION_STYLE);
         this.fillNoteIdChooser();
 
@@ -495,6 +500,17 @@ public class ArticulationEditor extends EditDialog<ArticulationData> {
     }
 
     /**
+     * make sure that the correct value is in the editor's msmDate, so the noteIDs list is filled correctly
+     */
+    private void updateMsmDate() {
+        double date = Tools.round((double) this.date.getValue(), 10);
+        if (this.performance.getPPQ() != this.msm.getPPQ())
+            this.setMsmDate((date * this.msm.getPPQ()) / this.performance.getPPQ());
+        else
+            this.setMsmDate(date);
+    }
+
+    /**
      * Match the value of noteId with the available noteIds at the current date and color the text accordingly.
      */
     private void checkNoteId() {
@@ -514,7 +530,7 @@ public class ArticulationEditor extends EditDialog<ArticulationData> {
         if (scores.isEmpty())
             return;
 
-        double date = Tools.round((double) this.date.getValue(), 10);
+//        double date = Tools.round((double) this.date.getValue(), 10);
         this.noteIds.clear();
 
         for (Element score : scores) {

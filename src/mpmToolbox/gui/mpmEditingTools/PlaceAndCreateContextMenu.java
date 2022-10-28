@@ -285,7 +285,7 @@ public class PlaceAndCreateContextMenu extends WebPopupMenu {
         }
 
         Msm msm = mpmTree.getProjectPane().getMsm();
-        ArticulationEditor editor = new ArticulationEditor(map, msm);   // initialize the editor dialog
+        ArticulationEditor editor = new ArticulationEditor(map, msm, datedNode.getPerformance());   // initialize the editor dialog
 //        double date = (anchor != null) ? Double.parseDouble(Helper.getAttributeValue("date", anchor.getAssociatedElements().get(0))) : 0.0;
 
         // if there is an anchor node, we set its date in the editor dialog
@@ -308,7 +308,6 @@ public class PlaceAndCreateContextMenu extends WebPopupMenu {
             int ppqMsm = mpmTree.getProjectPane().getMsm().getPPQ();
             int ppqMpm = datedNode.getPerformance().getPPQ();
             editor.setDate((date * ppqMpm) / ppqMsm);
-            editor.setMsmDate(date);
         }
 
         ArticulationData articulation = editor.create();
