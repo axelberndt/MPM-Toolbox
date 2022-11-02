@@ -340,7 +340,16 @@ public class Alignment {
         AsynchronyMap asynchronyMap = AsynchronyMap.createAsynchronyMap();
 
         int ppq = this.msm.getPPQ();
-        Element timeSignatureMap = this.msm.getGlobal().getFirstChildElement("dated").getFirstChildElement("timeSignatureMap");
+
+        Element timeSignatureMap = this.msm.getGlobal().getFirstChildElement("dated").getFirstChildElement("timeSignatureMap"); // get the global timeSignatureMap
+        if (timeSignatureMap == null) {                                                     // if we found no global timeSignatureMap
+            Elements parts = this.msm.getParts();                                           // take the first timeSignatureMap to be found in a part
+            for (int p = 0; p < parts.size(); ++p) {
+                timeSignatureMap = parts.get(p).getFirstChildElement("dated").getFirstChildElement("timeSignatureMap");
+                if (timeSignatureMap != null)
+                    break;
+            }
+        }
 
         // for each segment of the timing transformation we have a double array with values {startDate, endDate, toStartDate, toEndDate} to be transformed to tempo instructions
         double prevMsEndDate = 0.0;                                                         // this is to keep track of the toEndDate of the previous segment when processing the next
@@ -371,7 +380,7 @@ public class Alignment {
             }
 
             // process the regular timing transformation segments
-            Element timeSig = Msm.getElementBeforeAt(transform[0], timeSignatureMap);       // get the time signature at the transform's position
+            Element timeSig = (timeSignatureMap == null) ? null : Msm.getElementBeforeAt(transform[0], timeSignatureMap);       // get the time signature at the transform's position
             int denominator = (timeSig == null) ? 4 : Integer.parseInt(Helper.getAttributeValue("denominator", timeSig));
             double beatLength = 1.0 / denominator;
             double beatLengthTicks = ppq * 4 * beatLength;
