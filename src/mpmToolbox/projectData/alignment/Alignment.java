@@ -155,6 +155,28 @@ public class Alignment {
     }
 
     /**
+     * Get the note sequence according to their notation, i.e. in order of their tick date.
+     * This gives an accumulated sequence with all notes of all parts.
+     * @return accumulated sequence with all notes of all parts.
+     */
+    public ArrayList<Note> getNoteSequenceInTicks() {
+        ArrayList<Note> seq = new ArrayList<>();
+
+        for (Part part : this.parts) {                      // for each part
+            int i = 0;
+            for (Note n : part.getNoteSequenceInTicks()) {  // get its note sequence in ticks and do the following for each note
+                double date = n.getDate();                  // get the tick date of the note
+                for (; i < seq.size(); ++i)                 // find the first element in seq with a tick date greater than that of the note to be inserted
+                    if (date < seq.get(i).getDate())
+                        break;
+                seq.add(i, n);
+            }
+        }
+
+        return seq;
+    }
+
+    /**
      * generate a project data XML element
      * @return
      */

@@ -170,7 +170,7 @@ public class Note {
      * read the tick date of the note
      * @return
      */
-    public Double getDate() {
+    public double getDate() {
         return this.tickDate;
     }
 

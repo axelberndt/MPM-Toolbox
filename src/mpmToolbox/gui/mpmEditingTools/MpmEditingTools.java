@@ -2112,8 +2112,9 @@ public class MpmEditingTools {
      */
     private static void addOrnament(MpmTreeNode mapNode, MpmTree mpmTree) {
         OrnamentationMap map = (OrnamentationMap) mapNode.getUserObject();
+        Msm msm = mpmTree.getProjectPane().getMsm();
 
-        OrnamentEditor editor = new OrnamentEditor(map);
+        OrnamentEditor editor = new OrnamentEditor(map, msm, mapNode.getPerformance());
         OrnamentData ornament = editor.create();
         if (ornament != null) {
             map.addOrnament(ornament);
@@ -2129,12 +2130,13 @@ public class MpmEditingTools {
      */
     private static void editOrnament(MpmTreeNode ornamentNode, MpmTree mpmTree) {
         OrnamentationMap map = (OrnamentationMap) ornamentNode.getParent().getUserObject();
+        Msm msm = mpmTree.getProjectPane().getMsm();
 
         Element ornamentElement = (Element) ornamentNode.getUserObject();
         OrnamentData ornament = new OrnamentData(ornamentElement);
 
         // create and start editor
-        OrnamentEditor editor = new OrnamentEditor(map);
+        OrnamentEditor editor = new OrnamentEditor(map, msm, ornamentNode.getPerformance());
         OrnamentData newOrnament = editor.edit(ornament);
 
         if (ornament == newOrnament)                                // no change

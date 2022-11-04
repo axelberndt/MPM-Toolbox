@@ -34,7 +34,7 @@ public class TemporalSpreadPanel extends WebPanel {
     private final WebLabel frameStartLabel = new WebLabel("Frame Start");
     private final WebSpinner frameStart = new WebSpinner(new SpinnerNumberModel(0.0, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY, 1.0));
     private final WebLabel frameLengthLabel = new WebLabel("Frame Length");
-    private final WebSpinner frameLength = new WebSpinner(new SpinnerNumberModel(0.0, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY, 1.0));
+    private final WebSpinner frameLength = new WebSpinner(new SpinnerNumberModel(0.0, 0.0, Double.POSITIVE_INFINITY, 1.0));
     private final WebLabel intensityLabel = new WebLabel("Intensity");
     private final WebSpinner intensity = new WebSpinner(new SpinnerNumberModel(0.0, 0.0, Double.POSITIVE_INFINITY, 0.1));
 

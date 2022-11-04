@@ -197,6 +197,14 @@ public class Part {
     }
 
     /**
+     * get the note sequence according to their notation, i.e. in order of their tick date
+     * @return
+     */
+    public ArrayList<Note> getNoteSequenceInTicks() {
+        return this.tickSequence;
+    }
+
+    /**
      * checks if the part contains the given note
      * @param note
      * @return

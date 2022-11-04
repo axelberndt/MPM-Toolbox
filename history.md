@@ -8,6 +8,7 @@
 - Added default initialization to the Timing Basis field in the Performance Editor dialog, so it matches the `pulsesPerQuarter` value of the MSM.
 - Added `ornamentDef` editor dialog and functionality.
 - Added abstract class `mpmToolbox.projectData.alignment.AbstractAlignmentComputation`.
+- Added method `getNoteSequenceInTicks()` to classes `mpmToolbox.projectData.alignment.Alignment` and `mpmToolbox.projectData.alignment.Part`.
 
 #### v0.1.20
 - The MIDI player of the `mpmToolbox.gui.ProjectPane` has been moved to class `mpmToolbox.gui.MpmToolbox`, so it does not have to be reinitialized when loading a new project. The same has been done with the `mpmToolbox.gui.syncPlayer.SyncPlayer`'s MIDI player. When loading a soundfont, only the latter will change. The MSM tree's MIDI player does play only with piano sounds anyway.
