@@ -22,11 +22,11 @@ import java.util.UUID;
  * This class represents the temporalSpread sub-panel in the editor dialog of ornamentsDef.
  * @author Axel Berndt
  */
-public class TemporalSpreadPanel extends WebPanel {
+public class TemporalSpreadComponent extends WebPanel {
     private final int SPINNER_WIDTH = this.getFontMetrics(this.getFont()).stringWidth("999.999.99");
     private final WebTextField id = new WebTextField();
     private final WebButton generateId = new WebButton("Generate");
-    private final WebLabel idLabel= new WebLabel("ID");
+    private final WebLabel idLabel= new WebLabel("ID (optional)");
     private final WebLabel noteOffShiftLabel = new WebLabel("NoteOff Shift");
     private final WebComboBox noteOffShift = new WebComboBox(new NoteOffShiftItem[]{new NoteOffShiftItem(OrnamentDef.TemporalSpread.NoteOffShift.False), new NoteOffShiftItem(OrnamentDef.TemporalSpread.NoteOffShift.True), new NoteOffShiftItem(OrnamentDef.TemporalSpread.NoteOffShift.Monophonic)}, 0);   // "false" is selected by default
     private final WebLabel timeDomainLabel = new WebLabel("Time Domain");
@@ -36,13 +36,13 @@ public class TemporalSpreadPanel extends WebPanel {
     private final WebLabel frameLengthLabel = new WebLabel("Frame Length");
     private final WebSpinner frameLength = new WebSpinner(new SpinnerNumberModel(0.0, 0.0, Double.POSITIVE_INFINITY, 1.0));
     private final WebLabel intensityLabel = new WebLabel("Intensity");
-    private final WebSpinner intensity = new WebSpinner(new SpinnerNumberModel(0.0, 0.0, Double.POSITIVE_INFINITY, 0.1));
+    private final WebSpinner intensity = new WebSpinner(new SpinnerNumberModel(1.0, 0.0, Double.POSITIVE_INFINITY, 0.1));
 
 
     /**
      * constructor
      */
-    public TemporalSpreadPanel() {
+    public TemporalSpreadComponent() {
         super();
         GridBagLayout layout = new GridBagLayout();
         this.setLayout(layout);

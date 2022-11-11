@@ -181,7 +181,7 @@ public class MsmTree extends WebExTree<MsmTreeNode> implements /*MouseListener,*
             return;
 
         MsmTreeNode n = this.getNodeForPath(path);
-        n.play(this.projectPane.getParentMpmToolbox().getMidiPlayerMsmTree());                                 // the node might be a node and should play its note via MIDI when selected
+        n.play(this.projectPane.getParentMpmToolbox().getMidiPlayerForSingleNotes());                                 // the node might be a node and should play its note via MIDI when selected
 
         // trigger the score frame's score panel to repaint, so it highlights the selected note, if visible
         if ((n.getType() == MsmTreeNode.XmlNodeType.note)                                               // if the currently selected node is of type note

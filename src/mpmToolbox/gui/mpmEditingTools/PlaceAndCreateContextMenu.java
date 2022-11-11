@@ -94,6 +94,10 @@ public class PlaceAndCreateContextMenu extends WebPopupMenu {
                 metricalAccentuationItem.addActionListener(actionEvent -> PlaceAndCreateContextMenu.addAccentuationPattern(datedNode, mpmTree, anchor, this.mousePosInImage, this));
                 datedMenu.getKey().add(metricalAccentuationItem);
 
+                WebMenuItem ornamentItem = new WebMenuItem("Ornament");
+                ornamentItem.addActionListener(actionEvent -> PlaceAndCreateContextMenu.addOrnament(datedNode, mpmTree, anchor, this.mousePosInImage, this));
+                datedMenu.getKey().add(ornamentItem);
+
                 WebMenuItem rubatoItem = new WebMenuItem("Rubato");
                 rubatoItem.addActionListener(actionEvent -> PlaceAndCreateContextMenu.addRubato(datedNode, mpmTree, anchor, this.mousePosInImage, this));
                 datedMenu.getKey().add(rubatoItem);
@@ -445,6 +449,49 @@ public class PlaceAndCreateContextMenu extends WebPopupMenu {
             MpmEditingTools.updateAudioAlignment(datedNode.getPerformance(), mpmTree.getProjectPane(), false);    // update the alignment visualization in the audio frame
         } else if (deleteMapOnCancel) {                                                 // cancel
             ((Dated) datedNode.getUserObject()).removeMap(Mpm.METRICAL_ACCENTUATION_MAP);
+            mpmTree.reloadNode(mapNode.getParent());
+        }
+    }
+
+    /**
+     * create an ornament instruction on the score
+     * @param datedNode
+     * @param mpmTree
+     * @param anchor
+     * @param position position of mouse click on the score page
+     * @param self a reference to the popup menu
+     */
+    private static void addOrnament(MpmTreeNode datedNode, MpmTree mpmTree, ScoreNode anchor, Point position, PlaceAndCreateContextMenu self) {
+        boolean deleteMapOnCancel = false;  // if there is no map of the desired type in the dated environment and we have to create a new map but cancel the editor dialog, we should remove the map as well; this flag will be set true for this situation
+
+        // get the map or create one if there is none of the desired type
+        OrnamentationMap map = (OrnamentationMap) ((Dated) datedNode.getUserObject()).getMap(Mpm.ORNAMENTATION_MAP);
+        if (map == null) {
+            map = (OrnamentationMap) ((Dated) datedNode.getUserObject()).addMap(Mpm.ORNAMENTATION_MAP);
+            mpmTree.reloadNode(datedNode);  // update the MPM tree display to show the newly created map
+            deleteMapOnCancel = true;
+        }
+
+        OrnamentEditor editor = new OrnamentEditor(map, mpmTree.getProjectPane(), datedNode.getPerformance());   // initialize the editor dialog
+
+        if (anchor != null) {
+            double date = Double.parseDouble(Helper.getAttributeValue("date", anchor.getAssociatedElements().get(0)));
+            int ppqMsm = mpmTree.getProjectPane().getMsm().getPPQ();
+            int ppqMpm = datedNode.getPerformance().getPPQ();
+            editor.setDate((date * ppqMpm) / ppqMsm);
+            editor.setMsmDate(date);
+        }
+        OrnamentData ornament = editor.create();
+
+        MpmTreeNode mapNode = datedNode.findChildNode(map, false);
+        if (ornament != null) {
+            int index = map.addOrnament(ornament);                                      // add the instruction to the map
+            mpmTree.reloadNode(mapNode);                                                // update the MPM tree
+            MpmTreeNode newNode = mapNode.findChildNode(map.getElement(index), false);  // get a handle to the MPM tree node of the instruction just added
+            PlaceAndCreateContextMenu.repositionPerformanceInstruction(newNode, position, self, false);  // set its position on the score page
+            MpmEditingTools.updateAudioAlignment(datedNode.getPerformance(), mpmTree.getProjectPane(), false);    // update the alignment visualization in the audio frame
+        } else if (deleteMapOnCancel) {                                                 // cancel
+            ((Dated) datedNode.getUserObject()).removeMap(Mpm.ORNAMENTATION_MAP);
             mpmTree.reloadNode(mapNode.getParent());
         }
     }

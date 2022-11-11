@@ -5,6 +5,7 @@ mpmToolbox.gui.audio.utilities
 mpmToolbox.gui.mpmEditingTools
 mpmToolbox.gui.mpmEditingTools.editDialogs
 mpmToolbox.gui.mpmEditingTools.editDialogs.accentuationPatternDef
+mpmToolbox.gui.mpmEditingTools.editDialogs.ornament
 mpmToolbox.gui.mpmEditingTools.editDialogs.ornamentDef
 mpmToolbox.gui.mpmEditingTools.editDialogs.supplementary
 mpmToolbox.gui.mpmEditingTools.editDialogs.visualizers

@@ -5,8 +5,8 @@ import com.alee.laf.text.WebTextField;
 import meico.mpm.elements.styles.OrnamentationStyle;
 import meico.mpm.elements.styles.defs.OrnamentDef;
 import mpmToolbox.gui.Settings;
-import mpmToolbox.gui.mpmEditingTools.editDialogs.ornamentDef.DynamicsGradientPanel;
-import mpmToolbox.gui.mpmEditingTools.editDialogs.ornamentDef.TemporalSpreadPanel;
+import mpmToolbox.gui.mpmEditingTools.editDialogs.ornamentDef.DynamicsGradientComponent;
+import mpmToolbox.gui.mpmEditingTools.editDialogs.ornamentDef.TemporalSpreadComponent;
 import mpmToolbox.gui.mpmEditingTools.editDialogs.supplementary.EditDialogToggleButton;
 
 import javax.swing.*;
@@ -20,9 +20,9 @@ public class OrnamentDefEditor extends EditDialog<OrnamentDef> {
     private WebTextField name;
     private final OrnamentationStyle styleDef;
     private EditDialogToggleButton temporalSpreadButton;
-    private TemporalSpreadPanel temporalSpreadPanel;
+    private TemporalSpreadComponent temporalSpreadPanel;
     private EditDialogToggleButton dynamicsGradientButton;
-    private DynamicsGradientPanel dynamicsGradientPanel;
+    private DynamicsGradientComponent dynamicsGradientPanel;
 
     /**
      * constructor
@@ -56,13 +56,13 @@ public class OrnamentDefEditor extends EditDialog<OrnamentDef> {
         this.addToContentPanel(transformersLabel, 0, 2, 4, 1, 1.0, 1.0, 0, 0, GridBagConstraints.BOTH);
 
         // temporalSpread
-        this.temporalSpreadPanel = new TemporalSpreadPanel();
+        this.temporalSpreadPanel = new TemporalSpreadComponent();
         this.addToContentPanel(this.temporalSpreadPanel, 1, 3, 4, 1, 1.0, 1.0, 0, 0, GridBagConstraints.BOTH);
         this.temporalSpreadButton = new EditDialogToggleButton("Temporal Spread:", new JComponent[]{this.temporalSpreadPanel}, false);
         this.addToContentPanel(this.temporalSpreadButton, 0, 3, 1, 1, 1.0, 1.0, 0, 0, GridBagConstraints.BOTH);
 
         // dynamicsGradient
-        this.dynamicsGradientPanel = new DynamicsGradientPanel();
+        this.dynamicsGradientPanel = new DynamicsGradientComponent();
         this.addToContentPanel(this.dynamicsGradientPanel, 1, 4, 4, 1, 1.0, 1.0, 0, 0, GridBagConstraints.BOTH);
         this.dynamicsGradientButton = new EditDialogToggleButton("Dynamics Gradient:", new JComponent[]{this.dynamicsGradientPanel}, false);
         this.addToContentPanel(this.dynamicsGradientButton, 0, 4, 1, 1, 1.0, 1.0, 0, 0, GridBagConstraints.BOTH);

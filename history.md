@@ -6,9 +6,9 @@
 - Alignment to Performance conversion now also works when no global time signature data is available. Method `mpmToolbox.projectData.alignment.Alignment.exportTiming()` will then use the first `timeSignatureMap` to be found in an MSM `part` and, if still nothing was found, assume beat length of a quarter note as fallback.
 - Added handling/conversions of dates if the pulses per quarter value of the MSM and the performance differ. This addresses issue [14](https://github.com/axelberndt/MPM-Toolbox/issues/14). There are, however, still some "nitpicks" left with the TempoMap panel.
 - Added default initialization to the Timing Basis field in the Performance Editor dialog, so it matches the `pulsesPerQuarter` value of the MSM.
-- Added `ornamentDef` editor dialog and functionality.
 - Added abstract class `mpmToolbox.projectData.alignment.AbstractAlignmentComputation`.
 - Added method `getNoteSequenceInTicks()` to classes `mpmToolbox.projectData.alignment.Alignment` and `mpmToolbox.projectData.alignment.Part`.
+- Complete integration of ornamentation which was added to MPM with v2.1.3.
 
 #### v0.1.20
 - The MIDI player of the `mpmToolbox.gui.ProjectPane` has been moved to class `mpmToolbox.gui.MpmToolbox`, so it does not have to be reinitialized when loading a new project. The same has been done with the `mpmToolbox.gui.syncPlayer.SyncPlayer`'s MIDI player. When loading a soundfont, only the latter will change. The MSM tree's MIDI player does play only with piano sounds anyway.

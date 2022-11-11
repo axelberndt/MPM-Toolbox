@@ -23,7 +23,7 @@ import java.util.UUID;
  * This class represents the dynamicsGradient sub-panel in the editor dialog of ornamentsDef.
  * @author Axel Berndt
  */
-public class DynamicsGradientPanel extends WebPanel {
+public class DynamicsGradientComponent extends WebPanel {
     private final int SPINNER_WIDTH = this.getFontMetrics(this.getFont()).stringWidth("999.999.99");
     private final WebSlider transitionFromSlider;
     private final WebSpinner transitionFromSpinner;
@@ -31,12 +31,12 @@ public class DynamicsGradientPanel extends WebPanel {
     private final WebSpinner transitionToSpinner;
     private final WebTextField id = new WebTextField();
     private final WebButton generateId = new WebButton("Generate");
-    private final WebLabel idLabel= new WebLabel("ID");
+    private final WebLabel idLabel= new WebLabel("ID (optional)");
 
     /**
      * constructor
      */
-    public DynamicsGradientPanel() {
+    public DynamicsGradientComponent() {
         super();
         GridBagLayout layout = new GridBagLayout();
         this.setLayout(layout);

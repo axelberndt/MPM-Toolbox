@@ -44,7 +44,7 @@ public class MpmToolbox {
     private WebFrame frame = null;              // the main window frame
     private ProjectPane projectPane = null;     // the gui and project data that is worked on here
 
-    private MidiPlayer midiPlayerMsmTree = null;        // this midi player plays notes when clicked/selected in the MSM tree
+    private MidiPlayer midiPlayerForSingleNotes = null; // this midi player plays notes, e.g. when clicked/selected in the MSM tree or in the ornament dialog
 
     private MidiPlayer midiPlayerSyncPlayer = null;     // this is the midi player that the syncPlayer uses for playback
     private WebPanel welcomeMessage;
@@ -118,7 +118,7 @@ public class MpmToolbox {
      */
     private boolean initMidiPlayers() {
         try {
-            this.midiPlayerMsmTree = new MidiPlayer();
+            this.midiPlayerForSingleNotes = new MidiPlayer();
             this.midiPlayerSyncPlayer = new MidiPlayer();
         } catch (MidiUnavailableException e) {
             e.printStackTrace();
@@ -133,7 +133,7 @@ public class MpmToolbox {
             this.midiPlayerSyncPlayer.loadDefaultSoundbank();
         }
 
-        this.midiPlayerMsmTree.loadDefaultSoundbank();  // the MSM tree's MIDI player keeps the default soundfont
+        this.midiPlayerForSingleNotes.loadDefaultSoundbank();  // the MSM tree's MIDI player keeps the default soundfont
 
         return true;
     }
@@ -142,8 +142,8 @@ public class MpmToolbox {
      * a getter for the MIDI player of the MSM tree
      * @return
      */
-    public MidiPlayer getMidiPlayerMsmTree() {
-        return this.midiPlayerMsmTree;
+    public MidiPlayer getMidiPlayerForSingleNotes() {
+        return this.midiPlayerForSingleNotes;
     }
 
     /**
@@ -209,12 +209,12 @@ public class MpmToolbox {
         WebMenuItem exportWav = new WebMenuItem("Wave", 'w');
         exportWav.addActionListener(actionEvent -> {
             Midi midi = this.getProjectPane().getSyncPlayer().getPerformanceRendering();
-            midi.exportAudio(this.getMidiPlayerMsmTree().getSoundbank()).writeAudio();
+            midi.exportAudio(this.getMidiPlayerForSingleNotes().getSoundbank()).writeAudio();
         });
         WebMenuItem exportMp3 = new WebMenuItem("MP3", '3');
         exportMp3.addActionListener(actionEvent -> {
             Midi midi = this.getProjectPane().getSyncPlayer().getPerformanceRendering();
-            midi.exportAudio(this.getMidiPlayerMsmTree().getSoundbank()).writeMp3();
+            midi.exportAudio(this.getMidiPlayerForSingleNotes().getSoundbank()).writeMp3();
         });
         this.export = new WebMenu("Export Performance Rendering as");
         this.export.setMnemonic('e');
