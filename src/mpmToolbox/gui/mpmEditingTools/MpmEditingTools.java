@@ -355,6 +355,12 @@ public class MpmEditingTools {
                 editStyleDef.addActionListener(actionEvent -> MpmEditingTools.editStyleDef(self, mpmTree));
                 menu.add(editStyleDef);
 
+                // copy style
+                // TODO ...
+
+                // move style
+                // TODO ...
+
                 // delete styleDef
                 WebMenuItem deleteStyleDef = new WebMenuItem("Delete");
                 deleteStyleDef.addActionListener(actionEvent -> MpmEditingTools.deleteStyleDef(self, mpmTree));
@@ -548,6 +554,12 @@ public class MpmEditingTools {
                 WebMenuItem editDef = new WebMenuItem("Edit");
                 editDef.addActionListener(actionEvent -> MpmEditingTools.editDef(self, mpmTree));
                 menu.add(editDef);
+
+                // copy def
+                // TODO ...
+
+                // move def
+                // TODO
 
                 // delete def
                 WebMenuItem deleteDef = new WebMenuItem("Delete");
