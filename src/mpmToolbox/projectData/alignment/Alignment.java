@@ -524,6 +524,24 @@ public class Alignment {
     }
 
     /**
+     * This method sets the complete alignment at once
+     * @param fixedNotesToNewDates a list of key-value pairs, each specifying the note and where to place it in the milliseconds domain
+     */
+    public void repositionAll(ArrayList<KeyValue<Note, Double>> fixedNotesToNewDates) {
+        this.reset();       // this unfixes all notes
+
+        for (KeyValue<Note, Double> noteDatePair : fixedNotesToNewDates) {
+            double toMilliseconds = Math.max(0.0, noteDatePair.getValue());     // we do not allow shifting the note to negative timing
+            Note note = noteDatePair.getKey();
+            note.setFixed(true);
+            note.setMillisecondsDateEnd(note.getInitialMillisecondsDateEnd() - note.getInitialMillisecondsDate() + toMilliseconds);
+            note.setMillisecondsDate(toMilliseconds);
+        }
+
+        this.updateTiming();
+    }
+
+    /**
      * resets the values of each note in each part to their initial values;
      * the invoking application should also run recomputePianoRoll() to update the piano roll image
      */

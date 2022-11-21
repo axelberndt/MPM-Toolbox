@@ -1,6 +1,10 @@
 ### Version History
 
 
+#### v0.1.22
+- Added method `mpmToolbox.projectData.alignment.Alignment.repositionAll()`.
+
+
 #### v0.1.21
 - When initializing an `Alignment` (in the audio tab) not only will the last note be fixed but now also the first note. So wherever we start shifting notes, it will act more comprehensible now.
 - Alignment to Performance conversion now also works when no global time signature data is available. Method `mpmToolbox.projectData.alignment.Alignment.exportTiming()` will then use the first `timeSignatureMap` to be found in an MSM `part` and, if still nothing was found, assume beat length of a quarter note as fallback.
