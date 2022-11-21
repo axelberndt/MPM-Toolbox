@@ -493,6 +493,10 @@ public class MpmToolbox {
      * the closing procedure for an open project
      */
     public void closeProject() {
+        this.getMidiPlayerSyncPlayer().stop();
+        this.getProjectPane().getSyncPlayer().getAudioPlayer().stop();
+        this.getProjectPane().getSyncPlayer().getMidiPlayer().stop();
+
         this.frame.remove(this.projectPane);    // remove the ProjectPane component from this frame
         this.projectPane = null;
         this.frame.add(this.welcomeMessage);
