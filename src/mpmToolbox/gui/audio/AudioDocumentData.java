@@ -59,7 +59,7 @@ public class AudioDocumentData extends DocumentData<WebPanel> {
     private final WebComboBox partChooser = new WebComboBox();      // with this combobox the user can select whether all musical part or only on individual part should be displayed in the piano roll overlay
     private final WebButton resetButton = new WebButton("Reset");   // this button re-initializes the alignment
     private final WebButton perf2AlignConvert = new WebButton("<html>Alignment &rarr; Performance</html>");         // this is the button to convert a performance to an alignment and vice versa
-    private final WebComboBox alignmentComputationChooser = new WebComboBox(new AbstractAlignmentComputation[]{});  // choose the alignment computation algorithm that computes the audio-to-score/MSM alignment, fill the array with new instances of all alignment algorithm classes available
+    private final WebComboBox alignmentComputationChooser = new WebComboBox(new AbstractAlignmentComputation[]{new PlaceholderAligner()});  // choose the alignment computation algorithm that computes the audio-to-score/MSM alignment, fill the array with new instances of all alignment algorithm classes available
     private final WebButton triggerAlignmentComputation = new WebButton("\u25B6");      //  ▶ "\u25B6"
 
     /**
