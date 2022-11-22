@@ -45,6 +45,7 @@ public class PlaceholderAligner extends AbstractAlignmentComputation {
         if (audio != this.previousAudio) {
             // do your preprocessing
         }
+        this.previousAudio = audio;     // store for later reference
 
         // compute the alignment and update audio.getAlignment() accordingly
 
