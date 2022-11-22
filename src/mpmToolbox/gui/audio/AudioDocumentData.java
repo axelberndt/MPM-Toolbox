@@ -6,6 +6,8 @@ import com.alee.extended.split.WebMultiSplitPane;
 import com.alee.extended.tab.DocumentData;
 import com.alee.laf.button.WebButton;
 import com.alee.laf.combobox.WebComboBox;
+import com.alee.laf.grouping.GroupPane;
+import com.alee.laf.label.WebLabel;
 import com.alee.laf.panel.WebPanel;
 import meico.mei.Helper;
 import meico.mpm.elements.Performance;
@@ -13,7 +15,9 @@ import meico.supplementary.KeyValue;
 import mpmToolbox.gui.ProjectPane;
 import mpmToolbox.gui.Settings;
 import mpmToolbox.gui.audio.utilities.CursorPositions;
+import mpmToolbox.projectData.alignment.AbstractAlignmentComputation;
 import mpmToolbox.projectData.alignment.Note;
+import mpmToolbox.projectData.alignment.PlaceholderAligner;
 import mpmToolbox.projectData.audio.SpectrogramImage;
 import mpmToolbox.projectData.audio.WaveformImage;
 import mpmToolbox.gui.mpmEditingTools.MpmEditingTools;
@@ -27,6 +31,7 @@ import java.awt.*;
 import java.awt.event.ItemEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
+import java.util.Collections;
 
 /**
  * A custom DocumentData object for the audio analysis component.
@@ -53,7 +58,9 @@ public class AudioDocumentData extends DocumentData<WebPanel> {
 
     private final WebComboBox partChooser = new WebComboBox();      // with this combobox the user can select whether all musical part or only on individual part should be displayed in the piano roll overlay
     private final WebButton resetButton = new WebButton("Reset");   // this button re-initializes the alignment
-    private final WebButton perf2AlignConvert = new WebButton("<html>Alignment &rarr; Performance</html>"); // this is the button to convert a performance to an alignment and vice versa
+    private final WebButton perf2AlignConvert = new WebButton("<html>Alignment &rarr; Performance</html>");         // this is the button to convert a performance to an alignment and vice versa
+    private final WebComboBox alignmentComputationChooser = new WebComboBox(new AbstractAlignmentComputation[]{});  // choose the alignment computation algorithm that computes the audio-to-score/MSM alignment, fill the array with new instances of all alignment algorithm classes available
+    private final WebButton triggerAlignmentComputation = new WebButton("\u25B6");      //  ▶ "\u25B6"
 
     /**
      * constructor
@@ -67,6 +74,7 @@ public class AudioDocumentData extends DocumentData<WebPanel> {
 
         this.makePartChooser();
         this.makeResetButton();
+        this.makeAlignmentButtons();
         this.makePerf2AlignButton();
 
         this.waveform = new WaveformPanel(this);
@@ -226,7 +234,7 @@ public class AudioDocumentData extends DocumentData<WebPanel> {
      */
     private void makeResetButton() {
         this.resetButton.setPadding(Settings.paddingInDialogs);
-        this.resetButton.setToolTip("Re-initialize the piano roll.");
+        this.resetButton.setToolTip("Re-initialize the piano roll-to-audio alignment.");
         this.resetButton.addActionListener(actionEvent -> {
             this.alignment.reset();
 
@@ -236,6 +244,24 @@ public class AudioDocumentData extends DocumentData<WebPanel> {
                 audio.initAlignment(this.getParent().getMsm());
             }
 
+            this.alignment.recomputePianoRoll();
+            this.repaintAllComponents();
+        });
+    }
+
+    /**
+     * define the controls for the automatic alignment computation
+     */
+    private void makeAlignmentButtons() {
+        this.alignmentComputationChooser.setPadding(Settings.paddingInDialogs);
+        this.alignmentComputationChooser.setToolTip("Select the algorithm to automatically align the piano roll to the audio.");
+
+        this.triggerAlignmentComputation.setPadding(Settings.paddingInDialogs);
+        this.triggerAlignmentComputation.setToolTip("Trigger automatic alignment computation of the piano roll to the audio with the selected alignment algorithm.");
+        this.triggerAlignmentComputation.addActionListener(actionEvent -> {
+            if (this.alignmentComputationChooser.getSelectedItem() == null)     // should not be the case, just to make save code
+                return;
+            ((AbstractAlignmentComputation) this.alignmentComputationChooser.getSelectedItem()).openDialog(this.getAudio());
             this.alignment.recomputePianoRoll();
             this.repaintAllComponents();
         });
@@ -274,6 +300,9 @@ public class AudioDocumentData extends DocumentData<WebPanel> {
 //        this.partChooser.setEnabled(enable);
         this.resetButton.setEnabled(enable);
 
+        this.alignmentComputationChooser.setEnabled(enable);
+        this.triggerAlignmentComputation.setEnabled(enable);
+
         this.perf2AlignConvert.setEnabled(enable);
         this.perf2AlignConvert.setText((this.getParent().getSyncPlayer().getSelectedPerformance() == null) ? "<html>Alignment &rarr; Performance</html>" : "<html>Performance &rarr; Alignment</html>");
     }
@@ -306,10 +335,11 @@ public class AudioDocumentData extends DocumentData<WebPanel> {
         // the panel  with the buttons
         WebPanel buttonPanel = new WebPanel(new GridBagLayout());
         GridBagLayout buttonLayout = (GridBagLayout) buttonPanel.getLayout();
-        Tools.addComponentToGridBagLayout(buttonPanel, buttonLayout, this.partChooser, 0, 1, 1, 1, 1.0, 0.0, 0, 0, GridBagConstraints.NONE, GridBagConstraints.CENTER);
-        Tools.addComponentToGridBagLayout(buttonPanel, buttonLayout, this.resetButton, 1, 1, 1, 1, 1.0, 0.0, 0, 0, GridBagConstraints.NONE, GridBagConstraints.CENTER);
-        Tools.addComponentToGridBagLayout(buttonPanel, buttonLayout, this.perf2AlignConvert, 2, 1, 1, 1, 1.0, 0.0, 0, 0, GridBagConstraints.NONE, GridBagConstraints.CENTER);
-        Tools.addComponentToGridBagLayout(this.audioPanel, gridBagLayout, buttonPanel, 0, 1, 1, 1, 1.0, 0.0, 0, 0, GridBagConstraints.NONE, GridBagConstraints.CENTER);
+        Tools.addComponentToGridBagLayout(buttonPanel, buttonLayout, this.partChooser, 0, 1, 1, 1, 1.0, 0.0, 0, 0, GridBagConstraints.VERTICAL, GridBagConstraints.CENTER);
+        Tools.addComponentToGridBagLayout(buttonPanel, buttonLayout, this.resetButton, 1, 1, 1, 1, 1.0, 0.0, 0, 0, GridBagConstraints.VERTICAL, GridBagConstraints.CENTER);
+        Tools.addComponentToGridBagLayout(buttonPanel,buttonLayout, new GroupPane(GroupPane.CENTER, this.alignmentComputationChooser, this.triggerAlignmentComputation), 2, 1, 1, 1, 1.0, 0.0, 0, 0, GridBagConstraints.VERTICAL, GridBagConstraints.CENTER);
+        Tools.addComponentToGridBagLayout(buttonPanel, buttonLayout, this.perf2AlignConvert, 3, 1, 1, 1, 1.0, 0.0, 0, 0, GridBagConstraints.VERTICAL, GridBagConstraints.CENTER);
+        Tools.addComponentToGridBagLayout(this.audioPanel, gridBagLayout, buttonPanel, 0, 1, 1, 1, 1.0, 0.0, 0, 0, GridBagConstraints.VERTICAL, GridBagConstraints.CENTER);
     }
 
     /**

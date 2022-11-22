@@ -106,7 +106,7 @@ public abstract class EditDialog<E> extends WebDialog<EditDialog<E>> {
      * This method must be implemented to create the real editing UI. Consider that the content panel's layout manager is of type GridBagLayout.
      */
     public abstract void makeContentPanel(); //{
-//        WebLabel placeholder = new WebLabel("This is a placeholder. You have to overwrite method makeContentPanel()!");
+//        WebLabel placeholder = new WebLabel("This is a placeholder. You have to implement method makeContentPanel()!");
 //        placeholder.setHorizontalAlignment(WebLabel.RIGHT);
 //        placeholder.setPadding(Settings.paddingInDialogs);
 //        this.addToContentPanel(placeholder, 0, 0, 1, 1, 1.0, 1.0, 0, 0, GridBagConstraints.BOTH);
