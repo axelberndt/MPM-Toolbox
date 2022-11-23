@@ -234,7 +234,7 @@ public class AudioDocumentData extends DocumentData<WebPanel> {
      */
     private void makeResetButton() {
         this.resetButton.setPadding(Settings.paddingInDialogs);
-        this.resetButton.setToolTip("Re-initialize the piano roll-to-audio alignment.");
+        this.resetButton.setToolTip("<html><center>Re-initialize the piano roll-to-audio alignment.<br>Only active if \"Alignment to currently chosen audio\" is selected in the SyncPlayer.</center></html>");
         this.resetButton.addActionListener(actionEvent -> {
             this.alignment.reset();
 
@@ -254,10 +254,10 @@ public class AudioDocumentData extends DocumentData<WebPanel> {
      */
     private void makeAlignmentButtons() {
         this.alignmentComputationChooser.setPadding(Settings.paddingInDialogs);
-        this.alignmentComputationChooser.setToolTip("Select the algorithm to automatically align the piano roll to the audio.");
+        this.alignmentComputationChooser.setToolTip("<html><center>Select the algorithm to automatically align the piano roll to the audio.<br>Only active if \"Alignment to currently chosen audio\" is selected in the SyncPlayer.</center></html>");
 
         this.triggerAlignmentComputation.setPadding(Settings.paddingInDialogs);
-        this.triggerAlignmentComputation.setToolTip("Trigger automatic alignment computation of the piano roll to the audio with the selected alignment algorithm.");
+        this.triggerAlignmentComputation.setToolTip("<html><center>Trigger automatic alignment computation of the piano roll to the audio with the selected alignment algorithm.<br>Only active if \"Alignment to currently chosen audio\" is selected in the SyncPlayer.</center></html>");
         this.triggerAlignmentComputation.addActionListener(actionEvent -> {
             if (this.alignmentComputationChooser.getSelectedItem() == null)     // should not be the case, just to make save code
                 return;
@@ -295,7 +295,7 @@ public class AudioDocumentData extends DocumentData<WebPanel> {
      * this enables or disables the part chooser and other controls according to whether there is a performance selected in the syncPlayer
      */
     public void updateAudioTools() {
-        boolean enable = (this.getAudio() != null) && (this.alignment != null);
+        boolean enable = (this.getAudio() != null) && this.getParent().getSyncPlayer().isAudioAlignmentSelected();   // if an audio and its alignment are selected
 
 //        this.partChooser.setEnabled(enable);
         this.resetButton.setEnabled(enable);
@@ -303,7 +303,7 @@ public class AudioDocumentData extends DocumentData<WebPanel> {
         this.alignmentComputationChooser.setEnabled(enable);
         this.triggerAlignmentComputation.setEnabled(enable);
 
-        this.perf2AlignConvert.setEnabled(enable);
+        this.perf2AlignConvert.setEnabled(this.alignment != null);      // activate this if any alignment/performance is selected
         this.perf2AlignConvert.setText((this.getParent().getSyncPlayer().getSelectedPerformance() == null) ? "<html>Alignment &rarr; Performance</html>" : "<html>Performance &rarr; Alignment</html>");
     }
 
