@@ -18,7 +18,8 @@ import java.awt.event.KeyEvent;
  * It also extends WebDialog, so a dialog window can be opened that gives access to all
  * parameters. The dialog also contains the Run button to trigger the execution via method compute().
  * If the class is used without the dialog, the execution can be triggered directly by invoking compute().
- *
+ * Once a new class is defined and ready for use, add an instance of it to
+ * AudioDocumentData's alignmentComputationChooser list. This registers it in the GUI.
  * @author Axel Berndt
  */
 public abstract class AbstractAlignmentComputation extends WebDialog<AbstractAlignmentComputation> {

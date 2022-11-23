@@ -7,7 +7,9 @@ import mpmToolbox.projectData.audio.Audio;
 import java.awt.*;
 
 /**
- * This is an illustration on how to use AbstractAlignmentComputation.
+ * This is an illustration of how to use AbstractAlignmentComputation.
+ * Once a new class is defined and ready for use, add an instance of it to
+ * AudioDocumentData's alignmentComputationChooser list. This registers it in the GUI.
  * @author Axel Berndt
  */
 public class PlaceholderAligner extends AbstractAlignmentComputation {
