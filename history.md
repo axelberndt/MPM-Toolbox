@@ -4,7 +4,8 @@
 #### v0.1.22
 - Added method `mpmToolbox.projectData.alignment.Alignment.repositionAll()`.
 - Enhancement to method `mpmToolbox.gui.MpmToolbox.closeProject()`, when the project is closed or a new project is loaded while playback is running, the playback will now stop properly.
-- Enhanced class `mpmToolbox.projectData.alignment.AbstractAlignmentComputation` and updated class `mpmToolbox.gui.audio.AudioDocumentData` accordingly. The latter has two additional buttons to select an alignment algorithm and execute it. Also class `mpmToolbox.projectData.alignment.PlaceholderAligner` has been added to illustrate the usage of the abstract class.
+- Enhanced class `mpmToolbox.projectData.alignment.AbstractAlignmentComputation` and updated class `mpmToolbox.gui.audio.AudioDocumentData` accordingly. The latter has two additional buttons to select an alignment algorithm and execute it. 
+  - Also class `mpmToolbox.projectData.alignment.PlaceholderAligner` has been added to illustrate the usage of the abstract class. This is basically a tutorial for anyone who wishes to integrate a new alignment method into MPM Toolbox.
 
 
 #### v0.1.21

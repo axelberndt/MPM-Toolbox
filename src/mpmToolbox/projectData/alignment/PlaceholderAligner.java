@@ -1,10 +1,12 @@
 package mpmToolbox.projectData.alignment;
 
 import com.alee.laf.label.WebLabel;
+import meico.supplementary.KeyValue;
 import mpmToolbox.gui.Settings;
 import mpmToolbox.projectData.audio.Audio;
 
 import java.awt.*;
+import java.util.ArrayList;
 
 /**
  * This is an illustration of how to use AbstractAlignmentComputation.
@@ -38,18 +40,30 @@ public class PlaceholderAligner extends AbstractAlignmentComputation {
     }
 
     /**
-     *
+     * Compute the alignment. This is method where all the work is done.
      * @param audio the audio object whose alignment you wish to compute
      * @return the input audio object with altered alignment
      */
     @Override
     public Audio compute(Audio audio) {
-        if (audio != this.previousAudio) {
+        // Maybe we have some class variables that hold preprocessing data for the audio. We do not need to do the preprocessing again if it is the same audio as last time. The following if block checks, if that is the case.
+        if (audio != this.previousAudio) {  // we have to process new audio data, preprocessing is necessary
             this.previousAudio = audio;     // store for later reference
             // do your preprocessing
         }
 
-        // compute the alignment and update audio.getAlignment() accordingly
+        // Compute the alignment and update audio.getAlignment() as follows.
+        // Your alignment algorithm should have computed a milliseconds timestamp for some notes in the alignment.
+        // You do not need to have timestamps for all notes. Instead, once you set the timestamp for some notes, the others in-between will be linearly interpolated by method repositionAll().
+        // The timestamped notes should be provided as a list of (Note, Double) pairs such as the following.
+        ArrayList<KeyValue<Note, Double>> repositionTheseNotes = new ArrayList<>();
+        // The following loop is just a placeholder for your code that generates more meaningful (note, Double) pairs.
+        for (Note note : audio.getAlignment().getNoteSequenceInTicks()) {                       // for each note that gets a timestamp ... here I take every note; you will probably have a subset of this
+            KeyValue<Note, Double> entry = new KeyValue<>(note, note.getMillisecondsDate());    // instead of note.getMillisecondsDate() you should state your milliseconds timestamp for the note here
+            repositionTheseNotes.add(entry);                                                    // add it to the list; no need to list them in any special order
+        }
+
+        audio.getAlignment().repositionAll(repositionTheseNotes);  // This updates the audio`s alignment. The time position of notes that are not in the list will be linearly interpolated while keeping their rhythmic property.
 
         return audio;
     }
