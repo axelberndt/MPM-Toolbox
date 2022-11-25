@@ -56,16 +56,22 @@ public class PlaybackRunnable implements Runnable {
             this.midi = null;
         else {
             Performance selectedPerformance = ((PerformanceChooserItem) this.syncPlayer.performanceChooser.getSelectedItem()).getValue();
-            if (selectedPerformance != null) {                                  // a performance is selected
+
+            if (selectedPerformance != null)                                    // a performance is selected
                 this.midi = this.syncPlayer.parent.getMsm().exportExpressiveMidi(selectedPerformance, true);
-                this.midi.addOffset(millisecMidiOffset);                        // in expressive MIDI a tick is equal to a millisecond, so we can just add the milliseconds offset to the MIDI tick timing
-            }
-            else if ((this.syncPlayer.performanceChooser.getSelectedItem() == this.syncPlayer.alignmentPerformance) && (selectedAudio != null)) { // audio alignment is selected
+            else if ((this.syncPlayer.performanceChooser.getSelectedItem() == this.syncPlayer.alignmentPerformance) && (selectedAudio != null))   // audio alignment is selected
                 this.midi = selectedAudio.getAlignment().getExpressiveMsm().exportExpressiveMidi();
-                this.midi.addOffset(millisecMidiOffset);                        // in expressive MIDI a tick is equal to a millisecond, so we can just add the milliseconds offset to the MIDI tick timing
-            }
             else                                                                // no performance selected
                 this.midi = null;
+
+            if (this.midi != null) {
+                try {
+                    this.syncPlayer.getMidiPlayer().getSequencer().setSequence(this.midi.getSequence());    // load the midi sequence into the midi player
+                    this.midi.addOffset(millisecMidiOffset);                    // in expressive MIDI a tick is equal to a millisecond, so we can just add the milliseconds offset to the MIDI tick timing
+                } catch (InvalidMidiDataException e) {
+                    throw new RuntimeException(e);
+                }
+            }
         }
 
         this.midiIsLonger = (this.audio == null) || ((this.midi != null) && (this.midi.getMicrosecondLength() > (this.audio.getMicrosecondLength() - this.microsecAudioOffset)));
@@ -89,18 +95,24 @@ public class PlaybackRunnable implements Runnable {
      * start those players that have data
      */
     private void startPlayers() {
-        if ((this.midi != null) && (this.relativeMidiPlaybackPosition < 1.0)) {
-            try {
-                this.syncPlayer.getMidiPlayer().play(this.midi, this.relativeMidiPlaybackPosition);   // start MIDI playback at the slider position
-            } catch (InvalidMidiDataException e) {
-                e.printStackTrace();
-            }
+        boolean playMidi = false;
+        boolean playAudio = false;
+
+        if ((this.midi != null) && (this.relativeMidiPlaybackPosition < 1.0)) {     // prepare the MIDI player
+            long startDate = (long)((double) this.midi.getSequence().getTickLength() * this.relativeMidiPlaybackPosition);
+            this.syncPlayer.getMidiPlayer().setTickPosition(startDate);
+            playMidi = true;
         }
 
-        if ((this.audio != null) && (this.audioPlaybackPosition < this.syncPlayer.getAudioPlayer().getMicrosecondLength())) {
+        if ((this.audio != null) && (this.audioPlaybackPosition < this.syncPlayer.getAudioPlayer().getMicrosecondLength())) {   // prepare the audio player
             this.syncPlayer.getAudioPlayer().setMicrosecondPosition(this.audioPlaybackPosition);
-            this.syncPlayer.getAudioPlayer().play();
+            playAudio = true;
         }
+
+        if (playMidi)
+            this.syncPlayer.getMidiPlayer().play();
+        if (playAudio)
+            this.syncPlayer.getAudioPlayer().play();
     }
 
     /**
@@ -130,12 +142,13 @@ public class PlaybackRunnable implements Runnable {
         }
 
         if (this.midi != null) {
-            try {
-                this.syncPlayer.getMidiPlayer().play(this.midi, this.relativeMidiPlaybackPosition);
-            } catch (InvalidMidiDataException e) {
-                e.printStackTrace();
-            }
+            long startDate = (long)((double) this.midi.getSequence().getTickLength() * this.relativeMidiPlaybackPosition);
+            this.syncPlayer.getMidiPlayer().setTickPosition(startDate);
+            this.syncPlayer.getMidiPlayer().play();
         }
+
+        if (this.audio != null)
+            this.syncPlayer.getAudioPlayer().play();
     }
 
     /**
