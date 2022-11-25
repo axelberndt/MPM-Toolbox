@@ -95,24 +95,19 @@ public class PlaybackRunnable implements Runnable {
      * start those players that have data
      */
     private void startPlayers() {
-        boolean playMidi = false;
         boolean playAudio = false;
-
-        if ((this.midi != null) && (this.relativeMidiPlaybackPosition < 1.0)) {     // prepare the MIDI player
-            long startDate = (long)((double) this.midi.getSequence().getTickLength() * this.relativeMidiPlaybackPosition);
-            this.syncPlayer.getMidiPlayer().setTickPosition(startDate);
-            playMidi = true;
-        }
-
         if ((this.audio != null) && (this.audioPlaybackPosition < this.syncPlayer.getAudioPlayer().getMicrosecondLength())) {   // prepare the audio player
             this.syncPlayer.getAudioPlayer().setMicrosecondPosition(this.audioPlaybackPosition);
             playAudio = true;
         }
 
-        if (playMidi)
-            this.syncPlayer.getMidiPlayer().play();
+        if ((this.midi != null) && (this.relativeMidiPlaybackPosition < 1.0)) {     // prepare and start the MIDI player
+            long startDate = (long)((double) this.midi.getSequence().getTickLength() * this.relativeMidiPlaybackPosition);
+            this.syncPlayer.getMidiPlayer().play(startDate);                        // start MIDI player
+        }
+
         if (playAudio)
-            this.syncPlayer.getAudioPlayer().play();
+            this.syncPlayer.getAudioPlayer().play();                                // start audio player
     }
 
     /**
@@ -138,13 +133,11 @@ public class PlaybackRunnable implements Runnable {
             this.syncPlayer.getAudioPlayer().pause();
             this.syncPlayer.getAudioPlayer().setAudioData(this.audio);
             this.syncPlayer.getAudioPlayer().setMicrosecondPosition(this.audioPlaybackPosition);
-            this.syncPlayer.getAudioPlayer().play();
         }
 
         if (this.midi != null) {
             long startDate = (long)((double) this.midi.getSequence().getTickLength() * this.relativeMidiPlaybackPosition);
-            this.syncPlayer.getMidiPlayer().setTickPosition(startDate);
-            this.syncPlayer.getMidiPlayer().play();
+            this.syncPlayer.getMidiPlayer().play(startDate);
         }
 
         if (this.audio != null)
