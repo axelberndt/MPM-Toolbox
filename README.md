@@ -5,8 +5,8 @@
 [![LGPL v3](https://img.shields.io/github/license/cemfi/meico.svg)](https://github.com/cemfi/meico/blob/master/LICENSE)
 ![Java compatibility](https://img.shields.io/badge/Java-1.8--10-blue)
 
-Author: [Axel Berndt](https://github.com/axelberndt) <br>
-[Center of Music and Film Informatics](http://www.cemfi.de/), Detmold
+Author: [Axel Berndt](https://github.com/axelberndt) ([Center of Music and Film Informatics](http://www.cemfi.de/), Detmold) <br>
+Contributor: Vladimir Viro ([Peachnote](https://www.peachnote.de/))
 
 MPM Toolbox is the official graphical editor and analysis tool for the [Music Performance Markup](https://github.com/axelberndt/MPM) format. It is under active development. More information and documentation will follow.
 
@@ -20,6 +20,9 @@ MPM Toolbox makes use of the following third party libraries:
 - [Apache PDFBox](https://pdfbox.apache.org/) v2.0.23 by Apache, Apache License v2.0.
 - [Apache Commons Logging](http://commons.apache.org/proper/commons-logging/) v1.2 by Apache, Apache License v2.0.
 - [Apache FontBox](https://pdfbox.apache.org/) v2.0.23 by Apache, Apache License v2.0.
+- [Basic Pitch](https://github.com/spotify/basic-pitch) by Spotify, Apache License v2.0.
+- [ONNX](https://github.com/onnx/onnx), Apache License v2.0.
+- [SQLite JDBC Driver](https://github.com/xerial/sqlite-jdbc) by Taro L. Saito, Apache License v2.0.
 - [meico](https://github.com/cemfi/meico) by Axel Berndt, GNU GPL version 3.0.
 
 We publish MPM Toolbox under GNU GPL version 3.0. MPM Toolbox's development is part of a project that was funded by the [Fritz Thyssen Foundation](https://www.fritz-thyssen-stiftung.de/en/) (2019-2023). If you integrate MPM Toolbox or parts of it with your project make sure that you do not conflict with any of the above licenses.

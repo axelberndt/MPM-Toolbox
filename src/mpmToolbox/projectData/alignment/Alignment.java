@@ -3,7 +3,6 @@ package mpmToolbox.projectData.alignment;
 import com.alee.api.annotations.NotNull;
 import com.sun.media.sound.InvalidDataException;
 import meico.mei.Helper;
-import meico.mpm.Mpm;
 import meico.mpm.elements.Performance;
 import meico.mpm.elements.maps.ArticulationMap;
 import meico.mpm.elements.maps.AsynchronyMap;
@@ -12,9 +11,12 @@ import meico.mpm.elements.maps.TempoMap;
 import meico.mpm.elements.maps.data.ArticulationData;
 import meico.msm.Msm;
 import meico.supplementary.KeyValue;
-import nu.xom.*;
+import nu.xom.Attribute;
+import nu.xom.Element;
+import nu.xom.Elements;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -527,7 +529,7 @@ public class Alignment {
      * This method sets the complete alignment at once
      * @param fixedNotesToNewDates a list of key-value pairs, each specifying the note and where to place it in the milliseconds domain
      */
-    public void repositionAll(ArrayList<KeyValue<Note, Double>> fixedNotesToNewDates) {
+    public void repositionAll(List<KeyValue<Note, Double>> fixedNotesToNewDates) {
         this.reset();       // this unfixes all notes
 
         for (KeyValue<Note, Double> noteDatePair : fixedNotesToNewDates) {

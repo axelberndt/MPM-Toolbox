@@ -12,6 +12,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 
 /**
  * Abstract class for implementation of audio-to-symbolic music alignment algorithms.
@@ -40,6 +42,15 @@ public abstract class AbstractAlignmentComputation extends WebDialog<AbstractAli
         this.setResizable(Settings.debug);
         this.setModal(true);
         this.initKeyboardShortcuts();
+        this.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
+
+        // close procedure when clicking on X
+        this.addWindowListener(new WindowAdapter() {
+            public void windowClosing(WindowEvent e) {
+                run = false;
+                dispose();
+            }
+        });
 
         // content panel
         this.contentPanel.setPadding(Settings.paddingInDialogs);

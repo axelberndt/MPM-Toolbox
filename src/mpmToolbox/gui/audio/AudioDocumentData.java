@@ -7,7 +7,6 @@ import com.alee.extended.tab.DocumentData;
 import com.alee.laf.button.WebButton;
 import com.alee.laf.combobox.WebComboBox;
 import com.alee.laf.grouping.GroupPane;
-import com.alee.laf.label.WebLabel;
 import com.alee.laf.panel.WebPanel;
 import meico.mei.Helper;
 import meico.mpm.elements.Performance;
@@ -15,14 +14,14 @@ import meico.supplementary.KeyValue;
 import mpmToolbox.gui.ProjectPane;
 import mpmToolbox.gui.Settings;
 import mpmToolbox.gui.audio.utilities.CursorPositions;
+import mpmToolbox.gui.mpmEditingTools.MpmEditingTools;
 import mpmToolbox.projectData.alignment.AbstractAlignmentComputation;
-import mpmToolbox.projectData.alignment.Note;
+import mpmToolbox.projectData.alignment.Alignment;
+import mpmToolbox.projectData.alignment.BasicPitchLCSAligner;
 import mpmToolbox.projectData.alignment.PlaceholderAligner;
+import mpmToolbox.projectData.audio.Audio;
 import mpmToolbox.projectData.audio.SpectrogramImage;
 import mpmToolbox.projectData.audio.WaveformImage;
-import mpmToolbox.gui.mpmEditingTools.MpmEditingTools;
-import mpmToolbox.projectData.audio.Audio;
-import mpmToolbox.projectData.alignment.Alignment;
 import mpmToolbox.supplementary.Tools;
 import nu.xom.Element;
 
@@ -31,7 +30,6 @@ import java.awt.*;
 import java.awt.event.ItemEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
-import java.util.Collections;
 
 /**
  * A custom DocumentData object for the audio analysis component.
@@ -59,8 +57,8 @@ public class AudioDocumentData extends DocumentData<WebPanel> {
     private final WebComboBox partChooser = new WebComboBox();      // with this combobox the user can select whether all musical part or only on individual part should be displayed in the piano roll overlay
     private final WebButton resetButton = new WebButton("Reset");   // this button re-initializes the alignment
     private final WebButton perf2AlignConvert = new WebButton("<html>Alignment &rarr; Performance</html>");         // this is the button to convert a performance to an alignment and vice versa
-    private final WebComboBox alignmentComputationChooser = new WebComboBox(new AbstractAlignmentComputation[]{new PlaceholderAligner()});  // choose the alignment computation algorithm that computes the audio-to-score/MSM alignment, fill the array with new instances of all alignment algorithm classes available
-    private final WebButton triggerAlignmentComputation = new WebButton("\u25B6");      //  ▶ "\u25B6"
+    private final WebComboBox alignmentComputationChooser = new WebComboBox(new AbstractAlignmentComputation[]{new BasicPitchLCSAligner(), new PlaceholderAligner()});  // choose the alignment computation algorithm that computes the audio-to-score/MSM alignment, fill the array with new instances of all alignment algorithm classes available
+    private final WebButton triggerAlignmentComputation = new WebButton("Run");      //  ▶ "\u25B6"
 
     /**
      * constructor

@@ -20,6 +20,8 @@ import javax.swing.event.DocumentListener;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.math.RoundingMode;
 import java.util.UUID;
 
@@ -70,6 +72,15 @@ public abstract class EditDialog<E> extends WebDialog<EditDialog<E>> {
         this.setResizable(Settings.debug);
         this.setModal(true);
         this.initKeyboardShortcuts();
+        this.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
+
+        // close procedure when clicking on X
+        this.addWindowListener(new WindowAdapter() {
+            public void windowClosing(WindowEvent e) {
+                ok = false;
+                dispose();
+            }
+        });
 
         // content panel
         this.contentPanel = new WebPanel(this.contentPanelLayout);
