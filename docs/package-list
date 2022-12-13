@@ -16,6 +16,7 @@ mpmToolbox.gui.syncPlayer
 mpmToolbox.gui.syncPlayer.utilities
 mpmToolbox.projectData
 mpmToolbox.projectData.alignment
+mpmToolbox.projectData.alignment.basicPitchLcsAligner
 mpmToolbox.projectData.audio
 mpmToolbox.projectData.score
 mpmToolbox.supplementary
