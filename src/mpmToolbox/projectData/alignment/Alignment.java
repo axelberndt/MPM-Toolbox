@@ -256,10 +256,16 @@ public class Alignment {
             }
 
             if (isEnder) {                                      // if we found the next beginner = "ender" of the previous section
-                if (beginner != null)                           // usually we have a beginner
+                if (beginner != null) {                         // usually we have a beginner
+                    if (beginner.getMillisecondsDate() >= stopper.getMillisecondsDate())        // ensure meaningful values
+                        stopper.setMillisecondsDate(beginner.getMillisecondsDate() + 1.0);      // this is the fallback to make sure that the toStartDate and toEndDate values are not equal and not in reverse order
                     this.timingTransformation.add(new double[]{beginner.getInitialMillisecondsDate(), n.getInitialMillisecondsDate(), beginner.getMillisecondsDate(), stopper.getMillisecondsDate()});
-                else                                            // but right at the beginning we have no beginner but have to handle the notes before the first fixed note
-                    this.timingTransformation.add(new double[]{0.0, n.getInitialMillisecondsDate(), Math.max(0.0, stopper.getMillisecondsDate() - n.getInitialMillisecondsDate()), stopper.getMillisecondsDate()});
+                } else {                                        // but right at the beginning we have no beginner but have to handle the notes before the first fixed note
+                    double toStartDate = Math.max(0.0, stopper.getMillisecondsDate() - n.getInitialMillisecondsDate());
+                    if (toStartDate >= stopper.getMillisecondsDate())                           // ensure meaningful values
+                        stopper.setMillisecondsDate(toStartDate + 1.0);                         // this is the fallback to make sure that the toStartDate and toEndDate values are not equal and not in reverse order
+                    this.timingTransformation.add(new double[]{0.0, n.getInitialMillisecondsDate(), toStartDate, stopper.getMillisecondsDate()});
+                }
 
                 beginner = n;
                 stopper = null;

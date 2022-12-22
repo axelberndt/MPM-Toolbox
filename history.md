@@ -9,6 +9,7 @@
   - Enhancement in class `mpmToolbox.gui.audio.AudioDocumentData`. Some buttons on the bottom are enabled when they are not useful, e.g. when the piano roll displays a performance instead of an audio alignment or no audio is displayed.
 - Based on the above preparations, a first fully-fledged automatic alignment computation has been integrated with class `mpmToolbox.projectData.alignment.basicPitchLcsAligner.BasicPitchLCSAligner` and all related sub-classes in the same package; many thanks to Vladimir Viro from [Peachnote](https://www.peachnote.de/)!
 - Minor optimizations in class `mpmToolbox.gui.syncPlayer.PlaybackRunnable`.
+- Method `mpmToolbox.projectData.alignment.updateTimingTransformation()` has been made more stable against alignments with "unreasonable" values.
 
 
 #### v0.1.21
