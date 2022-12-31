@@ -49,6 +49,8 @@ public class Settings {
 
     public static double anchorSwitchOvershootThreshold = 0.3;          // in the score display, to switch the anchor from one nearest node to another the distance ratio (distance to nearest / distance to current anchorNode) must be at most this value, so the user has to overshoot, i.e. get much closer to the desired nearest node, to switch the anchor to it
 
+    public static int tempoCurveTesselation = 20;                       // the tesselation of continuous tempo curves in the TempoMapPanel
+
     protected static File soundbank = null;                             // set this null to use the default soundbank
 
     public static RecentOpened recentOpened = new RecentOpened(10);     // this is the list of the last 10 recently opened files
@@ -89,6 +91,9 @@ public class Settings {
                     break;
                 case "anchorSwitchOvershootThreshold":
                     Settings.anchorSwitchOvershootThreshold = Double.parseDouble(line);
+                    break;
+                case "tempoCurveTesselation":
+                    Settings.tempoCurveTesselation = Integer.parseInt(line);
                     break;
 //                case "symbolFont":
 //                      The .cfg file entry looks like this:
@@ -137,6 +142,7 @@ public class Settings {
                 + "\n\n# debug\n" + (Settings.debug ? "1" : "0")
                 + "\n\n# logfile\n" + (Settings.makeLogfile ? "1" : "0")
                 + "\n\n# anchorSwitchOvershootThreshold\n" + Settings.anchorSwitchOvershootThreshold
+                + "\n\n# tempoCurveTesselation\n" + Settings.tempoCurveTesselation
 //                + "\n\n# symbolFont\n" + Settings.symbolFontPath
                 + "\n\n# soundbank\n" + ((Settings.soundbank == null) ? "default" : Settings.soundbank.getAbsolutePath())
                 + "\n\n# recentOpened\n" + Settings.recentOpened.toString()

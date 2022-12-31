@@ -10,6 +10,9 @@
 - Based on the above preparations, a first fully-fledged automatic alignment computation has been integrated with class `mpmToolbox.projectData.alignment.basicPitchLcsAligner.BasicPitchLCSAligner` and all related sub-classes in the same package; many thanks to Vladimir Viro from [Peachnote](https://www.peachnote.de/)!
 - Minor optimizations in class `mpmToolbox.gui.syncPlayer.PlaybackRunnable`.
 - Method `mpmToolbox.projectData.alignment.updateTimingTransformation()` has been made more stable against alignments with "unreasonable" values.
+- Enhanced tempoMap visualization in class `mpmToolbox.gui.audio.TempoMapPanel`. 
+  - New class added, `mpmToolbox.gui.audio.utilities.TempoMapPanelElement`.
+  - Added configuration attribute `tempoCurveTesselation` in class `mpmToolbox.gui.Settings` to control the draw quality of continuous tempo transitions.
 
 
 #### v0.1.21

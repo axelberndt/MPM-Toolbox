@@ -7,12 +7,11 @@ import meico.mpm.elements.Performance;
 import meico.mpm.elements.maps.GenericMap;
 import meico.mpm.elements.maps.TempoMap;
 import meico.mpm.elements.maps.data.TempoData;
-import meico.supplementary.KeyValue;
 import mpmToolbox.gui.Settings;
+import mpmToolbox.gui.audio.utilities.TempoMapPanelElement;
 import mpmToolbox.projectData.alignment.Alignment;
 import mpmToolbox.projectData.alignment.Note;
 import mpmToolbox.projectData.alignment.PianoRoll;
-import mpmToolbox.supplementary.Tools;
 
 import java.awt.*;
 import java.awt.event.*;
@@ -26,7 +25,7 @@ import java.util.ArrayList;
 public class TempoMapPanel extends PianoRollPanel implements ComponentListener, MouseListener, MouseMotionListener, MouseWheelListener {
     private final Alignment alignment;
     private TempoMap tempoMap = null;
-    private final ArrayList<KeyValue<TempoData, KeyValue<Point2D.Double, Double>>> tempoData = new ArrayList<>();   // a list of TempoDatas (the tempoMap entries) and the start and end y, each with relative values
+    private final ArrayList<TempoMapPanelElement> tempoData = new ArrayList<>();   // a list of TempoDatas (the tempoMap entries)
     private double minTempo = Double.MAX_VALUE; // used to properly scale the visualization; this gets a meaningful value when a tempomap is read
     private double maxTempo = 0.0;              // used to properly scale the visualization; this gets a meaningful value when a tempomap is read
     private long leftmostSample;                // just a copy of the eponymous value in the parent to keep track of whether it changed and the tick values have to be computed anew
@@ -168,121 +167,33 @@ public class TempoMapPanel extends PianoRollPanel implements ComponentListener, 
         if (this.tempoData.isEmpty())
             return;
 
-        double x1 = this.parent.getLeftmostTick() / this.alignment.getMillisecondsLength();
-        double x2 = this.parent.getRightmostTick() / this.alignment.getMillisecondsLength();
-        double c = ((double) this.getWidth()) / (x2 - x1);
+        // compute the size of the whole tempoMap
+        double ticksPerPixel = (this.parent.getRightmostTick() - this.parent.getLeftmostTick()) / this.getWidth();
 
-        int halfSize = Math.max(2, Math.round((1.5f * this.getHeight()) / 128.0f)); // the size of a tempo instruction square should scale with the height of the panel
-        int size = halfSize + halfSize;                             // size of a tempo instruction square
+        int pixelWidth = (int) Math.round(this.alignment.getMillisecondsLength() / ticksPerPixel);  // in this particular alignment ticks = milliseconds
+        int pixelHeight = (int) (this.getHeight() * 0.6);                               // scale down the height, so we have some room above and below
 
-        Stroke defaultStroke = g2d.getStroke();                     // keep the previous stroke settings, so we can switch back to it afterwards
-        g2d.setStroke(new BasicStroke(halfSize * 0.25f));           // set new stroke
-        g2d.setColor(Settings.scorePerformanceColor);               // use normal performance symbol color
+        // compute pixel offsets
+        int xOffset = (-1 * (int) (this.parent.getLeftmostTick() / ticksPerPixel));
+        int yOffset = (int) (this.getHeight() * 0.2);
 
-//        ArrayList<Point> curve = new ArrayList<>();
-//        for (int i = 0; i < this.tempoData.size(); i++) {           // for each tempo instruction
-//            KeyValue<TempoData, KeyValue<Point2D.Double, Double>> tempoDatum = this.tempoData.get(i);
-//            TempoData data = tempoDatum.getKey();
-//
-//            if (data.endDate < this.parent.getLeftmostTick())       // the tempo instruction ends before the currently visualized frame
-//                continue;
-//
-//            // the start point of the tempo segment
-//            int x = (int) Math.round((tempoDatum.getValue().getKey().x - x1) * c);
-//            int y = (int) Math.round(tempoDatum.getValue().getKey().y * -this.getHeight()) + this.getHeight();
-//            curve.add(new Point(x, y));
-//
-//            // the end point of the tempo segment
-//            if ((i + 1) == this.tempoData.size()) {                 // the last tempo instruction gets a constant curve segment to the frame end
-//                x = this.getWidth();
-//                y = (int) Math.round(tempoDatum.getValue().getKey().y * -this.getHeight()) + this.getHeight();
-//            } else {
-//                if (data.transitionTo == null) {                    // constant tempo
-//                    x = (int) Math.round((this.tempoData.get(i + 1).getValue().getKey().x - x1) * c);
-//                    y = (int) Math.round(tempoDatum.getValue().getValue() * -this.getHeight()) + this.getHeight();
-//                } else {                                            // continuous tempo transition (accel., rit.)
-//                    // TODO ...
-//                }
-//            }
-//            curve.add(new Point(x, y));
-//
-//            if (data.startDate > this.parent.getRightmostTick())    // tempo instruction is after the currently visualized frame
-//                break;                                              // done
-//        }
-//
-//        for (int i = 1; i < curve.size(); ++i) {
-//            g2d.drawLine(curve.get(i-1).x, curve.get(i-1).y, curve.get(i).x, curve.get(i).y);
-//        }
+        int halfSize = Math.max(2, Math.round((1.5f * this.getHeight()) / 128.0f));     // the size of a tempo instruction square should scale with the height of the panel
 
-        //old code/////////////////////////////////
-        Point pendingTempoCurve = null;                             // this will hold the beginning of the previous tempo instruction's curve segment to be drawn when the next instruction is processed
-        for (int i = 0; i < this.tempoData.size(); i++) {           // for each tempo instruction
-            KeyValue<TempoData, KeyValue<Point2D.Double, Double>> tempoDatum = this.tempoData.get(i);
-            TempoData data = tempoDatum.getKey();
+        // draw tempoMap
+        Stroke defaultStroke = g2d.getStroke();                                         // keep the previous stroke settings, so we can switch back to it afterwards
+        g2d.setStroke(new BasicStroke(halfSize * 0.25f));                               // set new stroke
 
-            if (data.endDate < this.parent.getLeftmostTick())       // the tempo instruction ends before the currently visualized frame
+        Point prevConnection = null;
+        for (TempoMapPanelElement tempoDatum : this.tempoData) {                        // for each tempo instruction
+            if (tempoDatum.tempoData.endDate < this.parent.getLeftmostTick())           // the tempo instruction ends before the currently visualized frame
                 continue;
 
-            int x = (int) Math.round((tempoDatum.getValue().getKey().x - x1) * c);
-            int y = (int) Math.round(tempoDatum.getValue().getKey().y * -this.getHeight()) + this.getHeight();
+            if (tempoDatum.tempoData.startDate > this.parent.getRightmostTick())        // tempo instruction is after the currently visualized frame
+                break;                                                                  // done
 
-            // draw the curve segment of the previous tempo instruction
-            if (pendingTempoCurve != null) {
-                KeyValue<TempoData, KeyValue<Point2D.Double, Double>> previous = this.tempoData.get(i-1);
-                if (previous.getKey().transitionTo == null) {       // constant tempo
-//                    g2d.drawLine(pendingTempoCurve.x, pendingTempoCurve.y, x, pendingTempoCurve.y);
-//                    g2d.drawLine(x, pendingTempoCurve.y, x, y);
-                    g2d.drawPolyline(new int[]{pendingTempoCurve.x, x, x}, new int[]{pendingTempoCurve.y, pendingTempoCurve.y, y}, 3);
-                } else {                                            // continuous tempo transition
-                    int tesselation = 10;
-                    int[] curveX = new int[tesselation];
-                    int[] curveY = new int[tesselation];
-
-                    curveX[0] = pendingTempoCurve.x;
-                    curveY[0] = pendingTempoCurve.y;
-
-                    int transY = (int) Math.round((previous.getKey().transitionTo / this.maxTempo) * -this.getHeight()) + this.getHeight();
-
-                    for (int j = 1; j < curveX.length - 2; ++j) {
-                        double xf = (double) j / curveX.length;
-                        curveX[j] = (int) Math.round((x - pendingTempoCurve.x) * xf) + pendingTempoCurve.x;
-                        curveY[j] = (int) Math.round(Math.pow(xf, previous.getKey().exponent) * (transY - pendingTempoCurve.y)) + pendingTempoCurve.y;
-                    }
-
-                    curveX[tesselation - 2] = x;
-                    curveY[tesselation - 2] = transY;
-
-                    curveX[tesselation - 1] = x;
-                    curveY[tesselation - 1] = y;
-
-                    g2d.drawPolyline(curveX, curveY, curveX.length);
-//                    g2d.drawPolyline(new int[]{pendingTempoCurve.x, x, x}, new int[]{pendingTempoCurve.y, transY, y}, 3);
-                }
-            }
-
-            if (data.startDate > this.parent.getRightmostTick())    // tempo instruction is after the currently visualized frame
-                break;                                              // done
-
-            pendingTempoCurve = new Point(x, y);
-            g2d.fillRect(x - halfSize, y - halfSize, size, size);   // paint the square
-
-            // draw bpm value
-            g2d.setColor(Settings.scorePerformanceColorHighlighted);
-            FontMetrics metrics = g2d.getFontMetrics();
-            String bpm = String.valueOf(Tools.round(data.bpm, 2));
-            if (!data.isConstantTempo())                                // if it is a continuous tempo transition
-                bpm +=  " \u2192 " + Tools.round(data.transitionTo, 2);
-            int xFont = Math.max(0, pendingTempoCurve.x - halfSize + (size - metrics.stringWidth(bpm)) / 2);        // Determine the X coordinate for the text
-            int yFont = pendingTempoCurve.y - (int)(halfSize * 1.5);   // Determine the Y coordinate for the text (should be placed above the tempo node)
-            g2d.drawString(bpm, xFont, yFont);                                              // Draw the string
-
-            // the last tempo instruction gets a constant curve segment to the frame end
-            g2d.setColor(Settings.scorePerformanceColor);               // use normal performance symbol color
-            if ((i+1) == this.tempoData.size()) {
-                g2d.drawLine(pendingTempoCurve.x, pendingTempoCurve.y, this.getWidth(), pendingTempoCurve.y);
-            }
+            tempoDatum.scaleInstructionTo(pixelWidth, pixelHeight);                     // adjust the scaling of the instruction's  points
+            prevConnection = tempoDatum.draw(g2d, halfSize, xOffset, yOffset, prevConnection);  // draw the tempo instruction
         }
-        //end of old code/////////////////////////////
 
         g2d.setStroke(defaultStroke);
     }
@@ -319,6 +230,7 @@ public class TempoMapPanel extends PianoRollPanel implements ComponentListener, 
         this.tempoMap = (TempoMap) tmap;
 
         // collect tempo data for visualization and determine min and max tempo
+        ArrayList<TempoData> tempTempoData = new ArrayList<>();     // a temporary list of tempo instructions
         this.minTempo = Double.MAX_VALUE;
         this.maxTempo = 0.0;
         for (int i = 0; i < this.tempoMap.size(); ++i) {            // for each tempo instruction in the tempomap
@@ -326,7 +238,7 @@ public class TempoMapPanel extends PianoRollPanel implements ComponentListener, 
             if (data == null)                                       // the tempomap entry could be a style switch or a malicious entry
                 continue;                                           // go on with the next entry
 
-            this.tempoData.add(new KeyValue<>(data, null));         // add it to the tempoData list
+            tempTempoData.add(data);                                // add it to the tempoData temporary list
 
             // update minimum and maximum tempo values
             if (data.bpm < this.minTempo)
@@ -343,20 +255,29 @@ public class TempoMapPanel extends PianoRollPanel implements ComponentListener, 
                 this.maxTempo = data.transitionTo;
         }
 
-        // add and subtract some headroom from minTempo and maxTempo, so it does not go to the vertical extremes of the panel
-//        double meanTempo = (this.minTempo + this.maxTempo) / 2.0;
-//        double headroom = Math.min(this.maxTempo - meanTempo, this.minTempo);   // this makes the headroom as big as half of the tempo range, but not bigger than the minTempo
-
         // give the tempo instructions relative positions in a unity square (date, tempo)
-        double lengthTicks = this.alignment.getMillisecondsLength();    // in this particular alignment ticks = milliseconds
-        for (KeyValue<TempoData, KeyValue<Point2D.Double, Double>> tempoDatum : this.tempoData) {
-            double relativeX = tempoDatum.getKey().startDate / lengthTicks;
-            double relativeY = (tempoDatum.getKey().bpm - this.minTempo) / (this.maxTempo - this.minTempo);
+        double lengthTicks = this.alignment.getMillisecondsLength();                        // in this particular alignment ticks = milliseconds
+        for (TempoData tempoDatum : tempTempoData) {
+            double relativeX = tempoDatum.startDate / lengthTicks;
+            double relativeY = (tempoDatum.bpm - this.minTempo) / (this.maxTempo - this.minTempo);
             Point2D.Double startPoint = new Point2D.Double(relativeX, relativeY);
 
-            Double relativeEndY = (tempoDatum.getKey().transitionTo != null) ? (tempoDatum.getKey().transitionTo - this.minTempo) / (this.maxTempo - this.minTempo) : relativeY;
+            if (!this.tempoData.isEmpty())                                                  // the end x-coordinate of the previous instruction is at the x-coordinate of this instruction
+                this.tempoData.get(this.tempoData.size() - 1).setRelativeEndX(relativeX);
 
-            tempoDatum.setValue(new KeyValue<>(startPoint, relativeEndY));
+            double relativeEndY = (tempoDatum.transitionTo != null) ? (tempoDatum.transitionTo - this.minTempo) / (this.maxTempo - this.minTempo) : relativeY;
+            Point2D.Double endPoint = new Point2D.Double(relativeX + 1.0, relativeEndY);   // relativeX + 1.0 must be replaced by the relativeX coordinate of the next instruction, as done above
+
+            this.tempoData.add(new TempoMapPanelElement(tempoDatum, startPoint, endPoint));
+        }
+
+        // the last instruction must be constant
+        if (!this.tempoData.isEmpty()) {
+            TempoMapPanelElement last = this.tempoData.get(this.tempoData.size() - 1);
+            last.relativeCurve.clear();
+            last.absoluteCurve.clear();
+            last.relativeEnd.y = last.relativeCoordinates.y;
+            last.absoluteEnd.y = last.absoluteCoordinates.y;
         }
     }
 
@@ -633,5 +554,4 @@ public class TempoMapPanel extends PianoRollPanel implements ComponentListener, 
         this.parent.communicateMousePositionToAllComponents(e);
         this.zoom(pivotSample, zoomFactor);
     }
-
 }
