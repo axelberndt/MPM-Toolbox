@@ -14,7 +14,7 @@ public class CursorPositions {
     private Double ticks = null;            // tick position in the non-performed music (MSM)
     private Integer audioX = null;          // horizontal pixel position of the cursor in the audio domain panels
     private int audioXSpread = 1;           // When the cursor is in a tick domain panel we have to convert its position to milliseconds. The result can vary over a certain interval due to asynchronies, which is represented by this spread. So we can draw a thicker stroke.
-    private Integer ticksX = null;          // horizontal pixel position of the cursor in the tick domain panels
+    private Integer pixelsX = null;         // horizontal pixel position of the cursor in the tick domain panels
     private int ticksXSpread = 1;           // When the cursor is in a milliseconds domain panel we have to convert its position to ticks. The result can vary over a certain interval due to asynchronies, which is represented by this spread. So we can draw a thicker stroke.
 
     /**
@@ -38,8 +38,8 @@ public class CursorPositions {
                 this.sample = this.audioXToSample(this.audioX);
             } else if (this.ticks != null) {
                 this.ticksToAudioValues(this.ticks);
-            } else if (this.ticksX != null) {
-                this.ticks = this.ticksXToTicks(this.ticksX);
+            } else if (this.pixelsX != null) {
+                this.ticks = this.ticksXToTicks(this.pixelsX);
                 this.ticksToAudioValues(this.ticks);
             }
         }
@@ -73,8 +73,8 @@ public class CursorPositions {
                 this.milliseconds = this.sampleToMilliseconds(this.sample);
             } else if (this.ticks != null) {
                 this.ticksToAudioValues(this.ticks);
-            } else if (this.ticksX != null) {
-                this.ticks = this.ticksXToTicks(this.ticksX);
+            } else if (this.pixelsX != null) {
+                this.ticks = this.ticksXToTicks(this.pixelsX);
                 this.ticksToAudioValues(this.ticks);
             }
         }
@@ -101,8 +101,8 @@ public class CursorPositions {
     public double getTicks() {
         if (this.ticks == null) {
             this.ticks = 0.0;   // just to be sure that it is not null
-            if (this.ticksX != null) {
-                this.ticks = this.ticksXToTicks(this.ticksX);
+            if (this.pixelsX != null) {
+                this.ticks = this.ticksXToTicks(this.pixelsX);
             } else if (this.milliseconds != null) {
                 this.millisecondsToTickValues(this.milliseconds);
             } else if (this.sample != null) {
@@ -143,8 +143,8 @@ public class CursorPositions {
                 this.audioX = this.sampleToAudioX(this.sample);
             } else if (this.ticks != null) {
                 this.ticksToAudioValues(this.ticks);
-            } else if (this.ticksX != null) {
-                this.ticks = this.ticksXToTicks(this.ticksX);
+            } else if (this.pixelsX != null) {
+                this.ticks = this.ticksXToTicks(this.pixelsX);
                 this.ticksToAudioValues(this.ticks);
             }
         }
@@ -177,11 +177,11 @@ public class CursorPositions {
      * access the horizontal pixel position of the cursor in the tempomap panel
      * @return
      */
-    public int getTicksX() {
-        if (this.ticksX == null) {
-            this.ticksX = 0;    // just to be sure that it is not null
+    public int getPixelsX() {
+        if (this.pixelsX == null) {
+            this.pixelsX = 0;    // just to be sure that it is not null
             if (this.ticks != null) {
-                this.ticksX = this.ticksToTicksX(this.ticks);
+                this.pixelsX = this.ticksToTicksX(this.ticks);
             } else if (this.milliseconds != null) {
                 this.millisecondsToTickValues(this.milliseconds);
             } else if (this.sample != null) {
@@ -193,16 +193,16 @@ public class CursorPositions {
                 this.millisecondsToTickValues(this.milliseconds);
             }
         }
-        return this.ticksX;
+        return this.pixelsX;
     }
 
     /**
      * set the cursor position via its horizontal pixel position in the tempomap panel
-     * @param ticksX
+     * @param pixelsX
      */
-    public void setTicksX(int ticksX) {
+    public void setPixelsX(int pixelsX) {
         this.allNull();
-        this.ticksX = ticksX;
+        this.pixelsX = pixelsX;
 //        this.ticksXSpread = 1;
 //        this.ticks = this.ticksXToTicks(ticksX);
 //        this.ticksToAudioValues(this.ticks);
@@ -213,7 +213,7 @@ public class CursorPositions {
      * @return
      */
     public int getTicksXSpread() {
-        this.getTicksX();
+        this.getPixelsX();
         return this.ticksXSpread;
     }
 
@@ -226,7 +226,7 @@ public class CursorPositions {
         this.ticks = null;
         this.audioX = null;
         this.audioXSpread = 1;
-        this.ticksX = null;
+        this.pixelsX = null;
         this.ticksXSpread = 1;
     }
 
@@ -298,7 +298,7 @@ public class CursorPositions {
         double[] pixelPos = new double[]{this.parent.getTempoMapPanel().getWidth() * relativePos[0], this.parent.getTempoMapPanel().getWidth() * relativePos[1]};
 
         this.ticks = (tickDate[0] + tickDate[1]) / 2.0;
-        this.ticksX = (int) Math.round((pixelPos[0] + pixelPos[1]) / 2.0);      // the vertical pixel position of the stroke
+        this.pixelsX = (int) Math.round((pixelPos[0] + pixelPos[1]) / 2.0);      // the vertical pixel position of the stroke
         this.ticksXSpread = (int) Math.round(pixelPos[1] - pixelPos[0]);        // the stroke weight should be set as wide as the temporal spread in the performance
     }
 

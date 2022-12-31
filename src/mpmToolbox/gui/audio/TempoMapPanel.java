@@ -1,5 +1,6 @@
 package mpmToolbox.gui.audio;
 
+import com.alee.laf.menu.WebMenuItem;
 import com.alee.laf.menu.WebPopupMenu;
 import meico.mpm.Mpm;
 import meico.mpm.elements.Part;
@@ -9,9 +10,13 @@ import meico.mpm.elements.maps.TempoMap;
 import meico.mpm.elements.maps.data.TempoData;
 import mpmToolbox.gui.Settings;
 import mpmToolbox.gui.audio.utilities.TempoMapPanelElement;
+import mpmToolbox.gui.mpmEditingTools.MpmEditingTools;
+import mpmToolbox.gui.mpmTree.MpmTree;
+import mpmToolbox.gui.mpmTree.MpmTreeNode;
 import mpmToolbox.projectData.alignment.Alignment;
 import mpmToolbox.projectData.alignment.Note;
 import mpmToolbox.projectData.alignment.PianoRoll;
+import mpmToolbox.supplementary.Tools;
 
 import java.awt.*;
 import java.awt.event.*;
@@ -30,6 +35,7 @@ public class TempoMapPanel extends PianoRollPanel implements ComponentListener, 
     private double maxTempo = 0.0;              // used to properly scale the visualization; this gets a meaningful value when a tempomap is read
     private long leftmostSample;                // just a copy of the eponymous value in the parent to keep track of whether it changed and the tick values have to be computed anew
     private long rightmostSample;               // just a copy of the eponymous value in the parent to keep track of whether it changed and the tick values have to be computed anew
+    private int halfSize = 1;
 
     /**
      * constructor
@@ -67,13 +73,17 @@ public class TempoMapPanel extends PianoRollPanel implements ComponentListener, 
         if (this.parent.getParent().getSyncPlayer().getSelectedPerformance() == null)
             return;
 
+        this.halfSize = Math.max(2, Math.round((1.5f * this.getHeight()) / 128.0f));     // the size of a tempo instruction square should scale with the height of the panel
+
         Graphics2D g2d = (Graphics2D) g;        // make g a Graphics2D object, so we can use its extended drawing features
         if (this.drawPianoRoll(g2d)) {          // if we successfully draw the piano roll, we can also draw the other information
             this.drawTempoMap(g2d);
             this.drawPlaybackCursor(g2d);
 
             if (this.drawMouseCursor(g2d)) {
-                // TODO: print info text
+                // print info text
+                g2d.setColor(Color.LIGHT_GRAY);
+                g2d.drawString("Ticks: " + Tools.round(this.parent.getMouseCursor().getTicks(), 2), 2, Settings.getDefaultFontSize());
             }
         }
     }
@@ -177,11 +187,9 @@ public class TempoMapPanel extends PianoRollPanel implements ComponentListener, 
         int xOffset = (-1 * (int) (this.parent.getLeftmostTick() / ticksPerPixel));
         int yOffset = (int) (this.getHeight() * 0.2);
 
-        int halfSize = Math.max(2, Math.round((1.5f * this.getHeight()) / 128.0f));     // the size of a tempo instruction square should scale with the height of the panel
-
         // draw tempoMap
         Stroke defaultStroke = g2d.getStroke();                                         // keep the previous stroke settings, so we can switch back to it afterwards
-        g2d.setStroke(new BasicStroke(halfSize * 0.25f));                               // set new stroke
+        g2d.setStroke(new BasicStroke(this.halfSize * 0.25f));                               // set new stroke
 
         Point prevConnection = null;
         for (TempoMapPanelElement tempoDatum : this.tempoData) {                        // for each tempo instruction
@@ -191,8 +199,8 @@ public class TempoMapPanel extends PianoRollPanel implements ComponentListener, 
             if (tempoDatum.tempoData.startDate > this.parent.getRightmostTick())        // tempo instruction is after the currently visualized frame
                 break;                                                                  // done
 
-            tempoDatum.scaleInstructionTo(pixelWidth, pixelHeight);                     // adjust the scaling of the instruction's  points
-            prevConnection = tempoDatum.draw(g2d, halfSize, xOffset, yOffset, prevConnection);  // draw the tempo instruction
+            tempoDatum.setScalesAndOffsets(pixelWidth, pixelHeight, xOffset, yOffset);  // adjust the scaling and offsets of the instruction's  points
+            prevConnection = tempoDatum.draw(g2d, this.halfSize, prevConnection);            // draw the tempo instruction
         }
 
         g2d.setStroke(defaultStroke);
@@ -291,7 +299,7 @@ public class TempoMapPanel extends PianoRollPanel implements ComponentListener, 
         // the native domain of the super class PianoRollPanel is the audio domain; hence the mouse cursor position needs a different treatment here than in the super class
         if (this.mouseInThisPanel()) {                                // if the mouse is in this panel
             g2d.setColor(Settings.scoreNoteColorHighlighted);
-            g2d.drawLine(this.parent.getMouseCursor().getTicksX(), 0, this.parent.getMouseCursor().getTicksX(), this.getHeight());
+            g2d.drawLine(this.parent.getMouseCursor().getPixelsX(), 0, this.parent.getMouseCursor().getPixelsX(), this.getHeight());
             g2d.drawLine(0, this.mousePositionY, this.getWidth(), this.mousePositionY);
             return true;
         }
@@ -303,7 +311,7 @@ public class TempoMapPanel extends PianoRollPanel implements ComponentListener, 
         g2d.setColor(Settings.scoreNoteColorHighlighted);           // stroke color
         Stroke defaultStroke = g2d.getStroke();                     // keep the previous stroke settings
         g2d.setStroke(new BasicStroke(this.parent.getMouseCursor().getTicksXSpread())); // set the stroke
-        g2d.drawLine(this.parent.getMouseCursor().getTicksX(), 0, this.parent.getMouseCursor().getTicksX(), this.getHeight());    // draw the stroke
+        g2d.drawLine(this.parent.getMouseCursor().getPixelsX(), 0, this.parent.getMouseCursor().getPixelsX(), this.getHeight());    // draw the stroke
         g2d.setStroke(defaultStroke);                               // switch back to the previous stroke settings
 
         return true;
@@ -318,7 +326,7 @@ public class TempoMapPanel extends PianoRollPanel implements ComponentListener, 
         g2d.setColor(new Color(0.5f, 0.5f, 0.5f, 0.6f));            // stroke color
         Stroke defaultStroke = g2d.getStroke();                     // keep the previous stroke settings
         g2d.setStroke(new BasicStroke(this.parent.getPlaybackCursor().getTicksXSpread()));  // set the stroke
-        g2d.drawLine(this.parent.getPlaybackCursor().getTicksX(), 0, this.parent.getPlaybackCursor().getTicksX(), this.getHeight());    // draw the stroke
+        g2d.drawLine(this.parent.getPlaybackCursor().getPixelsX(), 0, this.parent.getPlaybackCursor().getPixelsX(), this.getHeight());    // draw the stroke
         g2d.setStroke(defaultStroke);                               // switch back to the previous stroke settings
     }
 
@@ -355,6 +363,46 @@ public class TempoMapPanel extends PianoRollPanel implements ComponentListener, 
     }
 
     /**
+     * find the tempo instruction that was clicked at mouse position (x, y)
+     * @param x
+     * @param y
+     * @return the tempo instruction or null
+     */
+    private TempoMapPanelElement getTempoInstructionAt(int x, int y) {
+        if (this.tempoData.isEmpty())
+            return null;
+
+        TempoMapPanelElement before = null;
+        TempoMapPanelElement after = null;
+        for (TempoMapPanelElement tempoDatum : this.tempoData) {                        // for each tempo instruction
+            if (tempoDatum.tempoData.endDate < this.parent.getLeftmostTick())           // the tempo instruction ends before the currently visualized frame
+                continue;
+
+            if (tempoDatum.tempoData.startDate > this.parent.getRightmostTick())        // tempo instruction is after the currently visualized frame
+                break;                                                                  // done
+
+            if (tempoDatum.getPixelPosition().x <= x)
+                before = tempoDatum;
+            else {
+                after = tempoDatum;
+                break;
+            }
+        }
+
+        int beforeDist = (before != null) ? x - before.getPixelPosition().x : Integer.MAX_VALUE;
+        int afterDist = (after != null) ? after.getPixelPosition().x - x : Integer.MAX_VALUE;
+
+        TempoMapPanelElement candidate = (beforeDist <= afterDist)
+                ? ((beforeDist > this.halfSize) ? null : before)
+                : ((afterDist > this.halfSize) ? null : after);
+
+        if ((candidate != null) && (Math.abs(y - candidate.getPixelPosition().y) > this.halfSize))
+            candidate = null;
+
+        return candidate;
+    }
+
+    /**
      * set the audio data that this panel should visualize
      */
     @Override
@@ -373,7 +421,7 @@ public class TempoMapPanel extends PianoRollPanel implements ComponentListener, 
         // do the scrolling only in this panel
         double leftmost = this.parent.getLeftmostTick();
         double rightmost = this.parent.getRightmostTick();
-        double tickOffset = ((rightmost - leftmost) * (this.parent.getMouseCursor().getTicksX() - e.getPoint().x)) / this.getWidth();   // this computes how many horizontal pixels the mouse has moved, then scales it by the amount of ticks per horizontal pixel, so we know how many pixels we want to move the leftmost and rightmost tick index
+        double tickOffset = ((rightmost - leftmost) * (this.parent.getMouseCursor().getPixelsX() - e.getPoint().x)) / this.getWidth();   // this computes how many horizontal pixels the mouse has moved, then scales it by the amount of ticks per horizontal pixel, so we know how many pixels we want to move the leftmost and rightmost tick index
 
         this.parent.communicateMousePositionToAllComponents(e);
 
@@ -436,8 +484,27 @@ public class TempoMapPanel extends PianoRollPanel implements ComponentListener, 
      */
     @Override
     protected WebPopupMenu getContextMenu(MouseEvent e) {
-        // TODO ...
+        // disabled
         return null;
+//        TempoMapPanelElement tempo = this.getTempoInstructionAt(e.getX(), e.getY());
+//        if (tempo == null)
+//            return null;
+//
+//        MpmTree mpmTree = this.parent.parent.getMpmTree();              // a handle to the mpm tree
+//        MpmTreeNode mpmTreeNode = mpmTree.findNode(tempo.tempoData.xml, true);    // get the mpm tree's node that corresponds with the selected node
+//        if (mpmTreeNode == null)                                        // if nothing has been selected
+//            return null;                                                // done
+//        mpmTree.setSelectedNode(mpmTreeNode);                           // select the node in the mpm tree
+//        mpmTree.scrollPathToVisible(mpmTreeNode.getTreePath());         // scroll the tree so the node is visible
+//
+//        // the context menu entry for replacing tempo instructions by continuous tempo transitions from the preceding to the succeeding instruction
+//        WebMenuItem replaceByContinuous = new WebMenuItem("Replace by Continuous Tempo Transition");
+//        replaceByContinuous.setToolTipText("<html><center>Removes this segment from the tempoMap.<br>The preceding tempo instruction is adapted to keep up the timing.</center></html>");
+//
+//        // make the context menu for tempo instructions
+//        WebPopupMenu menu = MpmEditingTools.makeMpmTreeContextMenu(mpmTreeNode, mpmTree);
+//        menu.add(replaceByContinuous, 0);
+//        return menu;
     }
 
     /**
@@ -446,9 +513,28 @@ public class TempoMapPanel extends PianoRollPanel implements ComponentListener, 
      */
     @Override
     public void mouseClicked(MouseEvent e) {
-        // TODO: interaction with the tempo curve
+        // interaction with the tempo curve
+        TempoMapPanelElement tempo = this.getTempoInstructionAt(e.getX(), e.getY());
+        if (tempo != null) {
+            MpmTree mpmTree = this.parent.parent.getMpmTree();              // a handle to the mpm tree
+            MpmTreeNode mpmTreeNode = mpmTree.findNode(tempo.tempoData.xml, true);    // get the mpm tree's node that corresponds with the selected node
+            if (mpmTreeNode == null)                                        // if nothing has been selected
+                return;                                                     // done
+            mpmTree.setSelectedNode(mpmTreeNode);                           // select the node in the mpm tree
+            mpmTree.scrollPathToVisible(mpmTreeNode.getTreePath());         // scroll the tree so the node is visible
 
-        super.mouseClicked(e);  // select the note that has been clicked, if any
+            switch (e.getButton()) {
+                case MouseEvent.BUTTON1:                                    // left click
+                    if (e.getClickCount() > 1)                              // if double (or more) click
+                        MpmEditingTools.quickOpenEditor(mpmTreeNode, mpmTree);  // open editor dialog
+                    break;
+                case MouseEvent.BUTTON3:                                    // right click = context menu
+                    WebPopupMenu menu = MpmEditingTools.makeMpmTreeContextMenu(mpmTreeNode, mpmTree);
+                    menu.show(this, e.getX() - 25, e.getY());
+                    break;
+            }
+        } else
+            super.mouseClicked(e);  // select the note that has been clicked, if any
     }
 
     /**
@@ -503,7 +589,14 @@ public class TempoMapPanel extends PianoRollPanel implements ComponentListener, 
         if (this.noData.isShowing())
             return;
 
-        super.mouseMoved(e);
+        TempoMapPanelElement tempo = this.getTempoInstructionAt(e.getX(), e.getY());
+        if (tempo != null) {                                        // if mouse is over a tempo instruction
+            this.mousePositionY = e.getY();
+            this.parent.communicateMousePositionToAllComponents(e);
+            this.parent.repaintAllComponents();
+            this.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        } else                                                      // else do the standard piano roll mouse-over work
+            super.mouseMoved(e);
     }
 
     /**
@@ -520,7 +613,7 @@ public class TempoMapPanel extends PianoRollPanel implements ComponentListener, 
         if (this.parent.getAudio() != null) {
             long leftmost = this.parent.getLeftmostSample();
             long rightmost = this.parent.getRightmostSample();
-            double sampleOffset = (double)((rightmost - leftmost) * (this.parent.getMouseCursor().getTicksX() - e.getPoint().x)) / this.parent.getWaveformPanel().getWidth();   // this computes how many horizontal pixels the mouse has moved, than scales it by the amount of samples per horizontal pixel so we know how many pixels we want to move the leftmost and rightmost sample index
+            double sampleOffset = (double)((rightmost - leftmost) * (this.parent.getMouseCursor().getPixelsX() - e.getPoint().x)) / this.parent.getWaveformPanel().getWidth();   // this computes how many horizontal pixels the mouse has moved, than scales it by the amount of samples per horizontal pixel so we know how many pixels we want to move the leftmost and rightmost sample index
             this.parent.communicateMousePositionToAllComponents(e);
             this.parent.scroll(sampleOffset);
             return;

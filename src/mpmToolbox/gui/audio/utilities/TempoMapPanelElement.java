@@ -25,12 +25,11 @@ public class TempoMapPanelElement {
 
     private int scaleWidth = 1;                                         // buffer the scale factor
     private int scaleHeight = 1;                                        // buffer the scale factor
-    private int xOffset = 1;
-    private int yOffset = 1;
-    private int halfSize = 1;
+    private int xOffset = 1;                                            // buffer the horizontal offset
+    private int yOffset = 1;                                            // buffer the vertical offset
 
-    private int[] xCoords = new int[0];
-    private int[] yCoords = new int[0];
+    private int[] xCoords = new int[1];                                 // the x pixel coordinates of the tempo curve's points
+    private int[] yCoords = new int[1];                                 // the y pixel coordinates of the tempo curve's points
 
     /**
      * constructor
@@ -46,6 +45,14 @@ public class TempoMapPanelElement {
 
         // the curve is not yet computed; this.setRelativeEndX() must be invoked
 //        this.setRelativeEndX(relativeEnd.getX());       // commented out for better efficiency in method TempoMapPanel.retrieveTempoMap()
+    }
+
+    /**
+     * get the pixel position of the instruction in the tempoMap visualization
+     * @return
+     */
+    public Point getPixelPosition() {
+        return new Point(this.xCoords[0], this.yCoords[0]);
     }
 
     /**
@@ -78,35 +85,34 @@ public class TempoMapPanelElement {
     }
 
     /**
-     *
+     * scale the width of the tempo curve
      * @param width of the unity square of the complete tempoMap
-     * @param height of the unity square of the complete tempoMap
      */
-    public void scaleInstructionTo(int width, int height) {
-        if (this.scaleWidth != width) {
-            this.scaleWidth = width;
-
-            this.absoluteCoordinates.x = (int) Math.round(this.relativeCoordinates.getX() * width);
-            this.absoluteEnd.x = (int) Math.round(this.relativeEnd.getX() * width);
-            for (int i = 0; i < this.relativeCurve.size(); ++i)
-                this.absoluteCurve.get(i).x = (int) Math.round(this.relativeCurve.get(i).getX() * width);
-
-            this.updateXOffset(this.xOffset);
-        }
-
-        if (this.scaleHeight != height) {
-            this.scaleHeight = height;
-
-            this.absoluteCoordinates.y = (int) Math.round(this.relativeCoordinates.getY() * -height) + height;
-            this.absoluteEnd.y = (int) Math.round(this.relativeEnd.getY() * -height) + height;
-            for (int i = 0; i < this.relativeCurve.size(); ++i)
-                this.absoluteCurve.get(i).y = (int) Math.round(this.relativeCurve.get(i).getY() * -height) + height;
-
-            this.updateYOffset(this.yOffset);
-        }
+    private void scaleWidth(int width) {
+        this.scaleWidth = width;
+        this.absoluteCoordinates.x = (int) Math.round(this.relativeCoordinates.getX() * width);
+        this.absoluteEnd.x = (int) Math.round(this.relativeEnd.getX() * width);
+        for (int i = 0; i < this.relativeCurve.size(); ++i)
+            this.absoluteCurve.get(i).x = (int) Math.round(this.relativeCurve.get(i).getX() * width);
     }
 
-    public void updateXOffset(int xOffset) {
+    /**
+     * scale the height of the tempo curve
+     * @param height of the unity square of the complete tempoMap
+     */
+    private void scaleHeight(int height) {
+        this.scaleHeight = height;
+        this.absoluteCoordinates.y = (int) Math.round(this.relativeCoordinates.getY() * -height) + height;
+        this.absoluteEnd.y = (int) Math.round(this.relativeEnd.getY() * -height) + height;
+        for (int i = 0; i < this.relativeCurve.size(); ++i)
+            this.absoluteCurve.get(i).y = (int) Math.round(this.relativeCurve.get(i).getY() * -height) + height;
+    }
+
+    /**
+     * set the horizontal pixel offset
+     * @param xOffset of the whole tempoMap
+     */
+    private void updateXOffset(int xOffset) {
         this.xOffset = xOffset;
         this.xCoords = new int[2 + this.absoluteCurve.size()];
         this.xCoords[0] = this.absoluteCoordinates.x + xOffset;
@@ -115,7 +121,11 @@ public class TempoMapPanelElement {
         this.xCoords[this.xCoords.length - 1] = this.absoluteEnd.x + xOffset;
     }
 
-    public void updateYOffset(int yOffset) {
+    /**
+     * set the vertical pixel offset
+     * @param yOffset of the whole tempoMap
+     */
+    private void updateYOffset(int yOffset) {
         this.yOffset = yOffset;
         this.yCoords = new int[2 + this.absoluteCurve.size()];
         this.yCoords[0] = this.absoluteCoordinates.y + yOffset;
@@ -125,21 +135,38 @@ public class TempoMapPanelElement {
     }
 
     /**
+     * adjust the geometry of the tempo curve according to scale and offset values of the tempoMap
+     * @param width of the unity square of the complete tempoMap
+     * @param height of the unity square of the complete tempoMap
+     * @param xOffset of the whole tempoMap
+     * @param yOffset of the whole tempoMap
+     */
+    public void setScalesAndOffsets(int width, int height, int xOffset, int yOffset) {
+        if (this.scaleWidth != width) {
+            this.scaleWidth(width);
+            this.updateXOffset(xOffset);
+        }
+        else if (this.xOffset != xOffset) {
+            this.updateXOffset(xOffset);
+        }
+
+        if (this.scaleHeight != height) {
+            this.scaleHeight(height);
+            this.updateYOffset(yOffset);
+        }
+        else if (this.yOffset != yOffset) {
+            this.updateYOffset(yOffset);
+        }
+    }
+
+    /**
      * draw the instruction into the Gaphics2D object
      * @param g2d
      * @param halfSize the size of a tempo instruction square should scale with the height of the panel; this is half that size
-     * @param xOffset of the whole tempoMap
-     * @param yOffset of the whole tempoMap
      * @param prevConncection the end point of the previous instruction
      * @return the end point of this instruction
      */
-    public Point draw(Graphics2D g2d, int halfSize, int xOffset, int yOffset, Point prevConncection) {
-        if (this.xOffset != xOffset)
-            this.updateXOffset(xOffset);
-
-        if (this.yOffset != yOffset)
-            this.updateYOffset(yOffset);
-
+    public Point draw(Graphics2D g2d, int halfSize, Point prevConncection) {
         g2d.setColor(Settings.scorePerformanceColor);                               // use normal performance symbol color
 
         // draw connection line to the preceding tempo instruction
@@ -150,7 +177,6 @@ public class TempoMapPanelElement {
         g2d.drawPolyline(this.xCoords, this.yCoords, this.xCoords.length);
 
         // draw the tempo instruction's square
-        this.halfSize = halfSize;
         int size = halfSize + halfSize;
         g2d.fillRect(this.xCoords[0] - halfSize, this.yCoords[0] - halfSize, size, size);
 

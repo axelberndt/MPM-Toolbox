@@ -413,7 +413,7 @@ public class AudioDocumentData extends DocumentData<WebPanel> {
             return;
         }
         // corresponds to: if (this.getTempoMapPanel().mouseInThisPanel)
-        this.mouseCursor.setTicksX(e.getX());
+        this.mouseCursor.setPixelsX(e.getX());
     }
 
     /**

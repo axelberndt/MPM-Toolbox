@@ -699,6 +699,12 @@ public class MpmEditingTools {
                 editTempo.addActionListener(actionEvent -> MpmEditingTools.editTempo(self, mpmTree));
                 menu.add(editTempo);
 
+                // replace tempo instruction by continuous tempo transition from the preceding to the succeeding instruction
+                WebMenuItem replaceByContinuous = new WebMenuItem("Replace by Continuous Transition");
+                replaceByContinuous.setToolTipText("<html><center>Removes this segment from the tempoMap.<br>The preceding tempo instruction is adapted to keep up the timing.</center></html>");
+                replaceByContinuous.addActionListener(actionEvent -> MpmEditingTools.replaceByContinuousTempo(self, mpmTree));
+                menu.add(replaceByContinuous);
+
                 // move entry
                 menu.add(MpmEditingTools.makeMoveMapEntry(self, mpmTree));
 
@@ -2287,6 +2293,32 @@ public class MpmEditingTools {
         MpmEditingTools.handOverScorePosition(tempoElement, map.getElement(index), mpmTree.getProjectPane().getScore());   // if the old instruction is linked in the score, we have to associate the new now with that score position
         mpmTree.reloadNode(tempoNode.getParent());
         MpmEditingTools.updateAudioAlignment(performance, mpmTree.getProjectPane(), true);    // update the alignment visualization in the audio frame
+    }
+
+    /**
+     * replace tempo instruction by continuous tempo transition from the preceding to the succeeding instruction
+     * @param tempoNode
+     * @param mpmTree
+     */
+    private static void replaceByContinuousTempo(MpmTreeNode tempoNode, MpmTree mpmTree) {
+        TempoMap map = (TempoMap) tempoNode.getParent().getUserObject();
+
+        MpmTreeNode prev = tempoNode.getPreviousSibling();
+        while ((prev != null) && (prev.getType() != MpmTreeNode.MpmNodeType.tempo))
+            prev = prev.getPreviousSibling();
+
+        if (prev == null)
+            return;
+
+        Element tempoElement = (Element) tempoNode.getUserObject();
+        TempoData tempoData = new TempoData(tempoElement);
+
+        Element prevElement = (Element) prev.getUserObject();
+        TempoData prevData = new TempoData(prevElement);
+
+        // TODO: do the thing
+
+        // TODO: do the updating and housekeeping as in the other methods
     }
 
     /**
