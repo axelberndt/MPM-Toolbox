@@ -9,13 +9,10 @@ import com.alee.laf.scroll.WebScrollPane;
 import com.alee.managers.icon.Icons;
 import com.alee.managers.style.StyleId;
 import mpmToolbox.gui.ProjectPane;
-import mpmToolbox.gui.score.ScoreDisplayPanel;
 import nu.xom.Attribute;
 import nu.xom.Element;
 import nu.xom.Node;
 
-import javax.swing.event.TreeSelectionEvent;
-import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.TreePath;
 import javax.swing.tree.TreeSelectionModel;
 import java.util.ArrayList;
@@ -25,7 +22,7 @@ import java.util.Enumeration;
  * A custom WebAsncTree for MSM data.
  * @author Axel Berndt
  */
-public class MsmTree extends WebExTree<MsmTreeNode> implements /*MouseListener,*/ TreeSelectionListener {
+public class MsmTree extends WebExTree<MsmTreeNode> /*implements MouseListener, TreeSelectionListener*/ {
     @NotNull private final ProjectPane projectPane;                         // a link to the parent project pane to access its data, midi player etc.
     private WebDockableFrame dockableFrame = null;                          // a WebDockableFrame instance that displays this MSM tree, to be used in class ProjectPane
 
@@ -45,7 +42,7 @@ public class MsmTree extends WebExTree<MsmTreeNode> implements /*MouseListener,*
 //        msmTree.setCellEditor(new MsmTreeCellEditor());
 //        msmTree.setStyleId(StyleId.treeTransparent);
 
-        this.addTreeSelectionListener(this);
+//        this.addTreeSelectionListener(this);
 //        this.addMouseListener(this);
     }
 
@@ -167,32 +164,6 @@ public class MsmTree extends WebExTree<MsmTreeNode> implements /*MouseListener,*
         }
 
         return null;
-    }
-
-    /**
-     * The TreeSelectionListener is connected to the MSM tree and fires when something is selected there.
-     * So the score display can highlight notes if possible.
-     * @param treeSelectionEvent
-     */
-    @Override
-    public void valueChanged(TreeSelectionEvent treeSelectionEvent) {
-        TreePath path = treeSelectionEvent.getNewLeadSelectionPath();
-        if (path == null)
-            return;
-
-        MsmTreeNode n = this.getNodeForPath(path);
-        n.play(this.projectPane.getParentMpmToolbox().getMidiPlayerForSingleNotes());                                 // the node might be a node and should play its note via MIDI when selected
-
-        // trigger the score frame's score panel to repaint, so it highlights the selected note, if visible
-        if ((n.getType() == MsmTreeNode.XmlNodeType.note)                                               // if the currently selected node is of type note
-                && (this.projectPane.getScoreFrame().getScoreDisplay() != null)) {                      // and we have a score display
-
-            ScoreDisplayPanel scoreDisplayPanel = this.projectPane.getScoreFrame().getScoreDisplay();   // get the currently displayed score page
-            if (scoreDisplayPanel.getScorePage().contains((Element) n.getUserObject()))                 // if it contains the note we have just selected
-                scoreDisplayPanel.repaint();                                                            // let the score display repaint so the highlighted note gets displayed
-        }
-
-        // TODO trigger the piano roll in the audio tab to display/emphasize this part
     }
 
     /**

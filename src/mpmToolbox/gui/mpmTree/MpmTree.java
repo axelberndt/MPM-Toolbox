@@ -8,8 +8,6 @@ import mpmToolbox.gui.ProjectPane;
 import javax.swing.*;
 import javax.swing.event.TreeModelEvent;
 import javax.swing.event.TreeModelListener;
-import javax.swing.event.TreeSelectionEvent;
-import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.TreePath;
 import javax.swing.tree.TreeSelectionModel;
 import java.awt.event.MouseEvent;
@@ -23,7 +21,7 @@ import java.util.List;
  * This class represents an MPM tree based on the WebExTree class.
  * @author Axel Berndt
  */
-public class MpmTree extends WebExTree<MpmTreeNode> implements MouseListener, TreeSelectionListener, TreeModelListener {
+public class MpmTree extends WebExTree<MpmTreeNode> implements MouseListener, /*TreeSelectionListener,*/ TreeModelListener {
     @NotNull private final ProjectPane projectPane;                         // a link to the parent project pane to access its data, midi player etc.
 
     /**
@@ -41,23 +39,9 @@ public class MpmTree extends WebExTree<MpmTreeNode> implements MouseListener, Tr
 //        this.setCellEditor(new MpmTreeCellEditor());
 //        this.setStyleId(StyleId.treeTransparent);
 
-        this.addTreeSelectionListener(this);
+//        this.addTreeSelectionListener(this);
         this.treeModel.addTreeModelListener(this);
         this.addMouseListener(this);
-    }
-
-    /**
-     * The TreeSelectionListener is connected to the MPM tree and fires when something is selected there.
-     * So the score display can highlight notes if possible.
-     * @param treeSelectionEvent
-     */
-    @Override
-    public void valueChanged(TreeSelectionEvent treeSelectionEvent) {
-        TreePath path = treeSelectionEvent.getNewLeadSelectionPath();
-        if (path == null)
-            return;
-
-        this.projectPane.repaintScoreDisplay();    // repaint the score display so a selected MpmTreeNode gets highlighted and when switching to another performance we get to see its overlay
     }
 
     /**

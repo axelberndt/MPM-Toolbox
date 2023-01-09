@@ -166,12 +166,14 @@ public class TempoMapPanelElement {
      * @param prevConnection the end point of the previous instruction
      * @return the end point of this instruction
      */
-    public Point draw(Graphics2D g2d, int halfSize, Point prevConnection) {
+    public Point draw(Graphics2D g2d, int halfSize, Point prevConnection, Color color) {
         g2d.setColor(Settings.scorePerformanceColor);                               // use normal performance symbol color
 
         // draw connection line to the preceding tempo instruction
         if ((prevConnection != null) && (prevConnection.y != this.yCoords[0]))    // only necessary if there is a preceding one, and it ends on a different value than this instructions start value
             g2d.drawLine(prevConnection.x, prevConnection.y, this.xCoords[0], this.yCoords[0]);
+
+        g2d.setColor(color);
 
         // draw the curve segment of the tempo instruction
         g2d.drawPolyline(this.xCoords, this.yCoords, this.xCoords.length);

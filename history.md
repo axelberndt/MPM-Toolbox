@@ -13,6 +13,7 @@
 - Enhanced tempoMap visualization in class `mpmToolbox.gui.audio.TempoMapPanel`. 
   - New class added, `mpmToolbox.gui.audio.utilities.TempoMapPanelElement`.
   - Added configuration attribute `tempoCurveTesselation` in class `mpmToolbox.gui.Settings` to control the draw quality of continuous tempo transitions.
+- Removed the `TreeSelectionListener` from classes `mpmToolbox.gui.msmTree.MsmTree` and `mpmToolbox.gui.mpmTree.MpmTree`. These listeners are now created by classes `mpmToolbox.gui.score.ScoreDisplayPanel` and `mpmToolbox.gui.audio.TempoMapPanel` which do actually react on those interactions in the trees.
 
 
 #### v0.1.21

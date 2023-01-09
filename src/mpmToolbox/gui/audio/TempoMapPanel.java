@@ -1,6 +1,5 @@
 package mpmToolbox.gui.audio;
 
-import com.alee.laf.menu.WebMenuItem;
 import com.alee.laf.menu.WebPopupMenu;
 import meico.mpm.Mpm;
 import meico.mpm.elements.Part;
@@ -18,6 +17,7 @@ import mpmToolbox.projectData.alignment.Note;
 import mpmToolbox.projectData.alignment.PianoRoll;
 import mpmToolbox.supplementary.Tools;
 
+import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.geom.Point2D;
@@ -60,6 +60,19 @@ public class TempoMapPanel extends PianoRollPanel implements ComponentListener, 
 
         this.setOpaque(false);
         this.setBackground(Color.BLACK);
+
+        this.parent.getParent().getMpmTree().addTreeSelectionListener(treeSelectionEvent -> {
+            TreePath path = treeSelectionEvent.getNewLeadSelectionPath();
+            TreePath oldPath = treeSelectionEvent.getOldLeadSelectionPath();
+            if (path == oldPath)
+                return;
+
+            // if a tempo instruction is involved in a node selection in the MPM tree
+            if (((path != null) && (this.parent.getParent().getMpmTree().getNodeForPath(path).getType() == MpmTreeNode.MpmNodeType.tempo))              // either as new selection
+                    || ((oldPath != null) && (this.parent.getParent().getMpmTree().getNodeForPath(oldPath).getType() == MpmTreeNode.MpmNodeType.tempo))) {  // or as previous selection
+                this.repaint();          // repaint the tempoMapPanel, so the highlighting gets updated
+            }
+        });
     }
 
     /**
@@ -199,8 +212,10 @@ public class TempoMapPanel extends PianoRollPanel implements ComponentListener, 
             if (tempoDatum.tempoData.startDate > this.parent.getRightmostTick())        // tempo instruction is after the currently visualized frame
                 break;                                                                  // done
 
+            MpmTreeNode selectedMpmNode = this.parent.getParent().getMpmTree().getSelectedNode();
+            Color color = ((selectedMpmNode == null) || (selectedMpmNode.getUserObject() != tempoDatum.tempoData.xml)) ? Settings.scorePerformanceColor : Settings.scorePerformanceColorHighlighted;
             tempoDatum.setScalesAndOffsets(pixelWidth, pixelHeight, xOffset, yOffset);  // adjust the scaling and offsets of the instruction's  points
-            prevConnection = tempoDatum.draw(g2d, this.halfSize, prevConnection);            // draw the tempo instruction
+            prevConnection = tempoDatum.draw(g2d, this.halfSize, prevConnection, color);            // draw the tempo instruction
         }
 
         g2d.setStroke(defaultStroke);

@@ -22,6 +22,7 @@ import mpmToolbox.supplementary.orthantNeighborhoodGraph.ONGNode;
 import nu.xom.Element;
 import nu.xom.Node;
 
+import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.geom.AffineTransform;
@@ -90,6 +91,23 @@ public class ScoreDisplayPanel extends WebPanel implements MouseWheelListener, M
         this.addMouseListener(this);
         this.addKeyListener(this);
 //        this.addKeyboardInput();
+
+        this.parent.getParent().getMpmTree().addTreeSelectionListener(treeSelectionEvent -> this.repaint());    // repaint when tree selection in MPM tree changed, so the highlighting gets updated
+
+        this.parent.getParent().getMsmTree().addTreeSelectionListener(treeSelectionEvent -> {
+            TreePath path = treeSelectionEvent.getNewLeadSelectionPath();
+            if (path == null)
+                return;
+
+            MsmTreeNode n = this.parent.getParent().getMsmTree().getNodeForPath(path);
+            n.play(this.parent.getParent().getParentMpmToolbox().getMidiPlayerForSingleNotes());                                 // the node might be a node and should play its note via MIDI when selected
+
+            // trigger the score frame's score panel to repaint, so it highlights the selected note, if visible
+            if (n.getType() == MsmTreeNode.XmlNodeType.note) {                                  // if the currently selected node is of type note
+                if (this.getScorePage().contains((Element) n.getUserObject()))                  // if it contains the note we have just selected
+                    this.repaint();                                                             // let the score display repaint so the highlighted note gets displayed
+            }
+        });
     }
 
     /**
