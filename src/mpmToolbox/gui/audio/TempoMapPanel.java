@@ -484,27 +484,18 @@ public class TempoMapPanel extends PianoRollPanel implements ComponentListener, 
      */
     @Override
     protected WebPopupMenu getContextMenu(MouseEvent e) {
-        // disabled
-        return null;
-//        TempoMapPanelElement tempo = this.getTempoInstructionAt(e.getX(), e.getY());
-//        if (tempo == null)
-//            return null;
-//
-//        MpmTree mpmTree = this.parent.parent.getMpmTree();              // a handle to the mpm tree
-//        MpmTreeNode mpmTreeNode = mpmTree.findNode(tempo.tempoData.xml, true);    // get the mpm tree's node that corresponds with the selected node
-//        if (mpmTreeNode == null)                                        // if nothing has been selected
-//            return null;                                                // done
-//        mpmTree.setSelectedNode(mpmTreeNode);                           // select the node in the mpm tree
-//        mpmTree.scrollPathToVisible(mpmTreeNode.getTreePath());         // scroll the tree so the node is visible
-//
-//        // the context menu entry for replacing tempo instructions by continuous tempo transitions from the preceding to the succeeding instruction
-//        WebMenuItem replaceByContinuous = new WebMenuItem("Replace by Continuous Tempo Transition");
-//        replaceByContinuous.setToolTipText("<html><center>Removes this segment from the tempoMap.<br>The preceding tempo instruction is adapted to keep up the timing.</center></html>");
-//
-//        // make the context menu for tempo instructions
-//        WebPopupMenu menu = MpmEditingTools.makeMpmTreeContextMenu(mpmTreeNode, mpmTree);
-//        menu.add(replaceByContinuous, 0);
-//        return menu;
+        TempoMapPanelElement tempo = this.getTempoInstructionAt(e.getX(), e.getY());
+        if (tempo == null)
+            return null;
+
+        MpmTree mpmTree = this.parent.parent.getMpmTree();              // a handle to the mpm tree
+        MpmTreeNode mpmTreeNode = mpmTree.findNode(tempo.tempoData.xml, true);    // get the mpm tree's node that corresponds with the selected node
+        if (mpmTreeNode == null)                                        // if nothing has been selected
+            return null;                                                // done
+        mpmTree.setSelectedNode(mpmTreeNode);                           // select the node in the mpm tree
+        mpmTree.scrollPathToVisible(mpmTreeNode.getTreePath());         // scroll the tree so the node is visible
+
+        return MpmEditingTools.makeMpmTreeContextMenu(mpmTreeNode, mpmTree);
     }
 
     /**
