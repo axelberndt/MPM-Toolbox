@@ -13,6 +13,8 @@
 - Enhanced tempoMap visualization in class `mpmToolbox.gui.audio.TempoMapPanel`. 
   - New class added, `mpmToolbox.gui.audio.utilities.TempoMapPanelElement`.
   - Added configuration attribute `tempoCurveTesselation` in class `mpmToolbox.gui.Settings` to control the draw quality of continuous tempo transitions.
+  - The tempo instructions in the visualization are fully interactive. Double click opens the editor dialog. Right click opens the same context menu as for the tempo instructions in the MPM tree widget.
+  - A new operation has been added to the tempo instruction's context menu, "Replace by Continuous Transition". It removes the instruction from the tempoMap and edits the preceding tempo instruction so that the timing of the next instruction is kept intact.
 - Removed the `TreeSelectionListener` from classes `mpmToolbox.gui.msmTree.MsmTree` and `mpmToolbox.gui.mpmTree.MpmTree`. These listeners are now created by classes `mpmToolbox.gui.score.ScoreDisplayPanel` and `mpmToolbox.gui.audio.TempoMapPanel` which do actually react on those interactions in the trees.
 
 
