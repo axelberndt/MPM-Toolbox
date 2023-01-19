@@ -709,7 +709,7 @@ public class MpmEditingTools {
                 menu.add(MpmEditingTools.makeDeleteMapEntryMenuItem(self, mpmTree));
 
                 // replace tempo instruction by continuous tempo transition from the preceding to the succeeding instruction
-                WebMenuItem replaceByContinuous = new WebMenuItem("Replace by Continuous Transition");
+                WebMenuItem replaceByContinuous = new WebMenuItem("Replace with Continuous Transition");
                 menu.add(replaceByContinuous);
                 replaceByContinuous.setToolTipText("<html><center>Removes this segment from the tempoMap.<br>The preceding tempo instruction is adapted to keep up the timing.<br>This operation is not applicable to the first and last tempo instruction in the map.</center></html>");
 
@@ -2336,58 +2336,17 @@ public class MpmEditingTools {
         TempoData tempoData = map.getTempoDataOf(map.getElementIndexOf(tempoElement));
 
         Element prevElement = (Element) prev.getUserObject();
-        TempoData prevData = map.getTempoDataOf(map.getElementIndexOf(prevElement));
+        int prevIndex = map.getElementIndexOf(prevElement);
+        TempoData prevData = map.getTempoDataOf(prevIndex);
 
         Element nextElement = (Element) next.getUserObject();
         TempoData nextData = map.getTempoDataOf(map.getElementIndexOf(nextElement));
 
-        // compute and edit the prev tempo instruction and create newTempo from it, which will replace prev in the tempoMap
-        int ppq = tempoNode.getPerformance().getPPQ();
-        double millisecondsOld = TempoMap.computeDiffTiming(tempoData.startDate, ppq, prevData) + TempoMap.computeDiffTiming(nextData.startDate, ppq, tempoData);
-
-        TempoData newTempo = new TempoData();
-        newTempo.xmlId = prevData.xmlId;
-        newTempo.bpm = prevData.bpm;
-        newTempo.bpmString = prevData.bpmString;
-        newTempo.startDate = prevData.startDate;
-        newTempo.endDate = nextData.startDate;
-        newTempo.beatLength = prevData.beatLength;
-        newTempo.transitionTo = nextData.bpm;   // TODO: tempoData.transitionTo or tempoData.bpm if tempoData is not between (prevData.bpm, nextData.bpm); auf beatLength umrechnen!!!
-        newTempo.transitionToString = nextData.bpmString;
-        newTempo.meanTempoAt = 0.5;             // TODO: must be computed
-        newTempo.exponent = Math.log(0.5) / Math.log(newTempo.meanTempoAt);
-
-        boolean isMonotone = true;              // TODO: compute
-        boolean isRitardando = newTempo.bpm > newTempo.transitionTo;
-
-        // bisection
-        double min = 0.0;
-        double max = 1.0;
-        for (double error = TempoMap.computeDiffTiming(nextData.startDate, ppq, newTempo) - millisecondsOld; Math.abs(error) >= 1.0; error = TempoMap.computeDiffTiming(nextData.startDate, ppq, newTempo) - millisecondsOld) {
-            System.out.println(error);
-            if (isRitardando) {
-                if (error > 0.0) {
-                    min = newTempo.meanTempoAt;
-                } else {
-                    max = newTempo.meanTempoAt;
-                }
-            } else {                    // is accelerando
-                if (error > 0.0) {
-                    max = newTempo.meanTempoAt;
-                } else {
-                    min = newTempo.meanTempoAt;
-                }
-            }
-            newTempo.meanTempoAt = (min + max) * 0.5;
-            newTempo.exponent = Math.log(0.5) / Math.log(newTempo.meanTempoAt);
-        }
-
-        // do the updating and housekeeping
         Performance performance = tempoNode.getPerformance();
-        map.removeElement(tempoElement);                            // remove the replaced instruction from the map
-        map.removeElement(prevElement);                             // remove the previous instruction from the map
-        int index = map.addTempo(newTempo);                         // add the new instruction to the map
-        MpmEditingTools.handOverScorePosition(prevElement, map.getElement(index), mpmTree.getProjectPane().getScore());   // if the old instruction is linked in the score, we have to associate the new now with that score position
+
+        map.simplify(new ArrayList<>(Arrays.asList(prevData, tempoData, nextData)), false, tempoNode.getPerformance().getPPQ());
+
+        MpmEditingTools.handOverScorePosition(prevElement, map.getElement(prevIndex), mpmTree.getProjectPane().getScore());   // if the old instruction is linked in the score, we have to associate the new now with that score position
         mpmTree.reloadNode(prev.getParent());
         MpmEditingTools.updateAudioAlignment(performance, mpmTree.getProjectPane(), true);    // update the alignment visualization in the audio frame
     }

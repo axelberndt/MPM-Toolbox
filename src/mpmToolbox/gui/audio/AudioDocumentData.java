@@ -9,7 +9,11 @@ import com.alee.laf.combobox.WebComboBox;
 import com.alee.laf.grouping.GroupPane;
 import com.alee.laf.panel.WebPanel;
 import meico.mei.Helper;
+import meico.mpm.Mpm;
+import meico.mpm.elements.Part;
 import meico.mpm.elements.Performance;
+import meico.mpm.elements.maps.GenericMap;
+import meico.mpm.elements.maps.TempoMap;
 import meico.supplementary.KeyValue;
 import mpmToolbox.gui.ProjectPane;
 import mpmToolbox.gui.Settings;
@@ -57,6 +61,7 @@ public class AudioDocumentData extends DocumentData<WebPanel> {
     private final WebComboBox partChooser = new WebComboBox();      // with this combobox the user can select whether all musical part or only on individual part should be displayed in the piano roll overlay
     private final WebButton resetButton = new WebButton("Reset");   // this button re-initializes the alignment
     private final WebButton perf2AlignConvert = new WebButton("<html>Alignment &rarr; Performance</html>");         // this is the button to convert a performance to an alignment and vice versa
+    private final WebButton simplifyTempoMapButton = new WebButton("Simplify TempoMap");    // the button to simplify the whole tempoMap with one click
     private final WebComboBox alignmentComputationChooser = new WebComboBox(new AbstractAlignmentComputation[]{new BasicPitchLCSAligner(), new PlaceholderAligner()});  // choose the alignment computation algorithm that computes the audio-to-score/MSM alignment, fill the array with new instances of all alignment algorithm classes available
     private final WebButton triggerAlignmentComputation = new WebButton("Run");      //  ▶ "\u25B6"
 
@@ -74,6 +79,7 @@ public class AudioDocumentData extends DocumentData<WebPanel> {
         this.makeResetButton();
         this.makeAlignmentButtons();
         this.makePerf2AlignButton();
+        this.makeSimplifyButton();
 
         this.waveform = new WaveformPanel(this);
         this.spectrogram = new SpectrogramPanel(this);
@@ -277,7 +283,7 @@ public class AudioDocumentData extends DocumentData<WebPanel> {
                 if (!this.getParent().getMpm().addPerformance(performance))             // add the performance to the MPM
                     return;                                                             // if performance adding failed, cancel
 
-                this.getAlignment().exportPerformance(performance);
+                this.getAlignment().exportPerformance(performance);                     // add the export data to the performance
 
                 // update MPM tree and SyncPlayer, and select the performance in both
                 this.getParent().getMpmTree().setSelectedNode(this.getParent().getMpmTree().reloadRootNode().findChildNode(performance, false));
@@ -286,6 +292,32 @@ public class AudioDocumentData extends DocumentData<WebPanel> {
                 this.getAudio().setAlignment(this.getAlignment());                      // we transfer the current timing data to the audio alignment
                 this.getParent().getSyncPlayer().selectAlignmentPerformance();          // select the alignment in the SyncPlayer so any further interaction in the piano roll will be on the alignment and not on the performance
             }
+        });
+    }
+
+    /**
+     * define the button to simplify the whole tempoMap with one click
+     */
+    private void makeSimplifyButton() {
+        this.simplifyTempoMapButton.setPadding(Settings.paddingInDialogs);
+        this.simplifyTempoMapButton.setToolTip("<html>Simplify monotonous and constant sequences of tempo instructions to single continuous or constant instructions.</html>");
+        this.simplifyTempoMapButton.addActionListener(actionEvent -> {
+            Performance performance = this.getParent().getSyncPlayer().getSelectedPerformance();
+            if (performance == null)
+                return;
+
+            // ask the tempoMap panel for the tempoMap it is displaying
+            TempoMap tmap = this.getTempoMapPanel().getTempoMap();
+            if (tmap == null)
+                return;
+
+            double error = tmap.simplify(1.0, performance.getPPQ());    // simplify
+
+            // TODO: debug simplify() (it processes no accellerandi)
+            // update mpmTree, score, TempoMapPanel
+            this.getParent().getMpmTree().reloadNode(this.getParent().getMpmTree().findNode(tmap, false));
+            this.updateTempomapPanel();
+            this.getParent().getScore().cleanupDeadNodes(); // TODO: before this, I should do a handover for those elements that have been edited, i.e. replaced by edited ones
         });
     }
 
@@ -303,6 +335,8 @@ public class AudioDocumentData extends DocumentData<WebPanel> {
 
         this.perf2AlignConvert.setEnabled(this.alignment != null);      // activate this if any alignment/performance is selected
         this.perf2AlignConvert.setText((this.getParent().getSyncPlayer().getSelectedPerformance() == null) ? "<html>Alignment &rarr; Performance</html>" : "<html>Performance &rarr; Alignment</html>");
+
+        this.simplifyTempoMapButton.setEnabled(this.getParent().getSyncPlayer().getSelectedPerformance() != null);
     }
 
     /**
@@ -337,6 +371,7 @@ public class AudioDocumentData extends DocumentData<WebPanel> {
         Tools.addComponentToGridBagLayout(buttonPanel, buttonLayout, this.resetButton, 1, 1, 1, 1, 1.0, 0.0, 0, 0, GridBagConstraints.VERTICAL, GridBagConstraints.CENTER);
         Tools.addComponentToGridBagLayout(buttonPanel,buttonLayout, new GroupPane(GroupPane.CENTER, this.alignmentComputationChooser, this.triggerAlignmentComputation), 2, 1, 1, 1, 1.0, 0.0, 0, 0, GridBagConstraints.VERTICAL, GridBagConstraints.CENTER);
         Tools.addComponentToGridBagLayout(buttonPanel, buttonLayout, this.perf2AlignConvert, 3, 1, 1, 1, 1.0, 0.0, 0, 0, GridBagConstraints.VERTICAL, GridBagConstraints.CENTER);
+        Tools.addComponentToGridBagLayout(buttonPanel, buttonLayout, this.simplifyTempoMapButton, 4, 1, 1, 1, 1.0, 0.0, 0, 0, GridBagConstraints.VERTICAL, GridBagConstraints.CENTER);
         Tools.addComponentToGridBagLayout(this.audioPanel, gridBagLayout, buttonPanel, 0, 1, 1, 1, 1.0, 0.0, 0, 0, GridBagConstraints.VERTICAL, GridBagConstraints.CENTER);
     }
 

@@ -7,6 +7,7 @@ import meico.mpm.elements.Performance;
 import meico.mpm.elements.maps.GenericMap;
 import meico.mpm.elements.maps.TempoMap;
 import meico.mpm.elements.maps.data.TempoData;
+import meico.supplementary.KeyValue;
 import mpmToolbox.gui.Settings;
 import mpmToolbox.gui.audio.utilities.TempoMapPanelElement;
 import mpmToolbox.gui.mpmEditingTools.MpmEditingTools;
@@ -202,7 +203,7 @@ public class TempoMapPanel extends PianoRollPanel implements ComponentListener, 
 
         // draw tempoMap
         Stroke defaultStroke = g2d.getStroke();                                         // keep the previous stroke settings, so we can switch back to it afterwards
-        g2d.setStroke(new BasicStroke(this.halfSize * 0.25f));                               // set new stroke
+        g2d.setStroke(new BasicStroke(this.halfSize * 0.25f));                          // set new stroke
 
         Point prevConnection = null;
         for (TempoMapPanelElement tempoDatum : this.tempoData) {                        // for each tempo instruction
@@ -253,45 +254,55 @@ public class TempoMapPanel extends PianoRollPanel implements ComponentListener, 
         this.tempoMap = (TempoMap) tmap;
 
         // collect tempo data for visualization and determine min and max tempo
-        ArrayList<TempoData> tempTempoData = new ArrayList<>();     // a temporary list of tempo instructions
-        this.minTempo = Double.MAX_VALUE;
-        this.maxTempo = 0.0;
+        ArrayList<KeyValue<TempoData, Double[]>> tempTempoData = new ArrayList<>(); // a temporary list of tempo instructions with their normalised bpm and transitionTo value in the value array of the KeyValue pair
+        this.minTempo = Double.MAX_VALUE;                           // in quarter note per minute
+        this.maxTempo = 0.0;                                        // in quarter note per minute
         for (int i = 0; i < this.tempoMap.size(); ++i) {            // for each tempo instruction in the tempomap
             TempoData data = this.tempoMap.getTempoDataOf(i);       // get its data
             if (data == null)                                       // the tempomap entry could be a style switch or a malicious entry
                 continue;                                           // go on with the next entry
 
-            tempTempoData.add(data);                                // add it to the tempoData temporary list
+            KeyValue<TempoData, Double[]> dataEntry = new KeyValue<>(data, new Double[]{data.bpm, data.transitionTo});
+
+            // regularise tempo to the basis of quarter note per minute
+            if (data.beatLength != 0.25) {
+                if (data.bpm != null)
+                    dataEntry.getValue()[0] *= data.beatLength * 4.0;
+                if (data.transitionTo != null)
+                    dataEntry.getValue()[1] *= data.beatLength * 4.0;
+            }
+
+            tempTempoData.add(dataEntry);                           // add it to the tempoData temporary list
 
             // update minimum and maximum tempo values
-            if (data.bpm < this.minTempo)
-                this.minTempo = data.bpm;
-            if (data.bpm > this.maxTempo)
-                this.maxTempo = data.bpm;
+            if (dataEntry.getValue()[0] < this.minTempo)
+                this.minTempo = dataEntry.getValue()[0];
+            if (dataEntry.getValue()[0] > this.maxTempo)
+                this.maxTempo = dataEntry.getValue()[0];
 
             if (data.transitionTo == null)
                 continue;
 
-            if (data.transitionTo < this.minTempo)
-                this.minTempo = data.transitionTo;
-            if (data.transitionTo > this.maxTempo)
-                this.maxTempo = data.transitionTo;
+            if (dataEntry.getValue()[1] < this.minTempo)
+                this.minTempo = dataEntry.getValue()[1];
+            if (dataEntry.getValue()[1] > this.maxTempo)
+                this.maxTempo = dataEntry.getValue()[1];
         }
 
         // give the tempo instructions relative positions in a unity square (date, tempo)
         double lengthTicks = this.alignment.getMillisecondsLength();                        // in this particular alignment ticks = milliseconds
-        for (TempoData tempoDatum : tempTempoData) {
-            double relativeX = tempoDatum.startDate / lengthTicks;
-            double relativeY = (tempoDatum.bpm - this.minTempo) / (this.maxTempo - this.minTempo);
+        for (KeyValue<TempoData, Double[]> tempoDatum : tempTempoData) {
+            double relativeX = tempoDatum.getKey().startDate / lengthTicks;
+            double relativeY = (tempoDatum.getValue()[0] - this.minTempo) / (this.maxTempo - this.minTempo);
             Point2D.Double startPoint = new Point2D.Double(relativeX, relativeY);
 
             if (!this.tempoData.isEmpty())                                                  // the end x-coordinate of the previous instruction is at the x-coordinate of this instruction
                 this.tempoData.get(this.tempoData.size() - 1).setRelativeEndX(relativeX);
 
-            double relativeEndY = (tempoDatum.transitionTo != null) ? (tempoDatum.transitionTo - this.minTempo) / (this.maxTempo - this.minTempo) : relativeY;
+            double relativeEndY = (tempoDatum.getValue()[1] != null) ? (tempoDatum.getValue()[1] - this.minTempo) / (this.maxTempo - this.minTempo) : relativeY;
             Point2D.Double endPoint = new Point2D.Double(relativeX + 1.0, relativeEndY);   // relativeX + 1.0 must be replaced by the relativeX coordinate of the next instruction, as done above
 
-            this.tempoData.add(new TempoMapPanelElement(tempoDatum, startPoint, endPoint));
+            this.tempoData.add(new TempoMapPanelElement(tempoDatum.getKey(), startPoint, endPoint));
         }
 
         // the last instruction must be constant
@@ -415,6 +426,14 @@ public class TempoMapPanel extends PianoRollPanel implements ComponentListener, 
             candidate = null;
 
         return candidate;
+    }
+
+    /**
+     * getter for the tempoMap that is currently displayed
+     * @return
+     */
+    public TempoMap getTempoMap() {
+        return this.tempoMap;
     }
 
     /**
