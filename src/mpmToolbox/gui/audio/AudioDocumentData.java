@@ -14,6 +14,7 @@ import meico.mpm.elements.Part;
 import meico.mpm.elements.Performance;
 import meico.mpm.elements.maps.GenericMap;
 import meico.mpm.elements.maps.TempoMap;
+import meico.mpm.elements.maps.data.TempoData;
 import meico.supplementary.KeyValue;
 import mpmToolbox.gui.ProjectPane;
 import mpmToolbox.gui.Settings;
@@ -300,7 +301,7 @@ public class AudioDocumentData extends DocumentData<WebPanel> {
      */
     private void makeSimplifyButton() {
         this.simplifyTempoMapButton.setPadding(Settings.paddingInDialogs);
-        this.simplifyTempoMapButton.setToolTip("<html>Simplify monotonous and constant sequences of tempo instructions to single continuous or constant instructions.</html>");
+        this.simplifyTempoMapButton.setToolTip("<html>Reduces monotonous and constant sequences of tempo instructions to a single continuous or constant instruction.</html>");
         this.simplifyTempoMapButton.addActionListener(actionEvent -> {
             Performance performance = this.getParent().getSyncPlayer().getSelectedPerformance();
             if (performance == null)
@@ -311,13 +312,7 @@ public class AudioDocumentData extends DocumentData<WebPanel> {
             if (tmap == null)
                 return;
 
-            double error = tmap.simplify(1.0, performance.getPPQ());    // simplify
-
-            // TODO: debug simplify() (it processes no accellerandi)
-            // update mpmTree, score, TempoMapPanel
-            this.getParent().getMpmTree().reloadNode(this.getParent().getMpmTree().findNode(tmap, false));
-            this.updateTempomapPanel();
-            this.getParent().getScore().cleanupDeadNodes(); // TODO: before this, I should do a handover for those elements that have been edited, i.e. replaced by edited ones
+            MpmEditingTools.simplifyTempoMap(tmap, performance.getPPQ(), this.getParent());
         });
     }
 

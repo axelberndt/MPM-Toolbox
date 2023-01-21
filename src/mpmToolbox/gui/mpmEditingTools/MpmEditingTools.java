@@ -487,6 +487,9 @@ public class MpmEditingTools {
                 // add style switch
                 menu.add(MpmEditingTools.makeAddStyleSwitchMenuEntry(self, mpmTree));
 
+                // simplify the whole tempoMap
+                menu.add(MpmEditingTools.makeSimplifyTempoMapEntry(self, mpmTree));
+
                 // move/merge into another part or global
                 menu.add(MpmEditingTools.makeMoveMergeMapEntry(self, mpmTree));
 
@@ -709,25 +712,7 @@ public class MpmEditingTools {
                 menu.add(MpmEditingTools.makeDeleteMapEntryMenuItem(self, mpmTree));
 
                 // replace tempo instruction by continuous tempo transition from the preceding to the succeeding instruction
-                WebMenuItem replaceByContinuous = new WebMenuItem("Replace with Continuous Transition");
-                menu.add(replaceByContinuous);
-                replaceByContinuous.setToolTipText("<html><center>Removes this segment from the tempoMap.<br>The preceding tempo instruction is adapted to keep up the timing.<br>This operation is not applicable to the first and last tempo instruction in the map.</center></html>");
-
-                MpmTreeNode prev = self.getPreviousSibling();
-                while ((prev != null) && (prev.getType() != MpmTreeNode.MpmNodeType.tempo))
-                    prev = prev.getPreviousSibling();
-                if (prev == null) {                             // this operation is not applicable to the first tempo instruction in the map
-                    replaceByContinuous.setEnabled(false);
-                } else {
-                    MpmTreeNode next = self.getNextSibling();
-                    while ((next != null) && (next.getType() != MpmTreeNode.MpmNodeType.tempo))
-                        next = next.getNextSibling();
-                    if (next == null) {                         // this operation is not applicable to the last tempo instruction in the map
-                        replaceByContinuous.setEnabled(false);
-                    } else {                                    // here we can enable this instruction
-                        replaceByContinuous.addActionListener(actionEvent -> MpmEditingTools.replaceByContinuousTempo(self, mpmTree));
-                    }
-                }
+                menu.add(MpmEditingTools.makeReplaceByContinuousTempoEntry(self, mpmTree));
                 break;
 
 
@@ -2311,44 +2296,109 @@ public class MpmEditingTools {
     }
 
     /**
+     * context menu entry to simplify a tempoMap
+     * @param tempoMapNode
+     * @param mpmTree
+     * @return
+     */
+    private static WebMenuItem makeSimplifyTempoMapEntry(MpmTreeNode tempoMapNode, MpmTree mpmTree) {
+        WebMenuItem menuItem = new WebMenuItem("Simplify TempoMap");
+        menuItem.setToolTipText("<html>Reduces monotonous and constant sequences of tempo instructions to a single continuous or constant instruction.</html>");
+
+        menuItem.addActionListener(actionEvent -> {
+            Performance performance = tempoMapNode.getPerformance();
+            if (performance == null)
+                return;
+            MpmEditingTools.simplifyTempoMap((TempoMap) tempoMapNode.getUserObject(), performance.getPPQ(), mpmTree.getProjectPane());
+        });
+
+        return menuItem;
+    }
+
+    /**
+     * simplify the whole tempoMap
+     * @param tempoMap
+     * @param ppq the pulses per quarter value of the tempoMap's underlying performance
+     * @param projectPane
+     */
+    public static void simplifyTempoMap(TempoMap tempoMap, int ppq, ProjectPane projectPane) {
+        long startTime = System.currentTimeMillis();                                                                    // we measure the time that the conversion consumes
+        System.out.println("Simplifying tempoMap.");
+
+        TempoMap.TempoMapSimplificationResults changes = tempoMap.simplify(ppq);   // simplify
+
+        // update mpmTree, score, TempoMapPanel
+        projectPane.getMpmTree().reloadNode(projectPane.getMpmTree().findNode(tempoMap, false));
+        for (KeyValue<TempoData, TempoData> replacement : changes.replacements) {
+            MpmEditingTools.handOverScorePosition(replacement.getKey().xml, replacement.getValue().xml, projectPane.getScore());   // if the old instruction is linked in the score, we have to associate the new now with that score position
+        }
+        projectPane.getScore().cleanupDeadNodes();
+        projectPane.getAudioFrame().updateTempomapPanel();
+
+        System.out.println("TempoMap simplification finished. Simplification error: " + changes.error + " milliseconds. Time consumed: " + (System.currentTimeMillis() - startTime) + " milliseconds");
+    }
+
+    /**
      * replace tempo instruction by continuous tempo transition from the preceding to the succeeding instruction
      * @param tempoNode
      * @param mpmTree
      */
-    private static void replaceByContinuousTempo(MpmTreeNode tempoNode, MpmTree mpmTree) {
-        TempoMap map = (TempoMap) tempoNode.getParent().getUserObject();
+    private static WebMenuItem makeReplaceByContinuousTempoEntry(MpmTreeNode tempoNode, MpmTree mpmTree) {
+        WebMenuItem menuItem = new WebMenuItem("Replace with Continuous Transition");
+        menuItem.setToolTipText("<html><center>Removes this segment from the tempoMap.<br>The preceding tempo instruction is adapted to keep up the timing.<br>This operation is not applicable to the first and last tempo instruction in the map.</center></html>");
 
-        MpmTreeNode prev = tempoNode.getPreviousSibling();
-        while ((prev != null) && (prev.getType() != MpmTreeNode.MpmNodeType.tempo))
-            prev = prev.getPreviousSibling();
+        MpmTreeNode previous = tempoNode.getPreviousSibling();
+        while ((previous != null) && (previous.getType() != MpmTreeNode.MpmNodeType.tempo))
+            previous = previous.getPreviousSibling();
+        if (previous == null) {                         // this operation is not applicable to the first tempo instruction in the map
+            menuItem.setEnabled(false);
+        } else {
+            MpmTreeNode successor = tempoNode.getNextSibling();
+            while ((successor != null) && (successor.getType() != MpmTreeNode.MpmNodeType.tempo))
+                successor = successor.getNextSibling();
+            if (successor == null) {                    // this operation is not applicable to the last tempo instruction in the map
+                menuItem.setEnabled(false);
+            } else {                                    // here we can enable this instruction
+                menuItem.addActionListener(actionEvent -> {
+                    TempoMap map = (TempoMap) tempoNode.getParent().getUserObject();
 
-        if (prev == null)
-            return;
+                    MpmTreeNode prev = tempoNode.getPreviousSibling();
+                    while ((prev != null) && (prev.getType() != MpmTreeNode.MpmNodeType.tempo))
+                        prev = prev.getPreviousSibling();
 
-        MpmTreeNode next = tempoNode.getNextSibling();
-        while ((next != null) && (next.getType() != MpmTreeNode.MpmNodeType.tempo))
-            next = next.getNextSibling();
+                    if (prev == null)
+                        return;
 
-        if (next == null)
-            return;
+                    MpmTreeNode next = tempoNode.getNextSibling();
+                    while ((next != null) && (next.getType() != MpmTreeNode.MpmNodeType.tempo))
+                        next = next.getNextSibling();
 
-        Element tempoElement = (Element) tempoNode.getUserObject();
-        TempoData tempoData = map.getTempoDataOf(map.getElementIndexOf(tempoElement));
+                    if (next == null)
+                        return;
 
-        Element prevElement = (Element) prev.getUserObject();
-        int prevIndex = map.getElementIndexOf(prevElement);
-        TempoData prevData = map.getTempoDataOf(prevIndex);
+                    Element tempoElement = (Element) tempoNode.getUserObject();
+                    TempoData tempoData = map.getTempoDataOf(map.getElementIndexOf(tempoElement));
 
-        Element nextElement = (Element) next.getUserObject();
-        TempoData nextData = map.getTempoDataOf(map.getElementIndexOf(nextElement));
+                    Element prevElement = (Element) prev.getUserObject();
+                    int prevIndex = map.getElementIndexOf(prevElement);
+                    TempoData prevData = map.getTempoDataOf(prevIndex);
 
-        Performance performance = tempoNode.getPerformance();
+                    Element nextElement = (Element) next.getUserObject();
+                    TempoData nextData = map.getTempoDataOf(map.getElementIndexOf(nextElement));
 
-        map.simplify(new ArrayList<>(Arrays.asList(prevData, tempoData, nextData)), false, tempoNode.getPerformance().getPPQ());
+                    Performance performance = tempoNode.getPerformance();
 
-        MpmEditingTools.handOverScorePosition(prevElement, map.getElement(prevIndex), mpmTree.getProjectPane().getScore());   // if the old instruction is linked in the score, we have to associate the new now with that score position
-        mpmTree.reloadNode(prev.getParent());
-        MpmEditingTools.updateAudioAlignment(performance, mpmTree.getProjectPane(), true);    // update the alignment visualization in the audio frame
+                    map.simplify(new ArrayList<>(Arrays.asList(prevData, tempoData, nextData)), false, tempoNode.getPerformance().getPPQ());
+
+                    MpmEditingTools.handOverScorePosition(prevElement, map.getElement(prevIndex), mpmTree.getProjectPane().getScore());   // if the old instruction is linked in the score, we have to associate the new now with that score position
+                    mpmTree.getProjectPane().getScore().cleanupDeadNodes();
+                    mpmTree.reloadNode(prev.getParent());
+                    MpmEditingTools.updateAudioAlignment(performance, mpmTree.getProjectPane(), true);    // update the alignment visualization in the audio frame
+                });
+            }
+        }
+
+        return menuItem;
     }
 
     /**
@@ -2401,7 +2451,7 @@ public class MpmEditingTools {
      * @param newMapElement the new map entry
      * @param score the score data
      */
-    private static void handOverScorePosition(Element prevMapElement, Element newMapElement, Score score) {
+    public static void handOverScorePosition(Element prevMapElement, Element newMapElement, Score score) {
         for (ScorePage page : score.getAllPages()) {                // check every score page
             ScoreNode node = page.getNode(prevMapElement);          // is the previous element linked on this page
             if (node == null)                                       // if not linked on the page
