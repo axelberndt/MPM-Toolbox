@@ -62,18 +62,20 @@ public class TempoMapPanel extends PianoRollPanel implements ComponentListener, 
         this.setOpaque(false);
         this.setBackground(Color.BLACK);
 
-        this.parent.getParent().getMpmTree().addTreeSelectionListener(treeSelectionEvent -> {
-            TreePath path = treeSelectionEvent.getNewLeadSelectionPath();
-            TreePath oldPath = treeSelectionEvent.getOldLeadSelectionPath();
-            if (path == oldPath)
-                return;
+        this.updateMpmTreeSelectionListener();
+        if (this.parent.getParent().getMpmDockableFrame() != null) {
+            this.parent.getParent().getMpmDockableFrame().addContainerListener(new ContainerListener() {    // if the MPM tree is completely removed or newly added, this listener updates the corresponding tree listener
+                @Override
+                public void componentAdded(ContainerEvent e) {
+                    updateMpmTreeSelectionListener();
+                }
 
-            // if a tempo instruction is involved in a node selection in the MPM tree
-            if (((path != null) && (this.parent.getParent().getMpmTree().getNodeForPath(path).getType() == MpmTreeNode.MpmNodeType.tempo))              // either as new selection
-                    || ((oldPath != null) && (this.parent.getParent().getMpmTree().getNodeForPath(oldPath).getType() == MpmTreeNode.MpmNodeType.tempo))) {  // or as previous selection
-                this.repaint();          // repaint the tempoMapPanel, so the highlighting gets updated
-            }
-        });
+                @Override
+                public void componentRemoved(ContainerEvent e) {
+                    updateMpmTreeSelectionListener();
+                }
+            });
+        }
     }
 
     /**
@@ -118,6 +120,26 @@ public class TempoMapPanel extends PianoRollPanel implements ComponentListener, 
         this.remove(this.noData);
         this.retrieveTempoMap();
         this.repaint();
+    }
+
+    /**
+     * invoke this method if the MPM tree is deleted or newly created, so the TempoMapPanel can react on it
+     */
+    public void updateMpmTreeSelectionListener() {
+        if (this.parent.getParent().getMpmTree() != null) {
+            this.parent.getParent().getMpmTree().addTreeSelectionListener(treeSelectionEvent -> {
+                TreePath path = treeSelectionEvent.getNewLeadSelectionPath();
+                TreePath oldPath = treeSelectionEvent.getOldLeadSelectionPath();
+                if (path == oldPath)
+                    return;
+
+                // if a tempo instruction is involved in a node selection in the MPM tree
+                if (((path != null) && (this.parent.getParent().getMpmTree().getNodeForPath(path).getType() == MpmTreeNode.MpmNodeType.tempo))              // either as new selection
+                        || ((oldPath != null) && (this.parent.getParent().getMpmTree().getNodeForPath(oldPath).getType() == MpmTreeNode.MpmNodeType.tempo))) {  // or as previous selection
+                    this.repaint();          // repaint the tempoMapPanel, so the highlighting gets updated
+                }
+            });
+        }
     }
 
     /**

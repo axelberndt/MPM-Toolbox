@@ -348,7 +348,7 @@ public class MpmToolbox {
         fileChooser.addChoosableFileFilter(new FileNameExtensionFilter("Music Performance Markup", "mpm"));
         fileChooser.addChoosableFileFilter(new FileNameExtensionFilter("MEI", "mei"));
         fileChooser.addChoosableFileFilter(new FileNameExtensionFilter("XML", "xml"));
-        fileChooser.addChoosableFileFilter(new FileNameExtensionFilter("MIDI", "mid"));
+        fileChooser.addChoosableFileFilter(new FileNameExtensionFilter("MIDI", "mid", "midi"));
         fileChooser.addChoosableFileFilter(new FileNameExtensionFilter("Audio files", "wav", "mp3"));
         fileChooser.addChoosableFileFilter(new FileNameExtensionFilter("Images", "pdf", "jpg", "jpeg", "png", "gif", "bmp"));
         fileChooser.addChoosableFileFilter(new FileNameExtensionFilter("Soundfonts", "dls", "sf2"));
@@ -439,6 +439,7 @@ public class MpmToolbox {
                     }
                     break;
                 case ".mid":
+                case ".midi":
                     projectPane = new ProjectPane(new Midi(file), this);
                     if (this.openProject(projectPane))
                         Tools.fileDrop(this, projectPane);

@@ -92,7 +92,20 @@ public class ScoreDisplayPanel extends WebPanel implements MouseWheelListener, M
         this.addKeyListener(this);
 //        this.addKeyboardInput();
 
-        this.parent.getParent().getMpmTree().addTreeSelectionListener(treeSelectionEvent -> this.repaint());    // repaint when tree selection in MPM tree changed, so the highlighting gets updated
+        this.updateMpmTreeSelectionListener();
+        if (this.parent.getParent().getMpmDockableFrame() != null) {
+            this.parent.getParent().getMpmDockableFrame().addContainerListener(new ContainerListener() {    // if the MPM tree is completely removed or newly added, this listener updates the corresponding tree listener
+                @Override
+                public void componentAdded(ContainerEvent e) {
+                    updateMpmTreeSelectionListener();
+                }
+
+                @Override
+                public void componentRemoved(ContainerEvent e) {
+                    updateMpmTreeSelectionListener();
+                }
+            });
+        }
 
         this.parent.getParent().getMsmTree().addTreeSelectionListener(treeSelectionEvent -> {
             TreePath path = treeSelectionEvent.getNewLeadSelectionPath();
@@ -108,6 +121,15 @@ public class ScoreDisplayPanel extends WebPanel implements MouseWheelListener, M
                     this.repaint();                                                             // let the score display repaint so the highlighted note gets displayed
             }
         });
+    }
+
+    /**
+     * invoke this method if the MPM tree is deleted or newly created, so the TempoMapPanel can react on it
+     */
+    public void updateMpmTreeSelectionListener() {
+        if (this.parent.getParent().getMpmTree() != null) {
+            this.parent.getParent().getMpmTree().addTreeSelectionListener(treeSelectionEvent -> this.repaint());    // repaint when tree selection in MPM tree changed, so the highlighting gets updated
+        }
     }
 
     /**

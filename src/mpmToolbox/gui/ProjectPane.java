@@ -256,6 +256,13 @@ public class ProjectPane extends WebDockablePane {
     }
 
     /**
+     * a getter for the MPM tree container
+     */
+    public WebDockableFrame getMpmDockableFrame() {
+        return this.mpmDockableFrame;
+    }
+
+    /**
      * access the list of score pages
      * @return
      */
