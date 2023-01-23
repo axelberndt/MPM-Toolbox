@@ -18,6 +18,7 @@
   - A new operation has been added to the tempo instruction's context menu, "Replace by Continuous Transition". It removes the instruction from the tempoMap and edits the preceding tempo instruction so that the timing of the next instruction is kept intact.
   - A similar new operation is added to the context menu of tempoMap nodes in the MPM tree and as a button in the audio panel: Simplify TempoMap. It reduces monotonous and constant sequences of tempo instructions to a single continuous or constant instruction.
 - Removed the `TreeSelectionListener` from classes `mpmToolbox.gui.msmTree.MsmTree` and `mpmToolbox.gui.mpmTree.MpmTree`. These listeners are now created by classes `mpmToolbox.gui.score.ScoreDisplayPanel` and `mpmToolbox.gui.audio.TempoMapPanel` which do actually react on those interactions in the trees.
+- MPM Toolbox can import MIDI files with filename extensions `.mid` (as before) and `.midi` (this is new).
 
 
 #### v0.1.21
