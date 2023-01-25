@@ -792,11 +792,12 @@ public class ScoreDisplayPanel extends WebPanel implements MouseWheelListener, M
      */
     @Override
     public void mouseReleased(MouseEvent mouseEvent) {
-        if (mouseEvent.isControlDown() || (this.parent.currentInteractionMode == ScoreDocumentData.InteractionMode.panAndZoom)) {   // if we are in pan mode
-            this.dragOrSelectGesture(mouseEvent);
+        if (mouseEvent.isControlDown() || (this.parent.currentInteractionMode == ScoreDocumentData.InteractionMode.panAndZoom) || (this.dragStartPoint != null)) {   // if we are in pan mode or in the midst of a drag gesture (dragStartPoint != null)
+            this.dragOrSelectGesture(mouseEvent);                                       // perform the drag
             return;                                                                     // done
         }
 
+        // otherwise perform a click
         switch (this.parent.currentInteractionMode) {
             case markNotes:                                                             // we are in mark notes mode
                 this.setCursor(Cursor.getPredefinedCursor(Cursor.CROSSHAIR_CURSOR));
@@ -915,20 +916,20 @@ public class ScoreDisplayPanel extends WebPanel implements MouseWheelListener, M
      */
     @Override
     public void mouseDragged(MouseEvent mouseEvent) {
-        // in pan and zoom mode do this
-        if ((this.parent.currentInteractionMode == ScoreDocumentData.InteractionMode.panAndZoom) || mouseEvent.isControlDown()) {
+        // panning should work in all interaction modes; once dragImage() has set variable this.dragStartPoint non-null, method mouseReleased() will treat the mouse button release as the end of the drag gesture, not a click
+//        if ((this.parent.currentInteractionMode == ScoreDocumentData.InteractionMode.panAndZoom) || mouseEvent.isControlDown()) {   // in pan and zoom mode do this
             this.setMousePositionInImage(null);
             this.setCursor(Cursor.getPredefinedCursor(Cursor.MOVE_CURSOR));                         // set the drag cursor
             this.dragImage(mouseEvent.getLocationOnScreen());
-            return;
-        }
-
-        // in performance mode, the anchor note stays fixed and we can drag the position even closer to other nodes
-        if (this.parent.currentInteractionMode == ScoreDocumentData.InteractionMode.editPerformance) {
-            this.setMousePositionInImage(this.mouse2PixelPosition(mouseEvent));
-            this.repaint();
-            return;
-        }
+//            return;
+//        }
+//
+//        // in performance mode, the anchor note stays fixed and we can drag the position even closer to other nodes
+//        if (this.parent.currentInteractionMode == ScoreDocumentData.InteractionMode.editPerformance) {
+//            this.setMousePositionInImage(this.mouse2PixelPosition(mouseEvent));
+//            this.repaint();
+//            return;
+//        }
 
 //        this.mousePositionInImage = this.mouse2PixelPosition(mouseEvent);
 //        this.repaint();
@@ -973,7 +974,8 @@ public class ScoreDisplayPanel extends WebPanel implements MouseWheelListener, M
      */
     @Override
     public void mouseWheelMoved(MouseWheelEvent mouseWheelEvent) {
-        if (!((this.parent.currentInteractionMode == ScoreDocumentData.InteractionMode.markNotes) || (this.parent.currentInteractionMode == ScoreDocumentData.InteractionMode.editPerformance)) || mouseWheelEvent.isControlDown()) {     // we are in pan and zoom mode
+        // zooming should be possible in all interaction modes, so the following line is commented out
+//        if (!((this.parent.currentInteractionMode == ScoreDocumentData.InteractionMode.markNotes) || (this.parent.currentInteractionMode == ScoreDocumentData.InteractionMode.editPerformance)) || mouseWheelEvent.isControlDown()) {     // we are in pan and zoom mode
             if (this.zoomFactor == null)                        // make sure zoomFactor is initialized
                 this.zoomFactor = 1.0;
 
@@ -1000,7 +1002,7 @@ public class ScoreDisplayPanel extends WebPanel implements MouseWheelListener, M
             }
 
             this.repaint();     // repaint the contents with this new transform
-        }
+//        }
     }
 
 //    /**
