@@ -16,6 +16,7 @@ import nu.xom.Element;
 import nu.xom.Elements;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 
@@ -209,65 +210,95 @@ public class Alignment {
     private void updateTimingTransformation() {
         // create an ordered list of all fixed notes
         ArrayList<Note> fixedNotes = new ArrayList<>();
-        for (Part part : this.getParts()) {
-            ArrayList<Note> f = part.getAllFixedNotes(false);   // get the part's list of fixed notes in the order of the current timing
+        int[] indices = new int[this.getParts().size()];
+        Arrays.fill(indices, 0);                                                                // initialize the indices array with zeros
 
-            if (fixedNotes.isEmpty()) {                         // if the fixedNotes list is empty
-                fixedNotes.addAll(f);                           // we can simply add the part's list, it is already ordered
-                continue;                                       // go on with the next part
-            }
+        for (boolean done = false; !done; done = Arrays.stream(indices).allMatch(n -> n < 0)) { // we are done when all indices are < 0
+            for (int p = 0; p < this.getParts().size(); ++p) {                                  // for each part
+                Part part = this.getParts().get(p);
 
-            // add the fixed notes to the list and keep the temporal order
-            int i = 0;
-            for (Note n : f) {
-                boolean added = false;
-                for (; i < fixedNotes.size(); ++i) {
-                    if (fixedNotes.get(i).getMillisecondsDate() > n.getMillisecondsDate()) {
-                        fixedNotes.add(i, n);
-                        added = true;
-                        i++;
+                if (indices[p] < 0)                                                             // if we reached the end of the part's note sequence
+                    continue;
+
+                if (part.getNoteSequence().get(indices[p]).isFixed()) {                         // we have a fixed note to be added to the list of fixed notes
+                    Note note = part.getNoteSequence().get(indices[p]);
+                    int addIndex = fixedNotes.size();
+                    while ((addIndex > 0) && (fixedNotes.get(addIndex - 1).getMillisecondsDate() > note.getMillisecondsDate()))  // if there are already later notes in the list
+                        --addIndex;                                                             // find the index before the earliest note that is after the note to be added
+                    fixedNotes.add(Math.max(0, addIndex), note);
+                }
+
+                do {                                                                            // find the next fixed note
+                    if ((++indices[p]) >= part.getNoteSequence().size()) {                      // increment the index and check if we reached the end of the part's note sequence
+                        indices[p] = -1;                                                        // as we reached the end of the part's note sequence, set the index negative, so it is recognized by the for-loop's allMatch() check
                         break;
                     }
-                }
-                if (!added)
-                    fixedNotes.add(n);
+                } while (!part.getNoteSequence().get(indices[p]).isFixed());
             }
         }
 
-        if (fixedNotes.isEmpty())                               // if no fixed notes
-            return;                                             // we are done
+//        this is alternative code to the above code block; the above is more efficient
+//        ArrayList<Note> fixedNotes = new ArrayList<>();
+//        for (Part part : this.getParts()) {
+//            ArrayList<Note> f = part.getAllFixedNotes(false);   // get the part's list of fixed notes in the order of the current timing
+//
+//            if (fixedNotes.isEmpty()) {                         // if the fixedNotes list is empty
+//                fixedNotes.addAll(f);                           // we can simply add the part's list, it is already ordered
+//                continue;                                       // go on with the next part
+//            }
+//
+//            // add the fixed notes to the list and keep the temporal order
+//            int i = 0;
+//            for (Note n : f) {
+//                boolean added = false;
+//                for (; i < fixedNotes.size(); ++i) {
+//                    if (fixedNotes.get(i).getMillisecondsDate() > n.getMillisecondsDate()) {
+//                        fixedNotes.add(i, n);
+//                        added = true;
+//                        i++;
+//                        break;
+//                    }
+//                }
+//                if (!added)
+//                    fixedNotes.add(n);
+//            }
+//        }
 
-        this.timingTransformation.clear();                      // we compute the timing transformation data anew
-        Note beginner = null;                                   // the section to be scaled begins with this note's millisecondsDate and initialMillisecondsDate
-        Note stopper = null;                                    // the section is scaled into [beginner.millisecondsDate; stopper.millisecondsDate)
+        if (fixedNotes.isEmpty())                                                               // if no fixed notes
+            return;                                                                             // we are done
+
+        this.timingTransformation.clear();                                                      // we compute the timing transformation data anew
+        Note beginner = null;                                                                   // the section to be scaled begins with this note's millisecondsDate and initialMillisecondsDate
+        Note stopper = null;                                                                    // the section is scaled into [beginner.millisecondsDate; stopper.millisecondsDate)
         for (int i=0; i < fixedNotes.size(); ++i) {
-            Note n = fixedNotes.get(i);
+            Note note = fixedNotes.get(i);
 
-            if (stopper == null)                                // if we seek a stopper
-                stopper = n;                                    // we take the first note we find
+            if (stopper == null)                                                                // if we seek a stopper (and that is the first we are looking for)
+                stopper = note;                                                                 // we take the first note we find
 
             // check if this is a beginner note, i.e. a note that was not shifted before another fixed note
             boolean isEnder = true;
-            for (int j=i+1; j < fixedNotes.size(); ++j) {       // check if another fixed note follows in the sequence that was initially before the current note
-                if (fixedNotes.get(j).getInitialMillisecondsDate() < n.getInitialMillisecondsDate()) {  // if we found one
-                    isEnder = false;                            // set the flag false
+            for (int j=i+1; j < fixedNotes.size(); ++j) {                                       // check if another fixed note follows in the sequence that was initially before the current note
+                if (fixedNotes.get(j).getInitialMillisecondsDate() < note.getInitialMillisecondsDate()) {  // if we found one
+                    isEnder = false;                                                            // set the flag false
                     break;
                 }
             }
 
-            if (isEnder) {                                      // if we found the next beginner = "ender" of the previous section
-                if (beginner != null) {                         // usually we have a beginner
+            if (isEnder) {                                                                      // if we found the next beginner = "ender" of the previous section
+                double newStopperMsDate = stopper.getMillisecondsDate();
+                if (beginner != null) {                                                         // usually we have a beginner
                     if (beginner.getMillisecondsDate() >= stopper.getMillisecondsDate())        // ensure meaningful values
-                        stopper.setMillisecondsDate(beginner.getMillisecondsDate() + 1.0);      // this is the fallback to make sure that the toStartDate and toEndDate values are not equal and not in reverse order
-                    this.timingTransformation.add(new double[]{beginner.getInitialMillisecondsDate(), n.getInitialMillisecondsDate(), beginner.getMillisecondsDate(), stopper.getMillisecondsDate()});
-                } else {                                        // but right at the beginning we have no beginner but have to handle the notes before the first fixed note
-                    double toStartDate = Math.max(0.0, stopper.getMillisecondsDate() - n.getInitialMillisecondsDate());
+                        newStopperMsDate = beginner.getMillisecondsDate() + 1.0;                // this is the fallback to make sure that the toStartDate and toEndDate values are not equal and not in reverse order
+                    this.timingTransformation.add(new double[]{beginner.getInitialMillisecondsDate(), note.getInitialMillisecondsDate(), beginner.getMillisecondsDate(), newStopperMsDate});
+                } else {                                                                        // but right at the beginning we have no beginner but have to handle the notes before the first fixed note
+                    double toStartDate = Math.max(0.0, stopper.getMillisecondsDate() - note.getInitialMillisecondsDate());
                     if (toStartDate >= stopper.getMillisecondsDate())                           // ensure meaningful values
-                        stopper.setMillisecondsDate(toStartDate + 1.0);                         // this is the fallback to make sure that the toStartDate and toEndDate values are not equal and not in reverse order
-                    this.timingTransformation.add(new double[]{0.0, n.getInitialMillisecondsDate(), toStartDate, stopper.getMillisecondsDate()});
+                        newStopperMsDate = toStartDate + 1.0;                                   // this is the fallback to make sure that the toStartDate and toEndDate values are not equal and not in reverse order
+                    this.timingTransformation.add(new double[]{0.0, note.getInitialMillisecondsDate(), toStartDate, newStopperMsDate});
                 }
 
-                beginner = n;
+                beginner = note;
                 stopper = null;
             }
         }
