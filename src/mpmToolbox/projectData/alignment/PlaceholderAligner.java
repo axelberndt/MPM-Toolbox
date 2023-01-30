@@ -33,7 +33,23 @@ public class PlaceholderAligner extends AbstractAlignmentComputation {
      */
     @Override
     public void makeContentPanel() {
-        WebLabel placeholder = new WebLabel("This is a placeholder. You have to implement method makeContentPanel()!");
+        WebLabel placeholder = new WebLabel(
+                "<html>This is a placeholder. You can add your own audio-to-score alignment algorithm here.<br><br>" +
+                "To do so, have a look into the source code of MPM Toolbox. Find class \"PlaceHolderAligner.java\"<br>" +
+                "in package \"mpmToolbox.projectData.alignment\". It is a minimal prototype model for an alignment<br>" +
+                "computation class and explains all necessary implementation details. Basically, you can copy<br>" +
+                "that class, rename it and add your code to it. Three methods from the parent abstract class<br>" +
+                "must be implemented, the constructor method, \"makeContentPanel()\" and \"compute()\". The latter<br>" +
+                "is the method that performs the alignment computation, whereas makeContentPanel() is the place<br>" +
+                "where this user interface is defined. Put all parameters of your algorithm in here, so users can<br>" +
+                "tweak them. Do not forget to label them and, maybe, add some explanatory text like this.<br><br>" +
+                "If your implementation comprises more than one class put them all into a subpackage. Any external<br>" +
+                "dependencies go into the \"externals\" folder. In MPM Toolbox we decided to store them locally<br>" +
+                "with the source code for several reasons (offline development, version stability, being able to<br>" +
+                "compile the code even if the dependency disappears from its web address for whatever reason).<br><br>" +
+                "Finally, find class \"AudioDocumentData.java\" in package \"mpmToolbox.gui.audio\". Add an<br>" +
+                "instance of your class to the array in the class variable  \"alignmentComputationChooser\",<br>" +
+                "just next to \"new PlaceholderAligner()\". Done.</html>");
         placeholder.setHorizontalAlignment(WebLabel.RIGHT);
         placeholder.setPadding(Settings.paddingInDialogs);
         this.addToContentPanel(placeholder, 0, 0, 1, 1, 1.0, 1.0, 0, 0, GridBagConstraints.BOTH);
