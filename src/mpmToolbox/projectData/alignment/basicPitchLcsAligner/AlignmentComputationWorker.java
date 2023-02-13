@@ -55,7 +55,7 @@ class AlignmentComputationWorker extends SwingWorker<Void, Void> {
         this.reuseModelOutput = reuseModelOutput;
         this.parent = parent;
         this.transcriber = transcriber;
-        this.aligner = new Aligner();
+        this.aligner = new Aligner(0.1);
         this.exportMidi = false;
     }
 
@@ -98,7 +98,7 @@ class AlignmentComputationWorker extends SwingWorker<Void, Void> {
         List<Transcriber.NoteEventWithTime> ns = transcriber.processWithProgress(audio, sampleRate, audioId,
                 minNoteLen, onsetThresh, frameThresh, minPitch, maxPitch,
                 true,
-                onLabel, onProgress, onDone);
+                onLabel, onProgress, onDone).noteEventWithTimes;
 
         if (exportMidi) {
             onLabel.apply("exporting MIDI file");

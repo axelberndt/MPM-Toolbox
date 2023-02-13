@@ -19,6 +19,7 @@ MPM Toolbox makes use of the following third party libraries:
 - [FileDrop](http://kim25.wwwdns.kim.uni-konstanz.de/vanted/javadoc/net/iharder/dnd/FileDrop.html) v1.1.1 by Robert Harder, Public Domain.
 - [Apache PDFBox](https://pdfbox.apache.org/) v2.0.23 by Apache, Apache License v2.0.
 - [Apache Commons Logging](http://commons.apache.org/proper/commons-logging/) v1.2 by Apache, Apache License v2.0.
+- [Apache Commons Math](https://commons.apache.org/proper/commons-math/) v3.6.1 by Apache, Apache License v2.0.
 - [Apache FontBox](https://pdfbox.apache.org/) v2.0.23 by Apache, Apache License v2.0.
 - [Basic Pitch](https://github.com/spotify/basic-pitch) by Rachel M. Bittner, Juan José Bosch, David Rubinstein, Gabriel Meseguer-Brocal, and Sebastian Ewert (Spotify), Apache License v2.0.
 - [ONNX](https://github.com/onnx/onnx) v1.13.1, Apache License v2.0.

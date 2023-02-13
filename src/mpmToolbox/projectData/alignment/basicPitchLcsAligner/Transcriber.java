@@ -10,6 +10,7 @@ import com.google.common.collect.ComparisonChain;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import mpmToolbox.Main;
+import mpmToolbox.gui.audio.utilities.SpectrogramSpecs;
 
 import javax.sound.midi.*;
 import javax.sound.sampled.AudioFormat;
@@ -38,11 +39,11 @@ import java.util.stream.Stream;
  * Original <a href="https://github.com/spotify/basic-pitch/">source code</a>.
  * <p>
  * Citation: @inproceedings{2022_BittnerBRME_LightweightNoteTranscription_ICASSP,
- *   author= {Bittner, Rachel M. and Bosch, Juan Jos\'e and Rubinstein, David and Meseguer-Brocal, Gabriel and Ewert, Sebastian},
- *   title= {A Lightweight Instrument-Agnostic Model for Polyphonic Note Transcription and Multipitch Estimation},
- *   booktitle= {Proceedings of the IEEE International Conference on Acoustics, Speech, and Signal Processing (ICASSP)},
- *   address= {Singapore},
- *   year= 2022,
+ * author= {Bittner, Rachel M. and Bosch, Juan Jos\'e and Rubinstein, David and Meseguer-Brocal, Gabriel and Ewert, Sebastian},
+ * title= {A Lightweight Instrument-Agnostic Model for Polyphonic Note Transcription and Multipitch Estimation},
+ * booktitle= {Proceedings of the IEEE International Conference on Acoustics, Speech, and Signal Processing (ICASSP)},
+ * address= {Singapore},
+ * year= 2022,
  * }
  */
 public class Transcriber {
@@ -374,31 +375,36 @@ public class Transcriber {
         return out;
     }
 
+    public class TranscriptionOutput {
+        public List<NoteEventWithTime> noteEventWithTimes;
+        public Map<String, float[][]> transcriptionModelOutput;
+    }
+
     /**
      * The main transcription method.
      *
      * @param audio            The mono audio data
      * @param sampleRate       The sample rate of the audio file
      * @param minNoteLen       The minimum length (in seconds) of notes to transcribe
-     * @param onsetThresh      The onset threshold to be passed to this.modelOutputToNotes
-     * @param frameThresh      The frame threshold to be passed to this.modelOutputToNotes
+     * @param onsetThresh      The onset threshold to be passed to {@link this.modelOutputToNotes}
+     * @param frameThresh      The frame threshold to be passed to {@link this.modelOutputToNotes}
      * @param reuseModelOutput Whether to re-use the raw transcription output if available
      * @param onLabel          A callback function that is called to display status information
      * @param onProgress       A callback function that is called to update the progress bar
      * @param onDone           A callback function that is called on transcription completion
      */
-    public List<NoteEventWithTime> processWithProgress(double[] audio,
-                                                       int sampleRate,
-                                                       String audioId,
-                                                       int minNoteLen,
-                                                       double onsetThresh,
-                                                       double frameThresh,
-                                                       int minPitch,
-                                                       int maxPitch,
-                                                       boolean reuseModelOutput,
-                                                       Function<String, Void> onLabel,
-                                                       Function<Double, Void> onProgress,
-                                                       Function<Void, Void> onDone) {
+    public TranscriptionOutput processWithProgress(double[] audio,
+                                                   int sampleRate,
+                                                   String audioId,
+                                                   int minNoteLen,
+                                                   double onsetThresh,
+                                                   double frameThresh,
+                                                   int minPitch,
+                                                   int maxPitch,
+                                                   boolean reuseModelOutput,
+                                                   Function<String, Void> onLabel,
+                                                   Function<Double, Void> onProgress,
+                                                   Function<Void, Void> onDone) {
 
         if (onLabel == null) {
             onLabel = (com.google.common.base.Function<String, Void>) input -> null;
@@ -482,7 +488,11 @@ public class Transcriber {
 
         onDone.apply(null);
 
-        return ns;
+        TranscriptionOutput out = new TranscriptionOutput();
+        out.noteEventWithTimes = ns;
+        out.transcriptionModelOutput = transcriptionModelOutput;
+
+        return out;
     }
 
 
@@ -498,6 +508,8 @@ public class Transcriber {
         public double startTime;
         public double endTime;
         public int pitchMidi;
+
+        // amplitude is normalized to [0, 1]
         public final double amplitude;
 
         public NoteEventWithTime(double startTime, double endTime, int pitchMidi, double amplitude) {
@@ -521,7 +533,7 @@ public class Transcriber {
 
         @Override
         public int compareTo(NoteEventWithTime o) {
-            return Double.compare(this.startTime, o.startTime);
+            return ComparisonChain.start().compare(this.startTime, o.startTime).compare(this.pitchMidi, o.pitchMidi).result();
         }
     }
 
@@ -567,7 +579,6 @@ public class Transcriber {
          *
          * @param o1 the first pair to compare
          * @param o2 the second pair to compare
-         *
          * @return a negative integer, zero, or a positive integer as the first pair's value is greater than, equal to,
          * or less than the second pair's value
          */
@@ -822,9 +833,7 @@ public class Transcriber {
      * Calculates the inferred onsets of a given set of onsets and frames.
      *
      * @param onsets the onsets to infer
-     *
      * @param frames the frames to use for inference
-     *
      * @return the inferred onsets
      */
     private static float[][] getInferedOnsets(float[][] onsets, float[][] frames) {
@@ -862,17 +871,22 @@ public class Transcriber {
         return maxOnsetsDiff;
     }
 
+    private static float[][] deepCopy(float[][] matrix) {
+        return java.util.Arrays.stream(matrix).map(el -> el.clone()).toArray($ -> matrix.clone());
+    }
+
     /**
      * Converts model output to a list of notes with timestamps.
-     * @param output the model output map
-     * @param onsetThresh the onset threshold
-     * @param frameThresh the frame threshold
-     * @param inferOnsets whether to infer onsets
-     * @param minNoteLen the minimum length of a note
-     * @param minFreq the minimum frequency of a note
-     * @param maxFreq the maximum frequency of a note
+     *
+     * @param output       the model output map
+     * @param onsetThresh  the onset threshold
+     * @param frameThresh  the frame threshold
+     * @param inferOnsets  whether to infer onsets
+     * @param minNoteLen   the minimum length of a note
+     * @param minFreq      the minimum frequency of a note
+     * @param maxFreq      the maximum frequency of a note
      * @param melodiaTrick whether to use the Melodia trick
-     * @param onProgress a function to call on progress updates
+     * @param onProgress   a function to call on progress updates
      * @return a list of notes with timestamps
      */
     private static List<NoteEventWithTime> modelOutputToNotes(
@@ -886,8 +900,8 @@ public class Transcriber {
             boolean melodiaTrick,
             Function<Double, Void> onProgress) {
 
-        float[][] frames = output.get("frame");
-        float[][] onsets = output.get("onset");
+        float[][] frames = deepCopy(output.get("frame"));
+        float[][] onsets = deepCopy(output.get("onset"));
 
         List<NoteEvent> estimatedNotes = outputToNotesPolyphonic(
                 frames,
@@ -917,17 +931,19 @@ public class Transcriber {
 
     /**
      * Converts the number of model frames to time values.
+     *
      * @param nFrames The number of model frames.
      * @return An array of time values.
      */
     private static double[] modelFramesToTime(int nFrames) {
         double[] originalTimes = new double[nFrames];
+        double offsetInSec = 0.2;
         double windowOffset = (1. * FFT_HOP / AUDIO_SAMPLE_RATE) * (
                 ANNOT_N_FRAMES - (1. * AUDIO_N_SAMPLES / FFT_HOP)
-        ) + 0.0018;
+        ); // + 0.0018;
         for (int i = 0; i < nFrames; i++) {
             float windowHopSizeInSec = 1f * FFT_HOP / AUDIO_SAMPLE_RATE;
-            originalTimes[i] = (double) i * windowHopSizeInSec - i * windowOffset / ANNOT_N_FRAMES;
+            originalTimes[i] = (double) i * windowHopSizeInSec - i * windowOffset / ANNOT_N_FRAMES + offsetInSec;
         }
         return originalTimes;
     }
