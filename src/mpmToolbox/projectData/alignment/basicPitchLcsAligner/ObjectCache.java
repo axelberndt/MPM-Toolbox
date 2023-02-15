@@ -10,8 +10,9 @@ import java.sql.*;
  * the least recently accessed object is removed from the cache to make space for new objects.
  * The cache is implemented using SQLite, which is a lightweight, in-process relational database engine
  * that allows the cache to persist even if the program is restarted.
+ * @author Vladimir Viro
  */
-public class ObjectCache {
+class ObjectCache {
     private final String tableName = "object_cache";
     private final String idColumn = "id";
     private final String objectColumn = "object";
@@ -75,7 +76,6 @@ public class ObjectCache {
             statement.close();
             insertStatement = connection.prepareStatement(insertSql);
             updateStatement = connection.prepareStatement(updateSql);
-            selectStatement = connection.prepareStatement(selectSql);
             deleteStatement = connection.prepareStatement(deleteSql);
             deleteOldestStatement = connection.prepareStatement(deleteOldestSql);
             getSizeStatement = connection.prepareStatement(getSizeSql);
@@ -130,6 +130,7 @@ public class ObjectCache {
     }
 
     public Object get(String id) throws SQLException, IOException, ClassNotFoundException {
+        selectStatement = connection.prepareStatement(selectSql);
         selectStatement.setString(1, id);
         ResultSet rs = selectStatement.executeQuery();
         if (rs.next()) {

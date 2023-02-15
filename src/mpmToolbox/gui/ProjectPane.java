@@ -99,6 +99,10 @@ public class ProjectPane extends WebDockablePane {
      * constructor, instantiate a project from a project file
      * @param file
      * @param parent
+     * @throws SAXException
+     * @throws ParsingException
+     * @throws ParserConfigurationException
+     * @throws IOException
      */
     public ProjectPane(File file, MpmToolbox parent) throws SAXException, ParsingException, ParserConfigurationException, IOException {
         super();

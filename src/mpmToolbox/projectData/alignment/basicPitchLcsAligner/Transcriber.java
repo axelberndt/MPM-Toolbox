@@ -10,7 +10,6 @@ import com.google.common.collect.ComparisonChain;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import mpmToolbox.Main;
-import mpmToolbox.gui.audio.utilities.SpectrogramSpecs;
 
 import javax.sound.midi.*;
 import javax.sound.sampled.AudioFormat;
@@ -45,10 +44,9 @@ import java.util.stream.Stream;
  * address= {Singapore},
  * year= 2022,
  * }
+ * @author Vladimir Viro
  */
-public class Transcriber {
-
-
+class Transcriber {
     /**
      * The frame size of the FFT algorithm used in the transcription process.
      */
@@ -386,8 +384,8 @@ public class Transcriber {
      * @param audio            The mono audio data
      * @param sampleRate       The sample rate of the audio file
      * @param minNoteLen       The minimum length (in seconds) of notes to transcribe
-     * @param onsetThresh      The onset threshold to be passed to {@link this.modelOutputToNotes}
-     * @param frameThresh      The frame threshold to be passed to {@link this.modelOutputToNotes}
+     * @param onsetThresh      The onset threshold to be passed to this.modelOutputToNotes
+     * @param frameThresh      The frame threshold to be passed to this.modelOutputToNotes
      * @param reuseModelOutput Whether to re-use the raw transcription output if available
      * @param onLabel          A callback function that is called to display status information
      * @param onProgress       A callback function that is called to update the progress bar
@@ -484,7 +482,7 @@ public class Transcriber {
                 true, minNoteLen, midiToFreq(minPitch - 2), midiToFreq(maxPitch + 2), true,
                 onProgress);
 
-        cache.close();
+        // cache.close();
 
         onDone.apply(null);
 

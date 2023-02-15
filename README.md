@@ -8,7 +8,7 @@
 Author: [Axel Berndt](https://github.com/axelberndt) ([Center of Music and Film Informatics](http://www.cemfi.de/), Detmold) <br>
 Contributor: Vladimir Viro ([Peachnote](https://www.peachnote.de/))
 
-MPM Toolbox is the official graphical editor and analysis tool for the [Music Performance Markup](https://github.com/axelberndt/MPM) format. More information and documentation as well as a practical introduction are provided by the [tutorial project](https://github.com/axelberndt/MPM/tree/master/sample%20encodings/Max%20Reger%20-%20Moment%20Musical%20(MPM%20Toolbox%20Tutorial)). Download the complete folder, then drag and drop the `.mpr` file in the MPM Toolbox window.
+MPM Toolbox is the official graphical editor and analysis tool for the [Music Performance Markup](https://github.com/axelberndt/MPM) format. More information and documentation as well as a practical introduction are provided by the [tutorial project](https://github.com/axelberndt/MPM/tree/master/sample%20encodings/Max%20Reger%20-%20Moment%20Musical%20(MPM%20Toolbox%20Tutorial)); download the complete folder, then drag and drop the `.mpr` file in the MPM Toolbox window.
 
 ![A screenshot of the MPM Toolbox main window.](https://github.com/axelberndt/MPM-Toolbox/blob/master/figures/screenshot01.png)
 

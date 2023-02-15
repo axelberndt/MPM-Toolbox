@@ -12,15 +12,23 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 
+/**
+ * @author Vladimir Viro
+ */
 class AlignmentComputation extends WebProgressDialog {
 
     protected final AlignmentComputationWorker worker;
 
-    public AlignmentComputation(double[] audio, int sampleRate, String audioId, Alignment alignment, int minNoteLen, double onsetThresh, double frameThresh,
+    public AlignmentComputation(double[] audio, int sampleRate, String audioId, Alignment alignment,
+                                int minNoteLen, double onsetThresh, double frameThresh,
+                                int pitchShift, double smoothingWidth, double tolerance,
                                 boolean reuseModelOutput, Transcriber transcriber) {
         super("Computing Alignment");
 
-        this.worker = new AlignmentComputationWorker(audio, sampleRate, audioId, alignment, minNoteLen, onsetThresh, frameThresh, reuseModelOutput, this, transcriber);
+        this.worker = new AlignmentComputationWorker(audio, sampleRate, audioId, alignment,
+                minNoteLen, onsetThresh, frameThresh,
+                pitchShift, smoothingWidth, tolerance,
+                reuseModelOutput, this, transcriber);
 
         this.setText("Initializing Alignment Pipeline ...");
         this.setIconImages(Settings.getIcons(null));

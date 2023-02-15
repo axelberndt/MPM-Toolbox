@@ -5,9 +5,9 @@
 - Added method `mpmToolbox.projectData.alignment.Alignment.repositionAll()`.
 - Enhancement to method `mpmToolbox.gui.MpmToolbox.closeProject()`, when the project is closed or a new project is loaded while playback is running, the playback will now stop properly.
 - Enhanced class `mpmToolbox.projectData.alignment.AbstractAlignmentComputation` and updated class `mpmToolbox.gui.audio.AudioDocumentData` accordingly. The latter has two additional buttons to select an alignment algorithm and execute it. 
-  - Also class `mpmToolbox.projectData.alignment.PlaceholderAligner` has been added to illustrate the usage of the abstract class. This is basically a tutorial for anyone who wishes to integrate a new alignment method into MPM Toolbox.
-  - Enhancement in class `mpmToolbox.gui.audio.AudioDocumentData`. Some buttons on the bottom are enabled when they are not useful, e.g. when the piano roll displays a performance instead of an audio alignment or no audio is displayed.
-- Based on the above preparations, a first fully-fledged automatic alignment computation has been integrated with class `mpmToolbox.projectData.alignment.basicPitchLcsAligner.BasicPitchLCSAligner` and all related sub-classes in the same package; many thanks to Vladimir Viro from [Peachnote](https://www.peachnote.de/)!
+  - Also class `mpmToolbox.projectData.alignment.PlaceholderAligner` has been added to illustrate the usage of the abstract class. This is basically a tutorial for developers who wish to integrate a new alignment method into MPM Toolbox.
+  - Enhancement in class `mpmToolbox.gui.audio.AudioDocumentData`. Some buttons on the bottom are disabled when they are not useful, e.g. when the piano roll displays a performance instead of an audio alignment or no audio is displayed.
+- Based on the above preparations, a first fully-fledged audio-to-score alignment algorithm has been integrated with class `mpmToolbox.projectData.alignment.basicPitchLcsAligner.BasicPitchLCSAligner` and all related sub-classes in the same package; many thanks to Vladimir Viro from [Peachnote](https://www.peachnote.de/)!
 - Minor optimizations in class `mpmToolbox.gui.syncPlayer.PlaybackRunnable`.
 - Method `mpmToolbox.projectData.alignment.Alignment.updateTimingTransformation()` has been made more stable against alignments with "unreasonable" values.
 - Enhanced tempoMap visualization in class `mpmToolbox.gui.audio.TempoMapPanel`. 
@@ -19,7 +19,7 @@
   - A similar new operation is added to the context menu of tempoMap nodes in the MPM tree and as a button in the audio panel: Simplify TempoMap. It reduces monotonous and constant sequences of tempo instructions to a single continuous or constant instruction.
 - Removed the `TreeSelectionListener` from classes `mpmToolbox.gui.msmTree.MsmTree` and `mpmToolbox.gui.mpmTree.MpmTree`. These listeners are now created by classes `mpmToolbox.gui.score.ScoreDisplayPanel` and `mpmToolbox.gui.audio.TempoMapPanel` which do actually react on those interactions in the trees.
 - MPM Toolbox can import MIDI files with filename extensions `.mid` (as before) and `.midi` (this is new).
-- Panning and zooming in the Score tab (class `mpmToolbox.gui.score.ScoreDisplayPanel`) is now possible in all interaction modes.
+- Panning and zooming in the Score tab (class `mpmToolbox.gui.score.ScoreDisplayPanel`) is now possible in all interaction modes without the need for holding CTRL down.
 
 
 #### v0.1.21

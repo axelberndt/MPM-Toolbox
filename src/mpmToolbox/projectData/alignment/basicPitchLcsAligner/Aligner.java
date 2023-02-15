@@ -20,8 +20,9 @@ import java.util.stream.DoubleStream;
 /**
  * Code for aligning a score contained in an {@link Alignment} object (and updating the alignment accordingly)
  * with a given sequence of notes.
+ * @author Vladimir Viro
  */
-public class Aligner {
+class Aligner {
 
     /**
      * tolerance used in the Douglas-Peucker alignment simplification algorithm
@@ -29,11 +30,20 @@ public class Aligner {
     private double simplificationToleranceSeconds;
 
     /**
+     * shift the transcription pitches by this amount in order to match a differently pitched score
+     */
+    private int pitchShift = 0;
+
+    private double smoothingWidth = 0;
+
+    /**
      * Aligner constructor
      * @param simplificationToleranceSeconds tolerance used in the Douglas-Peucker alignment simplification algorithm
      */
-    public Aligner(double simplificationToleranceSeconds) {
+    public Aligner(double simplificationToleranceSeconds, int pitchShift, double smoothingWidth) {
         this.simplificationToleranceSeconds = simplificationToleranceSeconds;
+        this.pitchShift = pitchShift;
+        this.smoothingWidth = smoothingWidth;
     }
 
     /**
@@ -117,7 +127,7 @@ public class Aligner {
             // get intervals between fixed points
             Note firstNote = scoreNotesSorted.firstEntry().getElement();
             for (Note lastNote : fixedNotesSorted) {
-                System.out.println("aligning interval from " + firstNote + " to " + lastNote);
+                // System.out.println("aligning interval from " + firstNote + " to " + lastNote);
                 SortedMultiset<Note> segmentNotes = scoreNotesSorted.subMultiset(firstNote, BoundType.CLOSED, lastNote, BoundType.CLOSED);
                 List<Note> segmentScoreNotes = Lists.newArrayList(segmentNotes);
                 Note finalFirstNote = firstNote;
@@ -143,7 +153,7 @@ public class Aligner {
 
             if (segmentScoreNotes.size() > 1 && segmentScoreNotes.get(0).getMillisecondsDate() !=
                     segmentScoreNotes.get(segmentScoreNotes.size() - 1).getMillisecondsDate() && segmentPerfNotes.size() > 1) {
-                System.out.println("aligning last interval from " + firstNote + " to " + lastNote);
+                // System.out.println("aligning last interval from " + firstNote + " to " + lastNote);
                 fixedNotes.addAll(computeSegmentAlignment(segmentScoreNotes, segmentPerfNotes, firstNote, lastNote, onLabel, onProgress));
             }
 
@@ -176,13 +186,13 @@ public class Aligner {
      * @return List of pairs of notes and times they are aligned with in performance.
      */
     private List<KeyValue<Note, Double>> computeSegmentAlignment(List<Note> scoreNotes,
-                                                                      List<Transcriber.NoteEventWithTime> perfNotes,
-                                                                      Note firstNote,
-                                                                      Note lastNote,
-                                                                      Function<String, Void> onLabel,
-                                                                      Function<Double, Void> onProgress) {
+                                                                 List<Transcriber.NoteEventWithTime> perfNotes,
+                                                                 Note firstNote,
+                                                                 Note lastNote,
+                                                                 Function<String, Void> onLabel,
+                                                                 Function<Double, Void> onProgress) {
 
-        boolean useSmoothing = false;
+        boolean useSmoothing = this.smoothingWidth > 0;
 
         List<Transcriber.NoteEventWithTime> scorePerfNotes = scoreNotes.stream().map((com.google.common.base.Function<Note, Transcriber.NoteEventWithTime>) note ->
                 new Transcriber.NoteEventWithTime(note.getMillisecondsDate() / 1000, note.getInitialMillisecondsDateEnd() / 1000, (int)note.getPitch(), 0.8)).collect(Collectors.toList());
@@ -191,7 +201,7 @@ public class Aligner {
 
         List<Integer> perfPitches = Lists.newArrayList();
         for (Transcriber.NoteEventWithTime note : perfNotes) {
-            perfPitches.add(note.pitchMidi);
+            perfPitches.add(note.pitchMidi + this.pitchShift);
         }
 
         List<Integer> scorePitches = Lists.newArrayList();
@@ -218,7 +228,7 @@ public class Aligner {
 
         perfPitches = Lists.newArrayList();
         for (Transcriber.NoteEventWithTime note : perfNotes) {
-            perfPitches.add(note.pitchMidi);
+            perfPitches.add(note.pitchMidi + this.pitchShift);
         }
 
         onLabel.apply("aligning score and performance");
@@ -266,14 +276,17 @@ public class Aligner {
             double[] y = Doubles.toArray(chordCenters.values());
             PolynomialSplineFunction spline = li.interpolate(x, y);
 
-            int nSteps = 1000;
+            double segmentDuration = (scoreNotes.get(scoreNotes.size() - 1).getInitialMillisecondsDateEnd() - scoreNotes.get(0).getInitialMillisecondsDate()) / 1000;
+
+            double stepHz = 4;
+            int nSteps = (int)(stepHz * segmentDuration);
 
             double[] grid = DoubleStream.iterate(x[0], i -> i + 1.0 / nSteps * (x[x.length - 1] - x[0])).limit(nSteps + 1).toArray();
             grid[grid.length - 1] = grid[grid.length - 1] - 0.000001;
 
             double[] interpolatedOnGrid = DoubleStream.of(grid).map(spline::value).toArray();
 
-            int kernSize = 30;
+            int kernSize = (int)Math.ceil(2 * this.smoothingWidth * stepHz);
 
             double[] smoothedChordCentersOnGrid = movingAverage(interpolatedOnGrid, kernSize);
 
@@ -300,6 +313,7 @@ public class Aligner {
 
         Set<Long> badChordTimes = Sets.newHashSet();
         List<Long> noteTimes = Lists.newArrayList(chordCenters.keySet());
+
 
         for (int i = 6; i < noteTimes.size() - 1; i++) {
             long chordScoreTime = noteTimes.get(i);

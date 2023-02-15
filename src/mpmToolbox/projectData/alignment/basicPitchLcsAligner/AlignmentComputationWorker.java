@@ -20,7 +20,7 @@ import static mpmToolbox.projectData.alignment.basicPitchLcsAligner.Transcriber.
 /**
  * A usual instance of Thread blocks the GUI. So we have to execute code that takes a considerable amount of time in a SwingWorker,
  * see https://www.codementor.io/@isaib.cicourel/swingworker-in-java-du1084lyl for a tutorial.
- * @author Axel Berndt
+ * @author Vladimir Viro
  */
 class AlignmentComputationWorker extends SwingWorker<Void, Void> {
     private final AlignmentComputation parent;
@@ -31,6 +31,9 @@ class AlignmentComputationWorker extends SwingWorker<Void, Void> {
     int minNoteLen;
     double onsetThresh;
     double frameThresh;
+    int pitchShift;
+    double smoothingWidth;
+    double tolerance;
     boolean reuseModelOutput;
 
     boolean exportMidi;
@@ -42,7 +45,9 @@ class AlignmentComputationWorker extends SwingWorker<Void, Void> {
     /**
      * constructor
      */
-    public AlignmentComputationWorker(double[] audio, int sampleRate, String audioId, Alignment alignment, int minNoteLen, double onsetThresh, double frameThresh,
+    public AlignmentComputationWorker(double[] audio, int sampleRate, String audioId, Alignment alignment,
+                                      int minNoteLen, double onsetThresh, double frameThresh,
+                                      int pitchShift, double smoothingWidth, double tolerance,
                                       boolean reuseModelOutput, @NotNull AlignmentComputation parent, Transcriber transcriber) {
         super();
         this.audio = audio;
@@ -52,10 +57,13 @@ class AlignmentComputationWorker extends SwingWorker<Void, Void> {
         this.minNoteLen = minNoteLen;
         this.onsetThresh = onsetThresh;
         this.frameThresh = frameThresh;
+        this.pitchShift = pitchShift;
+        this.smoothingWidth = smoothingWidth;
+        this.tolerance = tolerance;
         this.reuseModelOutput = reuseModelOutput;
         this.parent = parent;
         this.transcriber = transcriber;
-        this.aligner = new Aligner(0.1);
+        this.aligner = new Aligner(tolerance, pitchShift, smoothingWidth);
         this.exportMidi = false;
     }
 
