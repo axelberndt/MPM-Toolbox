@@ -1,6 +1,10 @@
 ### Version History
 
 
+#### v0.1.23
+- Meico update to v0.8.48.
+
+
 #### v0.1.22
 - Added method `mpmToolbox.projectData.alignment.Alignment.repositionAll()`.
 - Enhancement to method `mpmToolbox.gui.MpmToolbox.closeProject()`, when the project is closed or a new project is loaded while playback is running, the playback will now stop properly.
