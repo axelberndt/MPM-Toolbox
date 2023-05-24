@@ -1,6 +1,11 @@
 ### Version History
 
 
+#### v0.1.24
+- Meico update to v0.9.0.
+- Some first preparations for an audio recorder function.
+
+
 #### v0.1.23
 - Meico update to v0.8.48.
 

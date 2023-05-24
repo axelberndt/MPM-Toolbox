@@ -85,7 +85,7 @@ public class PlaybackRunnable implements Runnable {
         if (((this.audio == null) && (this.midi == null)) || (this.thread != null))
             return;
 
-        this.syncPlayer.playButton.setText("\u25FC");                      // set the playButton's symbol to ◼
+        this.syncPlayer.playButton.setText("<html><p style=\"font-size:  large\">\u25FC</p></html>");                      // set the playButton's symbol to ◼
         this.setPlaybackPositions(relativeSliderPosition);
         this.thread = new Thread(this);
         this.thread.start();
@@ -208,7 +208,7 @@ public class PlaybackRunnable implements Runnable {
             if (!this.terminate && !this.syncPlayer.playbackSlider.getValueIsAdjusting())   // if we reached the end of the music, i.e. playback was not terminated by interaction
                 this.syncPlayer.playbackSlider.setValue(0);     // set slider to start position ... in any other case just keep the slider position
 
-            this.syncPlayer.playButton.setText("\u25B6");       //  ▶ "\u25B6"
+            this.syncPlayer.playButton.setText("<html><p style=\"font-size:  large\">\u25B6</p></html>");       //  ▶ "\u25B6"
         });
     }
 }

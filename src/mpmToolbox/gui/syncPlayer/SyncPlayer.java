@@ -35,7 +35,7 @@ import java.awt.event.MouseListener;
 public class SyncPlayer extends WebPanel {
     protected final ProjectPane parent;                                   // a link to the parent project pane to access its data, midi player etc.
 
-    protected final WebButton playButton = new WebButton("\u25B6");       //  ◼ "\u25FC", ▶ "\u25B6"
+    protected final WebButton playButton = new WebButton("<html><p style=\"font-size:  large\">\u25B6</p></html>");       //  ◼ "\u25FC", ▶ "\u25B6"
 
     protected static final int PLAYBACK_SLIDER_MAX = 1000000000;
     protected final WebSlider playbackSlider = new WebSlider(WebSlider.HORIZONTAL, 0, PLAYBACK_SLIDER_MAX, 0);  // the slider that indicates playback position
@@ -212,9 +212,20 @@ public class SyncPlayer extends WebPanel {
         Tools.addComponentToGridBagLayout(this, (GridBagLayout) this.getLayout(), millisecondsLabel, 3, 1, 1, 1, 1.0, 1.0, 0, 0, GridBagConstraints.BOTH, GridBagConstraints.LINE_START);
 
         // make the play button
-        this.playButton.setPadding((int) (Settings.paddingInDialogs * 1.5));
+        this.playButton.setPadding((int) (Settings.paddingInDialogs * 1.2));
+        this.playButton.setToolTip("Start/Stop Playback");
         this.playButton.addActionListener(actionEvent -> this.triggerPlayback());
         Tools.addComponentToGridBagLayout(this, (GridBagLayout) this.getLayout(), this.playButton, 5, 0, 1, 2, 1.0, 1.0, 0, 0, GridBagConstraints.BOTH, GridBagConstraints.LINE_START);
+
+        // make record button
+        WebButton recordButton = new WebButton("<html><p style=\"color: #FF6868; font-size:  x-large\">\u26AB</p></html>");
+        recordButton.setToolTip("Make an Audio Recording");
+        recordButton.setPadding(Settings.paddingInDialogs);
+        recordButton.addActionListener(actionEvent -> {
+            System.out.println("REC");
+            // TODO: open recording dialog
+        });
+        Tools.addComponentToGridBagLayout(this, (GridBagLayout) this.getLayout(), recordButton, 6, 0, 1, 2, 1.0, 1.0, 0, 0, GridBagConstraints.BOTH, GridBagConstraints.LINE_START);
 
         // make the sliders
         this.makeMidiMasterVolumeSlider();
@@ -504,7 +515,7 @@ public class SyncPlayer extends WebPanel {
             }
         });
 
-        Tools.addComponentToGridBagLayout(this, (GridBagLayout) this.getLayout(), this.playbackSlider, 6, 0, 1, 2, 100.0, 1.0, 0, 0, GridBagConstraints.BOTH, GridBagConstraints.LINE_START);
+        Tools.addComponentToGridBagLayout(this, (GridBagLayout) this.getLayout(), this.playbackSlider, 7, 0, 1, 2, 100.0, 1.0, 0, 0, GridBagConstraints.BOTH, GridBagConstraints.LINE_START);
     }
 
     /**
@@ -512,7 +523,7 @@ public class SyncPlayer extends WebPanel {
      */
     public synchronized void triggerPlayback() {
         if ((this.runnable != null) && this.runnable.isPlaying()) {     // if music is already playing, we only want to stop it
-            this.playButton.setText("\u25B6");                          // set the playButton's symbol to ▶
+            this.playButton.setText("<html><p style=\"font-size:  large\">\u25B6</p></html>");                          // set the playButton's symbol to ▶
             this.runnable.stop();                                       // terminate the current runnable/thread, this will also stop the players
             this.runnable = null;
             return;

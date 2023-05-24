@@ -13,7 +13,7 @@ import java.io.IOException;
  * @author Axel Berndt
  */
 public class Main {
-    public static final String version = "0.1.23";
+    public static final String version = "0.1.24";
 
     public static void main(String[] args) {
         // read the application settings from file
