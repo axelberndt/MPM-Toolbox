@@ -222,8 +222,9 @@ public class SyncPlayer extends WebPanel {
         recordButton.setToolTip("Make an Audio Recording");
         recordButton.setPadding(Settings.paddingInDialogs);
         recordButton.addActionListener(actionEvent -> {
-            System.out.println("REC");
-            // TODO: open recording dialog
+            Audio recording = (new RecorderDialog()).openDialog();  // open recording dialog
+            if (this.parent.addAudio(recording))                    // if the recording is not null and could successfully be added to the project data, the syncPlayer's audio list gets updated
+                this.selectAudio(recording);                        // and we select the recording immediately
         });
         Tools.addComponentToGridBagLayout(this, (GridBagLayout) this.getLayout(), recordButton, 6, 0, 1, 2, 1.0, 1.0, 0, 0, GridBagConstraints.BOTH, GridBagConstraints.LINE_START);
 
@@ -302,6 +303,19 @@ public class SyncPlayer extends WebPanel {
             PerformanceChooserItem item = (PerformanceChooserItem) this.performanceChooser.getItemAt(i);
             if (item.getValue() == performance) {
                 this.performanceChooser.setSelectedItem(item);
+            }
+        }
+    }
+
+    /**
+     * select an audio programmatically
+     * @param audio
+     */
+    public void selectAudio(Audio audio) {
+        for (int i = 0; i < this.audioChooser.getItemCount(); ++i) {
+            AudioChooserItem item = (AudioChooserItem) this.audioChooser.getItemAt(i);
+            if (item.getValue() == audio) {
+                this.audioChooser.setSelectedItem(item);
             }
         }
     }

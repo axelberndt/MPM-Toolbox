@@ -339,11 +339,14 @@ public class ProjectPane extends WebDockablePane {
     /**
      * add an Audio object to the list of audios
      * @param audio
+     * @return success
      */
-    public void addAudio(Audio audio) {
+    public boolean addAudio(Audio audio) {
         if (this.data.addAudio(audio)) {
             this.syncPlayer.addAudio(audio);
+            return true;
         }
+        return false;
     }
 
     /**

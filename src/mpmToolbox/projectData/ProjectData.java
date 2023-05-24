@@ -261,6 +261,8 @@ public class ProjectData {
      * @param audio
      */
     public synchronized boolean addAudio(Audio audio) {
+        if (audio == null)
+            return false;
         if (this.audio.contains(audio))
             return false;
         return this.audio.add(audio);
