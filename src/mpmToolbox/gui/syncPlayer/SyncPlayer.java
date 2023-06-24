@@ -6,6 +6,7 @@ import com.alee.laf.label.WebLabel;
 import com.alee.laf.panel.WebPanel;
 import com.alee.laf.slider.WebSlider;
 import com.alee.laf.spinner.WebSpinner;
+import com.sun.media.sound.InvalidDataException;
 import meico.audio.AudioPlayer;
 import meico.midi.Midi;
 import meico.midi.MidiPlayer;
@@ -18,6 +19,7 @@ import mpmToolbox.projectData.audio.Audio;
 import mpmToolbox.supplementary.Tools;
 
 import javax.sound.midi.*;
+import javax.sound.sampled.AudioInputStream;
 import javax.sound.sampled.Clip;
 import javax.sound.sampled.FloatControl;
 import javax.swing.*;
@@ -26,6 +28,10 @@ import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 
 /**
  * This class implements the Audio and MIDI player for MPM Toolbox.
@@ -218,13 +224,35 @@ public class SyncPlayer extends WebPanel {
         Tools.addComponentToGridBagLayout(this, (GridBagLayout) this.getLayout(), this.playButton, 5, 0, 1, 2, 1.0, 1.0, 0, 0, GridBagConstraints.BOTH, GridBagConstraints.LINE_START);
 
         // make record button
-        WebButton recordButton = new WebButton("<html><p style=\"color: #FF6868; font-size:  x-large\">\u26AB</p></html>");
+        WebButton recordButton = new WebButton("<html><p style=\"color: " + Settings.errorColorHex + "; font-size:  x-large\">\u26AB</p></html>");
         recordButton.setToolTip("Make an Audio Recording");
         recordButton.setPadding(Settings.paddingInDialogs);
         recordButton.addActionListener(actionEvent -> {
-            Audio recording = (new RecorderDialog()).openDialog();  // open recording dialog
-            if (this.parent.addAudio(recording))                    // if the recording is not null and could successfully be added to the project data, the syncPlayer's audio list gets updated
+            this.stopPlayback();
+            AudioInputStream recordedStream = (new RecorderDialog()).openDialog();
+            if (recordedStream == null)
+                return;
+            Audio recording;
+            try {
+                recording = new Audio(recordedStream, this.parent.getMsm());
+            } catch (IOException e) {
+                e.printStackTrace();
+                return;
+            }
+            String path = this.parent.getProjectData().getFile().getParent() + File.separator + "recordings";
+            File directory = new File(path);
+            if (!directory.exists() && !directory.mkdirs())         // if the directory does not exist, generate it, and if this fails
+                return;
+            path = this.parent.getProjectData().getFile().getParent() + File.separator + "recordings" + File.separator + "recording";
+            int counter = 0;
+            while (Files.exists(Paths.get(path + counter + ".wav")))
+                ++counter;
+            recording.setFile(new File(path + counter + ".wav"));
+            if (this.parent.addAudio(recording)) {                  // if the recording is not null and could successfully be added to the project data, the syncPlayer's audio list gets updated
                 this.selectAudio(recording);                        // and we select the recording immediately
+                recording.writeAudio();                             // and the audio file will be stored to the file system
+                System.out.println("Recording written to " + recording.getFile().getAbsolutePath() + ".");
+            }
         });
         Tools.addComponentToGridBagLayout(this, (GridBagLayout) this.getLayout(), recordButton, 6, 0, 1, 2, 1.0, 1.0, 0, 0, GridBagConstraints.BOTH, GridBagConstraints.LINE_START);
 
@@ -536,14 +564,8 @@ public class SyncPlayer extends WebPanel {
      * start/stop playback
      */
     public synchronized void triggerPlayback() {
-        if ((this.runnable != null) && this.runnable.isPlaying()) {     // if music is already playing, we only want to stop it
-            this.playButton.setText("<html><p style=\"font-size:  large\">\u25B6</p></html>");                          // set the playButton's symbol to ▶
-            this.runnable.stop();                                       // terminate the current runnable/thread, this will also stop the players
-            this.runnable = null;
-            return;
-        }
-
-        this.triggerPlayback(((double) this.playbackSlider.getValue()) / PLAYBACK_SLIDER_MAX);
+        if (!this.stopPlayback())      // if music is already playing, we only want to stop it, otherwise we want to start it
+            this.triggerPlayback(((double) this.playbackSlider.getValue()) / PLAYBACK_SLIDER_MAX);
     }
 
     /**
@@ -586,6 +608,20 @@ public class SyncPlayer extends WebPanel {
             this.runnable.jumpTo(relativePosition);
         else
             this.runnable.start(relativePosition);                      // start the new runnable
+    }
+
+    /**
+     * stop the playback immediately
+     * @return true, if playback was running, else false
+     */
+    public synchronized boolean stopPlayback() {
+        if ((this.runnable != null) && this.runnable.isPlaying()) {     // if music is already playing, we only want to stop it
+            this.playButton.setText("<html><p style=\"font-size:  large\">\u25B6</p></html>");                          // set the playButton's symbol to ▶
+            this.runnable.stop();                                       // terminate the current runnable/thread, this will also stop the players
+            this.runnable = null;
+            return true;
+        }
+        return false;
     }
 
     /**

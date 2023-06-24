@@ -8,7 +8,6 @@ import com.alee.laf.panel.WebPanel;
 import meico.mpm.elements.Performance;
 import mpmToolbox.gui.Settings;
 import mpmToolbox.gui.audio.utilities.ArticulationMenu;
-import mpmToolbox.gui.audio.utilities.CursorPositions;
 import mpmToolbox.gui.msmTree.MsmTree;
 import mpmToolbox.gui.msmTree.MsmTreeNode;
 import mpmToolbox.projectData.alignment.Note;
@@ -204,7 +203,7 @@ public class PianoRollPanel extends WebPanel implements ComponentListener, Mouse
 
         // determine the performance currently displayed, or null if it is an alignment
         Performance performance = this.parent.getParent().getSyncPlayer().getSelectedPerformance();
-        if (/*(performance == null) ||*/ !this.parent.getParent().getMpm().getAllPerformances().contains(performance))  // we have no performance to create an articulation
+        if (/*(performance == null) ||*/ (this.parent.getParent().getMpm() == null) || !this.parent.getParent().getMpm().getAllPerformances().contains(performance))  // we have no performance to create an articulation
             performance = null;
 
         // make "note fixed" entry

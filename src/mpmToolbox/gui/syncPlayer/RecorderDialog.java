@@ -4,12 +4,14 @@ import com.alee.laf.button.WebButton;
 import com.alee.laf.combobox.WebComboBox;
 import com.alee.laf.label.WebLabel;
 import com.alee.laf.panel.WebPanel;
+import com.alee.laf.progressbar.WebProgressBar;
 import com.alee.laf.window.WebDialog;
 import mpmToolbox.gui.Settings;
+import mpmToolbox.gui.syncPlayer.utilities.RecordThread;
 import mpmToolbox.gui.syncPlayer.utilities.RecordingDeviceChooserItem;
-import mpmToolbox.projectData.audio.Audio;
 import mpmToolbox.supplementary.Tools;
 
+import javax.sound.sampled.*;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
@@ -22,9 +24,14 @@ import java.awt.event.WindowEvent;
  * This will return null or an Audio object with the recording.
  */
 public class RecorderDialog extends WebDialog<RecorderDialog> {
-    protected GridBagLayout contentPanelLayout = new GridBagLayout();
-    protected WebPanel contentPanel = new WebPanel(this.contentPanelLayout);
-    private Audio recording = null;             // the audio recording to be made
+    protected final GridBagLayout contentPanelLayout = new GridBagLayout();
+    protected final WebPanel contentPanel = new WebPanel(this.contentPanelLayout);
+    private final WebComboBox deviceChooser = new WebComboBox();
+    private final WebButton recordButton = new WebButton("<html><p style=\"color: " + Settings.errorColorHex + "; font-size:  x-large\">\u26AB</p></html>");
+    private final WebProgressBar vuMeter = new WebProgressBar(WebProgressBar.HORIZONTAL, 0, 100); // orientation, min, max
+    private final AudioFormat format = new AudioFormat(44100.0f, 16, 1, true, false); // sampleRate, sampleSizeInBits, channels, signed, bigEndian
+    private RecordThread recordThread = null;
+    private AudioInputStream recording = null;             // the audio recording to be made
 
     /**
      * constructor
@@ -42,6 +49,7 @@ public class RecorderDialog extends WebDialog<RecorderDialog> {
         // close procedure when clicking on X
         this.addWindowListener(new WindowAdapter() {
             public void windowClosing(WindowEvent e) {
+                stopRecording();
                 recording = null;
                 dispose();
             }
@@ -56,14 +64,16 @@ public class RecorderDialog extends WebDialog<RecorderDialog> {
         WebPanel okPanel = new WebPanel(runPanelLayout);
         okPanel.setPadding(Settings.paddingInDialogs);
 
-        WebButton run = new WebButton("Store", actionEvent -> {
+        WebButton store = new WebButton("Store", actionEvent -> {
+            this.stopRecording();
             this.dispose();
         });
-        run.setHorizontalAlignment(WebButton.CENTER);
-        run.setPadding(Settings.paddingInDialogs*2, Settings.paddingInDialogs, Settings.paddingInDialogs*2, Settings.paddingInDialogs);
-        Tools.addComponentToGridBagLayout(okPanel, runPanelLayout, run, 0, 0, 1, 1, 1.0, 1.0, 0, 0, GridBagConstraints.BOTH, GridBagConstraints.LINE_START);
+        store.setHorizontalAlignment(WebButton.CENTER);
+        store.setPadding(Settings.paddingInDialogs*2, Settings.paddingInDialogs, Settings.paddingInDialogs*2, Settings.paddingInDialogs);
+        Tools.addComponentToGridBagLayout(okPanel, runPanelLayout, store, 0, 0, 1, 1, 1.0, 1.0, 0, 0, GridBagConstraints.BOTH, GridBagConstraints.LINE_START);
 
         WebButton cancel = new WebButton("Cancel", actionEvent -> {
+            this.stopRecording();
             this.recording = null;
             this.dispose();
         });
@@ -91,18 +101,56 @@ public class RecorderDialog extends WebDialog<RecorderDialog> {
         deviceLabel.setPadding(Settings.paddingInDialogs);
         this.addToContentPanel(deviceLabel, 0, 0, 1, 1, 1.0, 1.0, 0, 0, GridBagConstraints.BOTH);
 
-        WebComboBox deviceChooser = new WebComboBox();
-        deviceChooser.setToolTip("Choose recording device.");
-        deviceChooser.setPadding(Settings.paddingInDialogs);
-//        deviceChooser.add(new RecordingDeviceChooserItem("Choose Recording Device", null));
+        // put all available recording devices in a combobox; see Java reference: https://docs.oracle.com/javase/tutorial/sound/capturing.html
+        this.deviceChooser.setToolTip("Choose Recording Device.");
+        this.deviceChooser.setPadding(Settings.paddingInDialogs);
+        DataLine.Info targetDataLineInfo = new DataLine.Info(TargetDataLine.class, this.format);    // create the info from the required format
+        for (Mixer.Info mixerInfo : AudioSystem.getMixerInfo()) {                                   // from each available mixer
+            Mixer mixer = AudioSystem.getMixer(mixerInfo);
+//            System.out.println(mixerInfo.getName() + ": " + mixerInfo.getDescription());
+            for (Line.Info lineInfo : mixer.getTargetLineInfo(targetDataLineInfo)) {                // from each available TargetDataLine (audio input line) that supports the targetDataLineInfo
+//                System.out.println("    " + lineInfo);
+                try {
+                    this.deviceChooser.addItem(new RecordingDeviceChooserItem(mixerInfo.getName(), (TargetDataLine) mixer.getLine(lineInfo)));   // obtain the TargetDataLine and add the entry to the combobox
+                } catch (LineUnavailableException ignored) {
+                }
+            }
+        }
+        this.addToContentPanel(this.deviceChooser, 1, 0, 1, 1, 1.0, 1.0, 0, 0, GridBagConstraints.BOTH);
 
+        // VU meter for input monitoring
+        this.vuMeter.setString("");
+        this.vuMeter.setBoldFont(true);
+        this.vuMeter.setForeground(Settings.errorColor);
+        this.vuMeter.setStringPainted(true);
+        this.vuMeter.setPadding(Settings.paddingInDialogs);
+        this.addToContentPanel(this.vuMeter, 0, 1, 2, 1, 1.0, 1.0, 0, 10, GridBagConstraints.BOTH);
+
+        // record button
+        this.recordButton.setToolTip("<html><center>Start/Stop Recording<br>Overwrites previous take!</center></html>");
+        this.recordButton.setPadding(Settings.paddingInDialogs);
+        this.recordButton.addActionListener(actionEvent -> {
+            if (this.recordThread == null) {                                                                // if no recording running
+                if (this.startRecording()) {                                                                // start recording; if success
+                    this.recordButton.setText("<html><p style=\"font-size:  x-large\">\u25FC</p></html>");  // set the recordButton's symbol to ◼
+                    this.deviceChooser.setEnabled(false);
+                }
+            } else {                                                                                                                            // if recording in progress
+                this.recordButton.setText("<html><p style=\"color: " + Settings.errorColorHex + "; font-size:  x-large\">\u26AB</p></html>");   // set the recordButton's symbol to ⚫
+                this.deviceChooser.setEnabled(true);
+                this.stopRecording();
+                this.vuMeter.setString("");
+                this.vuMeter.setValue(0);
+            }
+        });
+        this.addToContentPanel(this.recordButton, 0, 2, 2, 1, 1.0, 1.0, 0, 0, GridBagConstraints.BOTH);
     }
 
     /**
      * this opens the dialog window
      * @return the recorded audio data or null
      */
-    public Audio openDialog() {
+    public AudioInputStream openDialog() {
         this.setVisible(true);          // start the dialog
 
         // after the dialog closed do the following
@@ -137,18 +185,47 @@ public class RecorderDialog extends WebDialog<RecorderDialog> {
         this.getRootPane().getActionMap().put("Cancel", new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent actionEvent) {
+                stopRecording();
                 recording = null;
                 dispose();
             }
         });
 
-        inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), "Run");
-        this.getRootPane().getActionMap().put("Run", new AbstractAction() {
+        inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), "Store");
+        this.getRootPane().getActionMap().put("Store", new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent actionEvent) {
+                stopRecording();
                 dispose();
             }
         });
+    }
+
+    /**
+     * start the audio recording
+     * @return success
+     */
+    private boolean startRecording() {
+        if (this.deviceChooser.getSelectedItem() == null)
+            return false;
+
+        TargetDataLine line = ((RecordingDeviceChooserItem) this.deviceChooser.getSelectedItem()).getValue();
+        this.recordThread = new RecordThread(line, this.vuMeter);
+        this.recordThread.start();
+
+        return this.recordThread.isAlive();
+    }
+
+    /**
+     * terminate the recording
+     */
+    private void stopRecording() {
+        if (this.recordThread == null)
+            return;
+
+        this.recordThread.terminate();      // this invocation blocks until the thread terminates, so the next call works properly
+        this.recording = this.recordThread.getRecording();
+        this.recordThread = null;
     }
 
     /**

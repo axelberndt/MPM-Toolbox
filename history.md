@@ -3,7 +3,10 @@
 
 #### v0.1.24
 - Meico update to v0.9.0.
-- Some first preparations for an audio recorder function.
+- Added an audio recorder to the SyncPlayer. The recording will be stored in the project path under the `recordings` subdirectory. It will also be added automatically to the project.
+- Bugfix in method `mpmToolbox.gui.audio.PianoRollPanel.getContextMenu()` that prevented the context menu to be created when there is no MPM in the project. 
+- Addition to method `mpmToolbox.gui.audio.AudioDocumentData.makePerf2AlignButton()`, to generate an MPM if the project has none.
+- Added `TreeSelectionListener` to class `mpmToolbox.gui.msmTree.MsmTree`, so, when a note is clicked, it will be played even if no visual score is present.
 
 
 #### v0.1.23

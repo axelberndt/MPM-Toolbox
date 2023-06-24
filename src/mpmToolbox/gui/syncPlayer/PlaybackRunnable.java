@@ -85,7 +85,7 @@ public class PlaybackRunnable implements Runnable {
         if (((this.audio == null) && (this.midi == null)) || (this.thread != null))
             return;
 
-        this.syncPlayer.playButton.setText("<html><p style=\"font-size:  large\">\u25FC</p></html>");                      // set the playButton's symbol to ◼
+        this.syncPlayer.playButton.setText("<html><p style=\"font-size: large\">\u25FC</p></html>");                      // set the playButton's symbol to ◼
         this.setPlaybackPositions(relativeSliderPosition);
         this.thread = new Thread(this);
         this.thread.start();

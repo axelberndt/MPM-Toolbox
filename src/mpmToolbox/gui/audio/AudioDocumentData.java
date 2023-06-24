@@ -9,6 +9,7 @@ import com.alee.laf.combobox.WebComboBox;
 import com.alee.laf.grouping.GroupPane;
 import com.alee.laf.panel.WebPanel;
 import meico.mei.Helper;
+import meico.mpm.Mpm;
 import meico.mpm.elements.Performance;
 import meico.mpm.elements.maps.TempoMap;
 import meico.supplementary.KeyValue;
@@ -277,6 +278,11 @@ public class AudioDocumentData extends DocumentData<WebPanel> {
         this.perf2AlignConvert.addActionListener(actionEvent -> {
             if (this.getParent().getSyncPlayer().isAudioAlignmentSelected()) {          // if an audio alignment is selected, we create a performance from the current timing data
                 Performance performance = MpmEditingTools.createPerformanceDialog(this.getParent().getMsm());    // open dialog for performance creation
+                if (this.getParent().getMpm() == null) {
+                    Mpm newMpm = Mpm.createMpm();
+                    newMpm.setFile(Helper.getFilenameWithoutExtension(this.getParent().getMsm().getFile().getAbsolutePath()) + ".mpm");
+                    this.getParent().setMpm(newMpm);
+                }
                 if (!this.getParent().getMpm().addPerformance(performance))             // add the performance to the MPM
                     return;                                                             // if performance adding failed, cancel
 

@@ -3,18 +3,19 @@ package mpmToolbox.gui.syncPlayer.utilities;
 import meico.supplementary.KeyValue;
 
 import javax.sound.sampled.Mixer;
+import javax.sound.sampled.TargetDataLine;
 
 /**
  * This represents a recording device entry in a combobox.
  * @author Axel Berndt
  */
-public class RecordingDeviceChooserItem extends KeyValue<String, Mixer.Info> {
+public class RecordingDeviceChooserItem extends KeyValue<String, TargetDataLine> {
     /**
      * constructor
      * @param string
      * @param device
      */
-    public RecordingDeviceChooserItem(String string, Mixer.Info device) {
+    public RecordingDeviceChooserItem(String string, TargetDataLine device) {
         super(string, device);
     }
 

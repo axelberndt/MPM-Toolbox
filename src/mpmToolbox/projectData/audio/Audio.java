@@ -1,6 +1,7 @@
 package mpmToolbox.projectData.audio;
 
 import com.alee.extended.window.WebProgressDialog;
+import com.sun.media.sound.InvalidDataException;
 import com.tagtraum.jipes.AbstractSignalProcessor;
 import com.tagtraum.jipes.SignalPipeline;
 import com.tagtraum.jipes.SignalPump;
@@ -15,6 +16,7 @@ import mpmToolbox.supplementary.Tools;
 import nu.xom.Attribute;
 import nu.xom.Element;
 
+import javax.sound.sampled.AudioInputStream;
 import javax.sound.sampled.UnsupportedAudioFileException;
 import javax.swing.*;
 import java.awt.*;
@@ -42,9 +44,27 @@ public class Audio extends meico.audio.Audio {
      *
      * @param file
      * @param msm the Msm instance to be aligned with this Audio object
+     * @throws IOException
+     * @throws UnsupportedAudioFileException
      */
     public Audio(File file, Msm msm) throws IOException, UnsupportedAudioFileException {
         super(file);
+
+        this.waveforms = convertByteArray2DoubleArray(this.getAudio(), this.getFormat());
+        for (double[] chan : this.waveforms)
+            this.peakList.add(new PeakList(chan));
+
+        this.initAlignment(msm);
+    }
+
+    /**
+     * constructor; use it to instantiate from an AudioInputStream
+     * @param inputStream
+     * @param msm
+     * @throws InvalidDataException
+     */
+    public Audio(AudioInputStream inputStream, Msm msm) throws InvalidDataException {
+        super(inputStream);
 
         this.waveforms = convertByteArray2DoubleArray(this.getAudio(), this.getFormat());
         for (double[] chan : this.waveforms)

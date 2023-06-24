@@ -113,7 +113,7 @@ public class ScoreDisplayPanel extends WebPanel implements MouseWheelListener, M
                 return;
 
             MsmTreeNode n = this.parent.getParent().getMsmTree().getNodeForPath(path);
-            n.play(this.parent.getParent().getParentMpmToolbox().getMidiPlayerForSingleNotes());                                 // the node might be a node and should play its note via MIDI when selected
+//            n.play(this.parent.getParent().getParentMpmToolbox().getMidiPlayerForSingleNotes()); // the node might be a note and should play its note via MIDI when selected
 
             // trigger the score frame's score panel to repaint, so it highlights the selected note, if visible
             if (n.getType() == MsmTreeNode.XmlNodeType.note) {                                  // if the currently selected node is of type note

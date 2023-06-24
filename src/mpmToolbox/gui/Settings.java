@@ -35,6 +35,7 @@ public class Settings {
     public static int paddingInDialogs = 10;                            // this value is used in dialog elements (buttons, textfields etc.) for padding
 
     public static Color errorColor = new Color(255, 120, 120);          // the color for deleting a note in a score image
+    public static String errorColorHex = "#FF7878FF";                   // same as error color but as hex code
 
     public static Color scoreNoteColor = new Color(0f, 0.7f, 0f, 0.4f);                 // the color of note symbols that are annotated in a score image
     public static Color scoreNoteColorHighlighted = new Color(0.2f, 1f, 0.2f, 0.6f);    // the highlight color of note symbols that are annotated in a score image
