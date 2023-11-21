@@ -5,7 +5,7 @@
 [![LGPL v3](https://img.shields.io/github/license/cemfi/meico.svg)](https://github.com/cemfi/meico/blob/master/LICENSE)
 ![Java compatibility](https://img.shields.io/badge/Java-1.8--10-blue)
 
-Author: [Axel Berndt](https://github.com/axelberndt) ([Center of Music and Film Informatics](http://www.cemfi.de/), Detmold) <br>
+Author: [Axel Berndt](https://github.com/axelberndt) ([Paderborn University](https://www.muwi-detmold-paderborn.de/personen/professorinnen-und-professoren/prof-dr-ing-axel-berndt), Detmold) <br>
 Contributor: Vladimir Viro ([Peachnote](https://www.peachnote.de/))
 
 MPM Toolbox is the official graphical editor and analysis tool for the [Music Performance Markup](https://github.com/axelberndt/MPM) format. More information and documentation as well as a practical introduction are provided by the [tutorial project](https://github.com/axelberndt/MPM/tree/master/sample%20encodings/Max%20Reger%20-%20Moment%20Musical%20(MPM%20Toolbox%20Tutorial)); download the complete folder, then drag and drop the `.mpr` file in the MPM Toolbox window.
