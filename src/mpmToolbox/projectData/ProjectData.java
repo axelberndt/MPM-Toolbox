@@ -47,6 +47,7 @@ public class ProjectData {
         this.msm = msm;
         this.msmPreprocessing();
         this.score = new Score(this);
+        this.init();
     }
 
     /**
@@ -69,6 +70,7 @@ public class ProjectData {
         this.msmPreprocessing();
         this.setMpm(msmMpm.getValue().get(0));
         this.score = new Score(this);
+        this.init();
     }
 
     /**
@@ -101,6 +103,73 @@ public class ProjectData {
                 } catch (UnsupportedAudioFileException | IOException ex) {
                     ex.printStackTrace();
                 }
+            }
+        }
+    }
+
+    /**
+     * This method is a helper to initialize a ProjectData instance with file paths pointing to
+     * the source directory and filename from where it was initialized.
+     */
+    private void init() {
+        if ((this.msm == null) || (this.msm.getFile() == null))
+            return;
+
+        String projectFilePath = Helper.getFilenameWithoutExtension(this.msm.getFile().getAbsolutePath()) + ".mpr";
+
+        this.xml = new XmlBase();
+        this.xml.setFile(projectFilePath);
+
+        Element root = new Element("mpmToolboxProject");
+        Document xml = new Document(root);
+        this.xml.setDocument(xml);
+
+        // link msm
+        Element msmElt = new Element("msm");
+        Path relativeMsmPath = Paths.get(this.xml.getFile().getParent()).relativize(this.msm.getFile().toPath());
+        msmElt.addAttribute(new Attribute("file", relativeMsmPath.toString()));
+        root.appendChild(msmElt);
+
+        String basePath = this.xml.getFile().getAbsoluteFile().getParent() + File.separator;
+
+        // link mpm
+        if (this.mpm != null) {
+            // if necessary, also set the path of the mpm file
+            if (this.mpm.getFile() == null)
+                this.mpm.setFile(Helper.getFilenameWithoutExtension(this.xml.getFile().getAbsolutePath()) + ".mpm");
+            else if (!this.mpm.getFile().exists())
+                this.mpm.setFile(basePath + this.mpm.getFile().getName());
+            Element mpmElt = new Element("mpm");
+            Path relativeMpmPath = Paths.get(this.xml.getFile().getParent()).relativize(mpm.getFile().toPath());
+            mpmElt.addAttribute(new Attribute("file", relativeMpmPath.toString()));
+            root.appendChild(mpmElt);
+        }
+
+        // link the score sources
+        if (!this.score.isEmpty()) {
+            root.appendChild(this.score.toXml());
+        }
+
+        // link the audio sources
+        if (!this.audio.isEmpty()) {
+            Element audios = new Element("audios");
+            root.appendChild(audios);
+            for (Audio aud : this.audio) {
+//                Path src = aud.getFile().toPath();
+//                Path dest = Paths.get(path + "\\data\\score\\" + aud.getFile().getName());
+//                try {
+//                    Files.copy(src, dest, StandardCopyOption.REPLACE_EXISTING);
+//                } catch (IOException e) {
+//                    e.printStackTrace();
+//                    continue;
+//                }
+
+//                Element audioElt = new Element("audio");
+//                Path relativeAudioPath = Paths.get(file.getParent()).relativize(aud.getFile().toPath());
+//                audioElt.addAttribute(new Attribute("file", relativeAudioPath.toString()));
+
+                Element audioElt = aud.toXml(Paths.get(this.xml.getFile().getParent()));
+                audios.appendChild(audioElt);
             }
         }
     }
@@ -296,28 +365,29 @@ public class ProjectData {
 
         this.xml = new XmlBase();
         this.xml.setFile(file);
-        String basePath = file.getAbsoluteFile().getParent() + File.separator;
 
         Element root = new Element("mpmToolboxProject");
         Document xml = new Document(root);
         this.xml.setDocument(xml);
 
+        String basePath = file.getAbsoluteFile().getParent() + File.separator;
+
         // store MSM
-        if (!msm.getFile().exists())
-            msm.setFile(basePath + msm.getFile().getName());
-        msm.writeMsm();
+        if (!this.msm.getFile().exists())
+            this.msm.setFile(basePath + this.msm.getFile().getName());
+        this.msm.writeMsm();
         Element msmElt = new Element("msm");
-        Path relativeMsmPath = Paths.get(file.getParent()).relativize(msm.getFile().toPath());
+        Path relativeMsmPath = Paths.get(file.getParent()).relativize(this.msm.getFile().toPath());
         msmElt.addAttribute(new Attribute("file", relativeMsmPath.toString()));
         root.appendChild(msmElt);
 
         // store MPM
         if (this.mpm != null) {
-            if (mpm.getFile() == null)
-                mpm.setFile(Helper.getFilenameWithoutExtension(file.getAbsolutePath()) + ".mpm");
-            else if (!mpm.getFile().exists())
-                mpm.setFile(basePath + mpm.getFile().getName());
-            mpm.writeMpm();
+            if (this.mpm.getFile() == null)
+                this.mpm.setFile(Helper.getFilenameWithoutExtension(file.getAbsolutePath()) + ".mpm");
+            else if (!this.mpm.getFile().exists())
+                this.mpm.setFile(basePath + this.mpm.getFile().getName());
+            this.mpm.writeMpm();
             Element mpmElt = new Element("mpm");
             Path relativeMpmPath = Paths.get(file.getParent()).relativize(mpm.getFile().toPath());
             mpmElt.addAttribute(new Attribute("file", relativeMpmPath.toString()));

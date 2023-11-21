@@ -1,6 +1,10 @@
 ### Version History
 
 
+#### v0.1.25
+- Added method `init()` to class `mpmToolbox.projectData.ProjectData`. It makes sure that a project, that is not yet stored manually to the file system, nonetheless has a default path and is able to store related data, such as audio recordings.
+
+
 #### v0.1.24
 - Meico update to v0.9.0.
 - Added an audio recorder to the SyncPlayer. The recording will be stored in the project path under the `recordings` subdirectory. It will also be added automatically to the project.
