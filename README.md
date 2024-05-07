@@ -15,7 +15,7 @@ MPM Toolbox is the official graphical editor and analysis tool for the [Music Pe
 ### License information
 
 MPM Toolbox makes use of the following third party libraries:
-- [WebLaF](https://github.com/mgarin/weblaf) v1.2.13, including several sub-dependencies, GNU General Public License (GPL) version 3.0.
+- [WebLaF](https://github.com/mgarin/weblaf) v1.2.14, including several sub-dependencies, GNU General Public License (GPL) version 3.0.
 - [FileDrop](http://kim25.wwwdns.kim.uni-konstanz.de/vanted/javadoc/net/iharder/dnd/FileDrop.html) v1.1.1 by Robert Harder, Public Domain.
 - [Apache PDFBox](https://pdfbox.apache.org/) v2.0.23 by Apache, Apache License v2.0.
 - [Apache Commons Logging](http://commons.apache.org/proper/commons-logging/) v1.2 by Apache, Apache License v2.0.

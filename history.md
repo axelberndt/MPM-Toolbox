@@ -1,6 +1,14 @@
 ### Version History
 
 
+#### v0.1.26
+- Dependency updates
+  - WebLaF Core v1.2.13 to v1.2.14
+  - WebLaF UI v1.2.13 to v1.2.14
+  - junit Jupiter API v5.10.2
+  - xstream v1.4.20
+
+
 #### v0.1.25
 - Added method `init()` to class `mpmToolbox.projectData.ProjectData`. It makes sure that a project, that is not yet stored manually to the file system, nonetheless has a default path and is able to store related data, such as audio recordings.
 
