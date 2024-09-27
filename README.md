@@ -30,4 +30,4 @@ We publish MPM Toolbox under GNU GPL version 3.0. MPM Toolbox's development is p
 
 <img src="https://github.com/axelberndt/MPM-Toolbox/blob/master/figures/Fritz-Thyssen-Stiftung_Logo.png" alt="Fritz Thyssen Foundation" height="100px">
 <img src="https://github.com/axelberndt/MPM-Toolbox/blob/master/figures/Logo_Stiftung_Hochschullehre.png" alt="Stiftung Innovation in der Hochschullehre" height="100px">
-<img src="https://github.com/axelberndt/MPM-Toolbox/blob/master/figures/N4dMhs_Logo_2_RGB_300dpi_white.png" alt="Netzwerk 4.0 der Musikhochschulen" height="100px">
+<img src="https://github.com/axelberndt/MPM-Toolbox/blob/master/figures/Logo_N4dMhs.png" alt="Netzwerk 4.0 der Musikhochschulen" height="100px">
