@@ -26,4 +26,8 @@ MPM Toolbox makes use of the following third party libraries:
 - [SQLite JDBC Driver](https://github.com/xerial/sqlite-jdbc) v3.40.0.0 by Taro L. Saito, Apache License v2.0.
 - [meico](https://github.com/cemfi/meico) by Axel Berndt, GNU GPL version 3.0.
 
-We publish MPM Toolbox under GNU GPL version 3.0. MPM Toolbox's development is part of a project that was funded by the [Fritz Thyssen Foundation](https://www.fritz-thyssen-stiftung.de/en/) (2019-2023). If you integrate MPM Toolbox or parts of it with your project make sure that you do not conflict with any of the above licenses.
+We publish MPM Toolbox under GNU GPL version 3.0. MPM Toolbox's development is part of a project that was funded by the [Fritz Thyssen Foundation](https://www.fritz-thyssen-stiftung.de/en/) (2019-2023) and [Stiftung Innovation in der Hochschullehre](https://stiftung-hochschullehre.de/en/) via [Netzwerk 4.0 der Musikhochschulen](https://www.netzwerk-musikhochschulen.de) (2023). If you integrate MPM Toolbox or parts of it with your project make sure that you do not conflict with any of the above licenses.
+
+<img src="https://github.com/axelberndt/MPM-Toolbox/blob/master/figures/Fritz-Thyssen-Stiftung_Logo.png" alt="Fritz Thyssen Foundation" style="background-color:white;" class="bg-primary" height="100px">
+<img src="https://github.com/axelberndt/MPM-Toolbox/blob/master/figures/Logo_Stiftung_Hochschullehre.png" alt="Stiftung Innovation in der Hochschullehre" style="background-color:white;" class="bg-primary" height="100px">
+<img src="https://github.com/axelberndt/MPM-Toolbox/blob/master/figures/N4dMhs_Logo_2_RGB_300dpi_transparent.png" alt="Stiftung Innovation in der Hochschullehre" style="background-color:white;" class="bg-primary" height="100px">
