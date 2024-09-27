@@ -28,6 +28,4 @@ MPM Toolbox makes use of the following third party libraries:
 
 We publish MPM Toolbox under GNU GPL version 3.0. MPM Toolbox's development is part of a project that was funded by the [Fritz Thyssen Foundation](https://www.fritz-thyssen-stiftung.de/en/) (2019-2023) and [Stiftung Innovation in der Hochschullehre](https://stiftung-hochschullehre.de/en/) via [Netzwerk 4.0 der Musikhochschulen](https://www.netzwerk-musikhochschulen.de) (2023). If you integrate MPM Toolbox or parts of it with your project make sure that you do not conflict with any of the above licenses.
 
-<img src="https://github.com/axelberndt/MPM-Toolbox/blob/master/figures/Fritz-Thyssen-Stiftung_Logo.png" alt="Fritz Thyssen Foundation" height="100px">
-<img src="https://github.com/axelberndt/MPM-Toolbox/blob/master/figures/Logo_Stiftung_Hochschullehre.png" alt="Stiftung Innovation in der Hochschullehre" height="100px">
-<img src="https://github.com/axelberndt/MPM-Toolbox/blob/master/figures/Logo_N4dMhs.png" alt="Netzwerk 4.0 der Musikhochschulen" height="100px">
+<img src="https://github.com/axelberndt/MPM-Toolbox/blob/master/figures/Fritz-Thyssen-Stiftung_Logo.png" alt="Fritz Thyssen Foundation" height="100px"> <img src="https://github.com/axelberndt/MPM-Toolbox/blob/master/figures/Logo_Stiftung_Hochschullehre.png" alt="Stiftung Innovation in der Hochschullehre" height="100px"> <img src="https://github.com/axelberndt/MPM-Toolbox/blob/master/figures/Logo_N4dMhs.png" alt="Netzwerk 4.0 der Musikhochschulen" height="100px">
