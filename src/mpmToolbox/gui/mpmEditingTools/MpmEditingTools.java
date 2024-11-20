@@ -24,8 +24,6 @@ import mpmToolbox.gui.mpmEditingTools.editDialogs.*;
 import mpmToolbox.gui.mpmTree.MpmStyleCollection;
 import mpmToolbox.gui.mpmTree.MpmTree;
 import mpmToolbox.gui.mpmTree.MpmTreeNode;
-import mpmToolbox.gui.msmTree.MsmTree;
-import mpmToolbox.gui.msmTree.MsmTreeNode;
 import mpmToolbox.projectData.score.Score;
 import mpmToolbox.projectData.score.ScoreNode;
 import mpmToolbox.projectData.score.ScorePage;
@@ -875,22 +873,6 @@ public class MpmEditingTools {
         WebPopupMenu menu = MpmEditingTools.makeMpmTreeContextMenu(mpmTreeNode, mpmTree);
         menu.add(deleteFromScore);
 
-        return menu;
-    }
-
-    /**
-     * This creates the context menu in the ScoreDisplayPanel when an MSM object is right-clicked.
-     * @return
-     */
-    public static WebPopupMenu makeScoreContextMenu(@NotNull MsmTreeNode msmTreeNode, @NotNull MsmTree msmTree, @NotNull ScorePage scorePage) {
-        WebMenuItem deleteFromScore = new WebMenuItem("Remove from Score");
-        deleteFromScore.addActionListener(actionEvent -> {
-            scorePage.removeEntry((Element) msmTreeNode.getUserObject());   // remove the note from the score page graph structure
-            msmTree.updateNode(msmTreeNode);                                // update the MsmTree
-        });
-
-        WebPopupMenu menu = new WebPopupMenu();
-        menu.add(deleteFromScore);
         return menu;
     }
 

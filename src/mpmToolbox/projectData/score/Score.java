@@ -273,10 +273,11 @@ public class Score {
         for (ScorePage page : this.pages) {
             ArrayList<Element> toBeRemoved = new ArrayList<>();
             for (Element element : page.getAllEntries().keySet()) {     // for each element that is linked in this score page
-                if (element.getLocalName().equals("note"))              // notes cannot be removed since we are not allowed to edit the MSM
-                    continue;
+                if (element.getLocalName().equals("note")               // if we have a note element
+                        && (element.getDocument() == this.parentProject.getMsm().getDocument()))    // if it is still linked in the MSM document
+                    continue;                                           // we keep it
                 if ((this.parentProject.getMpm() != null)               // if we have an MPM document
-                        && (element.getDocument() == this.parentProject.getMpm().getDocument())) // if the element is still linked in the MPM document
+                        && (element.getDocument() == this.parentProject.getMpm().getDocument()))    // if the element is still linked in the MPM document
                     continue;                                           // we keep it
                 toBeRemoved.add(element);                               // otherwise it is dd and should be removed from the score
             }

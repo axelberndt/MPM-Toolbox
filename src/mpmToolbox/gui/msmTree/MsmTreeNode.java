@@ -3,11 +3,13 @@ package mpmToolbox.gui.msmTree;
 import com.alee.api.annotations.NotNull;
 import com.alee.api.ui.TextBridge;
 import com.alee.extended.tree.WebExTree;
+import com.alee.laf.menu.WebPopupMenu;
 import com.alee.laf.tree.TreeNodeParameters;
 import com.alee.laf.tree.UniqueNode;
 import meico.mei.Helper;
 import meico.midi.EventMaker;
 import meico.midi.MidiPlayer;
+import mpmToolbox.gui.msmEditingTools.MsmEditingTools;
 import mpmToolbox.projectData.ProjectData;
 import nu.xom.Attribute;
 import nu.xom.Element;
@@ -17,8 +19,6 @@ import javax.sound.midi.InvalidMidiDataException;
 import javax.sound.midi.Sequence;
 import javax.sound.midi.Track;
 import javax.swing.*;
-
-import static mpmToolbox.gui.msmTree.MsmTreeNode.XmlNodeType.root;
 
 /**
  * Instances of this class represent MSM data (Element, Attribute or Node) in a WebAsyncTree
@@ -64,7 +64,7 @@ public class MsmTreeNode extends UniqueNode<MsmTreeNode, Node> implements TextBr
         // determine type
         switch (xml.getLocalName()) {
             case "msm":
-                this.type = root;
+                this.type = XmlNodeType.msm;
                 break;
             case "global":
                 this.type = XmlNodeType.global;
@@ -72,11 +72,17 @@ public class MsmTreeNode extends UniqueNode<MsmTreeNode, Node> implements TextBr
             case "part":
                 this.type = XmlNodeType.part;
                 break;
+            case "header":
+                this.type = XmlNodeType.header;
+                break;
             case "dated":
-                this.type = XmlNodeType.score;
+                this.type = XmlNodeType.dated;
                 break;
             case "score":
                 this.type = XmlNodeType.score;
+                break;
+            case "sequencingMap":
+                this.type = XmlNodeType.sequencingMap;
                 break;
             case "note":
                 this.type = XmlNodeType.note;
@@ -119,14 +125,17 @@ public class MsmTreeNode extends UniqueNode<MsmTreeNode, Node> implements TextBr
      */
     private void generateMyName() {
         switch (this.type) {
-            case root:
-                this.name = "<html><font size=\"-2\" color=\"silver\">&lt;/&gt;</font>  " + ((Element)this.getUserObject()).getLocalName() + "</html>";
+            case msm:
+                this.name = "<html><font size=\"-2\" color=\"silver\">&lt;/&gt;</font>  msm</html>";
                 break;
             case part:
                 this.name = ((Element)this.getUserObject()).getLocalName().concat(" " + ((Element)this.getUserObject()).getAttributeValue("number")).concat(" " + ((Element)this.getUserObject()).getAttributeValue("name"));
                 break;
             case score:
                 this.name = "<html><font size=\"+0\" color=\"silver\">&#9835;</font>  " + ((Element)this.getUserObject()).getLocalName() + "</html>";
+                break;
+            case sequencingMap:
+                this.name = "sequencingMap";
                 break;
             case note: {
                 int ppq = this.project.getMsm().getPPQ();
@@ -167,10 +176,15 @@ public class MsmTreeNode extends UniqueNode<MsmTreeNode, Node> implements TextBr
             case lyrics:
                 this.name = ((Element)this.getUserObject()).getLocalName() + " \"" + ((Element)this.getUserObject()).getValue() + "\"";
                 break;
+            case element:
+                break;
             case attribute:
                 this.name = "<html><font size=\"+0\" color=\"silver\">@</font>  " + ((Attribute)this.getUserObject()).getLocalName() + " " + this.getUserObject().getValue() + "</html>";
 //                this.name = "@ " + ((Attribute)this.getUserObject()).getLocalName() + ": " + this.getUserObject().getValue();
                 break;
+            case global:
+            case dated:
+            case header:
             default:
                 this.name = ((Element)this.getUserObject()).getLocalName();
         }
@@ -182,6 +196,23 @@ public class MsmTreeNode extends UniqueNode<MsmTreeNode, Node> implements TextBr
      */
     protected void update() {
         this.generateMyName();
+    }
+
+    /**
+     * This method creates the context menu when the node is right-clicked.
+     * @param msmTree the MsmTree instance that this node belongs to
+     */
+    public WebPopupMenu getContextMenu(@NotNull MsmTree msmTree) {
+        return MsmEditingTools.makeMsmTreeContextMenu(this, msmTree);
+    }
+
+    /**
+     * This method will trigger the editor dialog for the node, provided it has one.
+     * It is meant to be invoked by a double click event in class MsmTree.
+     * @param msmTree
+     */
+    public void openEditorDialog(@NotNull MsmTree msmTree) {
+        MsmEditingTools.quickOpenEditor(this, msmTree);
     }
 
     /**
@@ -296,7 +327,7 @@ public class MsmTreeNode extends UniqueNode<MsmTreeNode, Node> implements TextBr
      */
     public Element getPart() {
         switch (this.getType()) {
-            case root:
+            case msm:
             case global:
                 return null;
             default: {
@@ -312,15 +343,17 @@ public class MsmTreeNode extends UniqueNode<MsmTreeNode, Node> implements TextBr
      * an enumeration of the node types
      */
     public enum XmlNodeType {
-        root,       // a root node
-        element,    // an element
-        attribute,  // an attribute
-        global,     // a global element
-        part,       // a part element
-        dated,      // a dated element
-        score,      // a score element
-        note,       // a note element
-        rest,       // a rest element
-        lyrics      // a lyrics element
+        msm,                // an msm node
+        element,            // an element
+        attribute,          // an attribute
+        global,             // a global element
+        part,               // a part element
+        header,             // a header element
+        dated,              // a dated element
+        score,              // a score element
+        sequencingMap,      // a sequencingMap element
+        note,               // a note element
+        rest,               // a rest element
+        lyrics              // a lyrics element
     }
 }

@@ -12,6 +12,7 @@ import mpmToolbox.gui.mpmEditingTools.MpmEditingTools;
 import mpmToolbox.gui.mpmEditingTools.PlaceAndCreateContextMenu;
 import mpmToolbox.gui.mpmTree.MpmTree;
 import mpmToolbox.gui.mpmTree.MpmTreeNode;
+import mpmToolbox.gui.msmEditingTools.MsmEditingTools;
 import mpmToolbox.gui.msmTree.MsmTree;
 import mpmToolbox.gui.msmTree.MsmTreeNode;
 import mpmToolbox.projectData.score.Score;
@@ -571,7 +572,7 @@ public class ScoreDisplayPanel extends WebPanel implements MouseWheelListener, M
                     case MouseEvent.BUTTON1:                                    // left click
                         break;
                     case MouseEvent.BUTTON3:                                    // right click = context menu
-                        WebPopupMenu menu = MpmEditingTools.makeScoreContextMenu(msmTreeNode, msmTree, scorePage);
+                        WebPopupMenu menu = MsmEditingTools.makeScoreContextMenu(msmTreeNode, msmTree, scorePage);
                         menu.show(this, mouseEvent.getX() - 25, mouseEvent.getY());
                         break;
                 }
@@ -814,7 +815,7 @@ public class ScoreDisplayPanel extends WebPanel implements MouseWheelListener, M
                         if (msmTreeNode != null) {                                      // if something has been selected
                             msmTree.setSelectedNode(msmTreeNode);                       // select the node in the msm tree
                             msmTree.scrollPathToVisible(msmTreeNode.getTreePath());     // scroll the tree so the node is visible
-                            WebPopupMenu menu = MpmEditingTools.makeScoreContextMenu(msmTreeNode, msmTree, scorePage);
+                            WebPopupMenu menu = MsmEditingTools.makeScoreContextMenu(msmTreeNode, msmTree, scorePage);
                             menu.show(this, mouseEvent.getX() - 25, mouseEvent.getY());
                         }
                         break;

@@ -13,10 +13,15 @@ import nu.xom.Attribute;
 import nu.xom.Element;
 import nu.xom.Node;
 
+import javax.swing.*;
+import javax.swing.event.TreeModelEvent;
+import javax.swing.event.TreeModelListener;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.TreePath;
 import javax.swing.tree.TreeSelectionModel;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
 import java.util.ArrayList;
 import java.util.Enumeration;
 
@@ -24,7 +29,7 @@ import java.util.Enumeration;
  * A custom WebAsncTree for MSM data.
  * @author Axel Berndt
  */
-public class MsmTree extends WebExTree<MsmTreeNode> implements TreeSelectionListener/*, MouseListener*/ {
+public class MsmTree extends WebExTree<MsmTreeNode> implements MouseListener, TreeSelectionListener, TreeModelListener {
     @NotNull private final ProjectPane projectPane;                         // a link to the parent project pane to access its data, midi player etc.
     private WebDockableFrame dockableFrame = null;                          // a WebDockableFrame instance that displays this MSM tree, to be used in class ProjectPane
 
@@ -44,8 +49,9 @@ public class MsmTree extends WebExTree<MsmTreeNode> implements TreeSelectionList
 //        msmTree.setCellEditor(new MsmTreeCellEditor());
 //        msmTree.setStyleId(StyleId.treeTransparent);
 
+        this.addMouseListener(this);
         this.addTreeSelectionListener(this);
-//        this.addMouseListener(this);
+        this.treeModel.addTreeModelListener(this);
     }
 
 //    /**
@@ -205,5 +211,78 @@ public class MsmTree extends WebExTree<MsmTreeNode> implements TreeSelectionList
         this.dockableFrame.add(scrollPane);
 
         return this.dockableFrame;
+    }
+
+    /**
+     * When the user clicked in the tree, perform this action.
+     * @param mouseEvent
+     */
+    @Override
+    public void mouseClicked(MouseEvent mouseEvent) {
+        // right click opens the context menu of the clicked node
+        if (SwingUtilities.isRightMouseButton(mouseEvent)) {    // if right click
+            MsmTreeNode node = this.getNodeForRow(this.getClosestRowForLocation(mouseEvent.getX(), mouseEvent.getY()));   // get the node that has been clicked
+            node.getContextMenu(this).show(this, mouseEvent.getX() - 25, mouseEvent.getY()); // trigger its context menu
+            return;
+        }
+        if (SwingUtilities.isLeftMouseButton(mouseEvent)) {     // if left click
+            if (mouseEvent.getClickCount() > 1) {               // if double (or more) click -> open editor dialog
+                MsmTreeNode node = this.getSelectedNode();      // get the node that has been double-clicked
+                node.openEditorDialog(this);
+            }
+        }
+    }
+
+    /**
+     * Perform this action when mouse button is pressed.
+     * @param mouseEvent
+     */
+    @Override
+    public void mousePressed(MouseEvent mouseEvent) {
+    }
+
+    /**
+     * Perform this action when mouse button is released.
+     * @param mouseEvent
+     */
+    @Override
+    public void mouseReleased(MouseEvent mouseEvent) {
+    }
+
+    /**
+     * Perform this action when the mouse cursor enters the MpmTree widget.
+     * @param mouseEvent
+     */
+    @Override
+    public void mouseEntered(MouseEvent mouseEvent) {
+    }
+
+    /**
+     * perform this action when the mouse cursor exits the MpmTree widget.
+     * @param mouseEvent
+     */
+    @Override
+    public void mouseExited(MouseEvent mouseEvent) {
+    }
+
+    @Override
+    public void treeNodesChanged(TreeModelEvent treeModelEvent) {
+    }
+
+    @Override
+    public void treeNodesInserted(TreeModelEvent treeModelEvent) {
+    }
+
+    @Override
+    public void treeNodesRemoved(TreeModelEvent treeModelEvent) {
+    }
+
+    /**
+     * if anything in the tree structure changed the score display gets updated
+     * @param treeModelEvent
+     */
+    @Override
+    public void treeStructureChanged(TreeModelEvent treeModelEvent) {
+        this.projectPane.repaintScoreDisplay();    // repaint the score display so a selected MpmTreeNode gets highlighted and when switching to another performance we get to see its overlay
     }
 }

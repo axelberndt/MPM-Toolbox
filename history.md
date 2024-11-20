@@ -1,6 +1,13 @@
 ### Version History
 
 
+#### v0.1.27
+- Added package `msmEditingTools` with class `MsmEditingTools` to create context menu popups when right-clicking the MSM tree.
+- Right now there is only one such context menu for the MSM root node that offers to apply every `sequencingMap` to the affected MSM and MPM maps. 
+  - The `sequencingMaps` are then deleted from the MSM as they are no longer valid.
+  - It is recommended to operate this functionality BEFORE making any entries in the graphical score as they will get lost in the process.
+
+
 #### v0.1.26
 - Dependency updates
   - WebLaF Core v1.2.13 to v1.2.14

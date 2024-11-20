@@ -213,7 +213,6 @@ public class MpmTree extends WebExTree<MpmTreeNode> implements MouseListener, /*
      */
     @Override
     public void mousePressed(MouseEvent mouseEvent) {
-
     }
 
     /**
@@ -222,7 +221,6 @@ public class MpmTree extends WebExTree<MpmTreeNode> implements MouseListener, /*
      */
     @Override
     public void mouseReleased(MouseEvent mouseEvent) {
-
     }
 
     /**
@@ -231,7 +229,6 @@ public class MpmTree extends WebExTree<MpmTreeNode> implements MouseListener, /*
      */
     @Override
     public void mouseEntered(MouseEvent mouseEvent) {
-
     }
 
     /**
@@ -240,7 +237,6 @@ public class MpmTree extends WebExTree<MpmTreeNode> implements MouseListener, /*
      */
     @Override
     public void mouseExited(MouseEvent mouseEvent) {
-
     }
 
     @Override
