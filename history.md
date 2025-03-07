@@ -1,6 +1,10 @@
 ### Version History
 
 
+#### v0.1.28
+- meico update to v0.11.3.
+
+
 #### v0.1.27
 - Added package `msmEditingTools` with class `MsmEditingTools` to create context menu popups when right-clicking the MSM tree.
 - Right now there is only one such context menu for the MSM root node that offers to apply every `sequencingMap` to the affected MSM and MPM maps. 
