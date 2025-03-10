@@ -307,6 +307,9 @@ public class MpmEditingTools {
                         WebMenuItem addDefaultArticulationStyle = new WebMenuItem("Add Default Articulation Style");
                         addDefaultArticulationStyle.addActionListener(actionEvent -> MpmEditingTools.addDefaultArticulationStyle(self, mpmTree));
                         menu.add(addDefaultArticulationStyle);
+                        WebMenuItem addDefaultSyllableArticulationStyle = new WebMenuItem("Add Default Syllable Articulation Style");
+                        addDefaultSyllableArticulationStyle.addActionListener(actionEvent -> MpmEditingTools.addDefaultSyllableArticulationStyle(self, mpmTree));
+                        menu.add(addDefaultSyllableArticulationStyle);
                         break;
                     case "dynamicsStyles":
                         WebMenuItem addDefaultDynamicsStyle = new WebMenuItem("Add Default Dynamics Style");
@@ -1297,6 +1300,59 @@ public class MpmEditingTools {
         articulationStyle.addDef(ArticulationDef.createDefaultArticulationDef("staccato"));
         articulationStyle.addDef(ArticulationDef.createDefaultArticulationDef("staccatissimo"));
         articulationStyle.addDef(ArticulationDef.createDefaultArticulationDef("tenuto"));
+
+        mpmTree.reloadNode(styleCollectionNode);
+
+        Performance performance = styleCollectionNode.getPerformance();
+        MpmEditingTools.updateAudioAlignment(performance, mpmTree.getProjectPane(), false);
+    }
+
+    private static void addDefaultSyllableArticulationStyle(@NotNull MpmTreeNode styleCollectionNode, @NotNull MpmTree mpmTree) {
+        Header header = (Header) styleCollectionNode.getParent().getUserObject();
+
+        String styleName = "Default Syllable Articulations";
+        if (header.getStyleDef(Mpm.ARTICULATION_STYLE, styleName) != null) {    // if there is already a style with the same name, add a number to it
+            int styleNumber = 1;
+            while (header.getStyleDef(Mpm.ARTICULATION_STYLE, styleName.concat(" " + styleNumber)) != null)
+                styleNumber++;
+            styleName = styleName.concat(" " + styleNumber);
+        }
+
+        ArticulationStyle articulationStyle = (ArticulationStyle) header.addStyleDef(Mpm.ARTICULATION_STYLE, styleName);
+        ArticulationDef defaultDef = ArticulationDef.createArticulationDef("default");
+        defaultDef.setAbsoluteDurationChangeMs(-10.0);
+        articulationStyle.addDef(defaultDef);
+
+        ArticulationDef dashDef = ArticulationDef.createArticulationDef("-");
+//        dashDef.setAbsoluteDurationChangeMs(-5.0);
+        dashDef.setRelativeDuration(1.0);
+        articulationStyle.addDef(dashDef);
+
+        ArticulationDef underscoreDef = ArticulationDef.createArticulationDef("_");
+        underscoreDef.setRelativeDuration(1.0);
+        articulationStyle.addDef(underscoreDef);
+
+        ArticulationDef endSylDef = ArticulationDef.createArticulationDef("endSyl");
+//        endSylDef.setAbsoluteDurationChangeMs(-70.0);
+        endSylDef.setAbsoluteDurationChangeMs(-50.0);
+        articulationStyle.addDef(endSylDef);
+
+        ArticulationDef commaDef = ArticulationDef.createArticulationDef(",");
+        commaDef.setAbsoluteDurationChangeMs(-100.0);
+        articulationStyle.addDef(commaDef);
+
+        ArticulationDef semicolonDef = ArticulationDef.createArticulationDef(";");
+        semicolonDef.setAbsoluteDurationChangeMs(-110.0);
+        articulationStyle.addDef(semicolonDef);
+
+        ArticulationDef colonDef = ArticulationDef.createArticulationDef(":");
+        colonDef.setAbsoluteDurationChangeMs(-110.0);
+        articulationStyle.addDef(colonDef);
+
+        ArticulationDef periodDef = ArticulationDef.createArticulationDef(".");
+        periodDef.setAbsoluteDurationChangeMs(-120.0);
+        periodDef.setRelativeVelocity(0.8);
+        articulationStyle.addDef(periodDef);
 
         mpmTree.reloadNode(styleCollectionNode);
 
