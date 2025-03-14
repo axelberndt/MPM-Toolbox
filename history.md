@@ -1,6 +1,10 @@
 ### Version History
 
 
+### v0.1.30
+- meico update to v0.11.4.
+
+
 #### v0.1.29
 - Added new context menu option to "Add Default Syllable Articulation Style" to Element `articulationStyles`. 
 
