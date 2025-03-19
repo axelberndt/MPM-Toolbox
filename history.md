@@ -1,7 +1,11 @@
 ### Version History
 
 
-### v0.1.30
+#### v0.1.31
+- meico update to v0.11.5 (improved resolution of copyof/sameas).
+
+
+#### v0.1.30
 - meico update to v0.11.4.
 
 
