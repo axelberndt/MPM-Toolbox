@@ -220,7 +220,8 @@ public class Alignment {
                 if (indices[p] < 0)                                                             // if we reached the end of the part's note sequence
                     continue;
 
-                if (part.getNoteSequence().get(indices[p]).isFixed()) {                         // we have a fixed note to be added to the list of fixed notes
+                if (!part.getNoteSequence().isEmpty()                                           // the note sequence must have at least on element
+                        && part.getNoteSequence().get(indices[p]).isFixed()) {                  // we have a fixed note to be added to the list of fixed notes
                     Note note = part.getNoteSequence().get(indices[p]);
                     int addIndex = fixedNotes.size();
                     while ((addIndex > 0) && (fixedNotes.get(addIndex - 1).getMillisecondsDate() > note.getMillisecondsDate()))  // if there are already later notes in the list

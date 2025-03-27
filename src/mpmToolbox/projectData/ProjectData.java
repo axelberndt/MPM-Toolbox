@@ -200,6 +200,7 @@ public class ProjectData {
         this.msm.deleteEmptyMaps();
 //        this.msm.resolveSequencingMaps();   // if repetitions, da capi etc. were encoded as expansions, this should not be invoked
         this.msm.addIds();
+        this.msm.fitMidiPitches(0, 127);
     }
 
     /**

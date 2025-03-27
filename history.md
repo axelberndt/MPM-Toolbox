@@ -1,6 +1,11 @@
 ### Version History
 
 
+#### v0.1.32
+- meico update to v0.11.6 for improved handling of invalid MIDI data.
+- Small edits in methods `mpmToolbox.projectData.alignment.Alignment.updateTimingTransformation()` and `mpmToolbox.projectData.ProjectData.msmPreprocessing()` for better stability.
+
+
 #### v0.1.31
 - meico update to v0.11.5 (improved resolution of copyof/sameas).
 
