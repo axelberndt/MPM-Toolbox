@@ -10,6 +10,7 @@ mpmToolbox.gui.mpmEditingTools.editDialogs.ornamentDef
 mpmToolbox.gui.mpmEditingTools.editDialogs.supplementary
 mpmToolbox.gui.mpmEditingTools.editDialogs.visualizers
 mpmToolbox.gui.mpmTree
+mpmToolbox.gui.msmEditingTools
 mpmToolbox.gui.msmTree
 mpmToolbox.gui.score
 mpmToolbox.gui.syncPlayer

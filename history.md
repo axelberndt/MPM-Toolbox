@@ -1,6 +1,10 @@
 ### Version History
 
 
+#### v0.1.33
+- Computed spectrograms are now also stored in the `mpr``project files, so the spectrogram does not need to be recomputed when reopening the project.
+
+
 #### v0.1.32
 - meico update to v0.11.6 for improved handling of invalid MIDI data.
 - Small edits in methods `mpmToolbox.projectData.alignment.Alignment.updateTimingTransformation()` and `mpmToolbox.projectData.ProjectData.msmPreprocessing()` for better stability.

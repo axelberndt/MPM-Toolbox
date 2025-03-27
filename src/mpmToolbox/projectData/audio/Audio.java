@@ -8,6 +8,7 @@ import com.tagtraum.jipes.SignalPump;
 import com.tagtraum.jipes.audio.*;
 import com.tagtraum.jipes.math.WindowFunction;
 import com.tagtraum.jipes.universal.Mapping;
+import meico.mei.Helper;
 import meico.msm.Msm;
 import meico.supplementary.KeyValue;
 import mpmToolbox.projectData.alignment.Alignment;
@@ -16,6 +17,7 @@ import mpmToolbox.supplementary.Tools;
 import nu.xom.Attribute;
 import nu.xom.Element;
 
+import javax.imageio.ImageIO;
 import javax.sound.sampled.AudioInputStream;
 import javax.sound.sampled.UnsupportedAudioFileException;
 import javax.swing.*;
@@ -24,6 +26,7 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Map;
 
@@ -84,10 +87,15 @@ public class Audio extends meico.audio.Audio {
     public Audio(Element projectAudioData, String projectBasePath, Msm msm) throws IOException, UnsupportedAudioFileException {
         super(new File(Tools.uniformPath(projectBasePath + projectAudioData.getAttributeValue("file"))));
 
+        // initialize waveform visualization
         this.waveforms = convertByteArray2DoubleArray(this.getAudio(), this.getFormat());
         for (double[] chan : this.waveforms)
             this.peakList.add(new PeakList(chan));
 
+        // initialize spectrogram data
+        this.spectrogramImage = SpectrogramImage.createSpectrogramImage(projectAudioData, projectBasePath);
+
+        // initialize alignment data
         Element alignmentData = projectAudioData.getFirstChildElement("alignment");
         this.alignment = new Alignment(msm, alignmentData);
         if (alignmentData == null) {     // if we had no alignment data from the project file, an initial alignment was generated with a default tempo that will potentially not fit the audio length
@@ -102,8 +110,27 @@ public class Audio extends meico.audio.Audio {
      */
     public Element toXml(Path projectPath) {
         Element out = new Element("audio");
+
+        // store link to audio file
         out.addAttribute(new Attribute("file", projectPath.relativize(this.getFile().toPath()).toString()));
+
+        // TODO: store spectrogram data and image
+        if (this.getSpectrogramImage() != null) {
+            // TODO: store spectrogram data to XML
+
+            // store spectrogram image and link to it in XML
+            Path imagePath = projectPath.relativize(this.getSpectrogramImage().getFile().toPath());
+            try {
+                ImageIO.write(this.getSpectrogramImage(), "png", this.getSpectrogramImage().getFile());
+                out.appendChild(this.getSpectrogramImage().toXml(projectPath));
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+
+        // store alignment data
         out.appendChild(this.alignment.toXml());
+
         return out;
     }
 
@@ -377,8 +404,11 @@ public class Audio extends meico.audio.Audio {
                 && this.spectrogramImage.sameMetrics(windowFunction, hopSize, minFrequency, maxFrequency, binsPerSemitone)) {
 
             // if the normalization flag changed we can reuse the spectrogram and need to rerender the image
-            if (this.spectrogramImage.normalize != normalize)
+            if (this.spectrogramImage.normalize != normalize) {
                 this.spectrogramImage = new SpectrogramImage(this.spectrogramImage.spectrogram, windowFunction, hopSize, minFrequency, maxFrequency, binsPerSemitone, normalize);
+                String absoluteImageFilePath = Helper.getFilenameWithoutExtension(this.getFile().getAbsolutePath()) + ".png";
+                this.spectrogramImage.setFile(new File(absoluteImageFilePath));
+            }
 
             return false;
         }
@@ -393,6 +423,8 @@ public class Audio extends meico.audio.Audio {
         }
 
         this.spectrogramImage = new SpectrogramImage(spectrogram, windowFunction, hopSize, minFrequency, maxFrequency, binsPerSemitone, normalize);
+        String absoluteImageFilePath = Helper.getFilenameWithoutExtension(this.getFile().getAbsolutePath()) + ".png";
+        this.spectrogramImage.setFile(new File(absoluteImageFilePath));
         return true;
     }
 
