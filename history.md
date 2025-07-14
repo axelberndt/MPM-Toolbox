@@ -1,8 +1,12 @@
 ### Version History
 
 
+#### v0.1.34
+- Meico update to v0.11.7.
+
+
 #### v0.1.33
-- Computed spectrograms are now also stored in the `mpr``project files, so the spectrogram does not need to be recomputed when reopening the project.
+- Computed spectrograms are now also stored in the `mpr` project files, so the spectrogram does not need to be recomputed when reopening the project.
 
 
 #### v0.1.32
