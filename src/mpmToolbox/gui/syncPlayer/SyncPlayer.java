@@ -11,6 +11,7 @@ import meico.audio.AudioPlayer;
 import meico.midi.Midi;
 import meico.midi.MidiPlayer;
 import meico.mpm.elements.Performance;
+import meico.msm.Msm;
 import mpmToolbox.gui.ProjectPane;
 import mpmToolbox.gui.Settings;
 import mpmToolbox.gui.syncPlayer.utilities.AudioChooserItem;
@@ -470,6 +471,28 @@ public class SyncPlayer extends WebPanel {
 
         Performance performance = (selectedPerformanceItem == null) ? null : selectedPerformanceItem.getValue();
         return this.parent.getMsm().exportExpressiveMidi(performance, true);
+    }
+
+    /**
+     * get the MSM with enriched expressive data for the currently selected performance
+     * @return the enriched MSM; if no performance is selected the original MSM is returned
+     */
+    public Msm getPerformanceRenderingInExpressiveMsm() {
+        PerformanceChooserItem selectedPerformanceItem = (PerformanceChooserItem) this.performanceChooser.getSelectedItem();
+
+        if (selectedPerformanceItem == this.alignmentPerformance) {
+            Audio audio = this.getSelectedAudio();
+            if (audio != null) {
+                return audio.getAlignment().getExpressiveMsm();
+            }
+        }
+
+        Performance performance = (selectedPerformanceItem == null) ? null : selectedPerformanceItem.getValue();
+        if  (performance == null) {
+            return this.parent.getMsm();
+        }
+
+        return performance.perform(this.parent.getMsm());
     }
 
     /**

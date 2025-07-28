@@ -216,11 +216,17 @@ public class MpmToolbox {
             Midi midi = this.getProjectPane().getSyncPlayer().getPerformanceRendering();
             midi.exportAudio(this.getMidiPlayerForSingleNotes().getSoundbank()).writeMp3();
         });
+        WebMenuItem exportMsm = new WebMenuItem("Expressive MSM", 's');
+        exportMsm.addActionListener(actionEvent -> {
+            Msm msm = this.getProjectPane().getSyncPlayer().getPerformanceRenderingInExpressiveMsm();
+            msm.writeMsm();
+        });
         this.export = new WebMenu("Export Performance Rendering as");
         this.export.setMnemonic('e');
         this.export.add(exportMidi);
         this.export.add(exportWav);
         this.export.add(exportMp3);
+        this.export.add(exportMsm);
         this.export.setEnabled(this.projectPane != null);
         file.add(this.export);
 
