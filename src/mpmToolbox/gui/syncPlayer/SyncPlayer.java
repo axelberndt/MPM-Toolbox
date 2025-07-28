@@ -225,7 +225,7 @@ public class SyncPlayer extends WebPanel {
         Tools.addComponentToGridBagLayout(this, (GridBagLayout) this.getLayout(), this.playButton, 5, 0, 1, 2, 1.0, 1.0, 0, 0, GridBagConstraints.BOTH, GridBagConstraints.LINE_START);
 
         // make record button
-        WebButton recordButton = new WebButton("<html><p style=\"color: " + Settings.errorColorHex + "; font-size:  x-large\">\u26AB</p></html>");
+        WebButton recordButton = new WebButton("<html><p style=\"color: " + Settings.errorColorHex + "; font-size:  x-large\">\u23FA</p></html>");
         recordButton.setToolTip("Make an Audio Recording");
         recordButton.setPadding(Settings.paddingInDialogs);
         recordButton.addActionListener(actionEvent -> {

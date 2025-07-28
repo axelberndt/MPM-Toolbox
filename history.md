@@ -4,6 +4,7 @@
 #### v0.1.35
 - Meico update to v0.11.8.
 - Added new export option "Expressive MSM" and the corresponding new method `mpmToolbox.gui.syncPlayer.getPerformanceRenderingInExpressiveMsm()`.
+- Changed recording Symbol in `mpmToolbox.gui.syncPlayer.SyncPlayer` and `mpmToolbox.gui.syncPlayer.RecorderDialog`.
 
 
 #### v0.1.34

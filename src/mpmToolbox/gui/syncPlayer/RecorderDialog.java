@@ -27,7 +27,7 @@ public class RecorderDialog extends WebDialog<RecorderDialog> {
     protected final GridBagLayout contentPanelLayout = new GridBagLayout();
     protected final WebPanel contentPanel = new WebPanel(this.contentPanelLayout);
     private final WebComboBox deviceChooser = new WebComboBox();
-    private final WebButton recordButton = new WebButton("<html><p style=\"color: " + Settings.errorColorHex + "; font-size:  x-large\">\u26AB</p></html>");
+    private final WebButton recordButton = new WebButton("<html><p style=\"color: " + Settings.errorColorHex + "; font-size:  x-large\">\u23FA</p></html>");
     private final WebProgressBar vuMeter = new WebProgressBar(WebProgressBar.HORIZONTAL, 0, 100); // orientation, min, max
     private final AudioFormat format = new AudioFormat(44100.0f, 16, 1, true, false); // sampleRate, sampleSizeInBits, channels, signed, bigEndian
     private RecordThread recordThread = null;
