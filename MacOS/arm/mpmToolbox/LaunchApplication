@@ -1,0 +1,5 @@
+#!/bin/sh
+cd "$(dirname "$0")"
+
+# Run the Jar
+./jre-small/bin/java -jar mpmToolbox.jar

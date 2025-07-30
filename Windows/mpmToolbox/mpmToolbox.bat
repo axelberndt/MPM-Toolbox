@@ -1,0 +1,1 @@
+jre-small\bin\java -jar mpmToolbox.jar
