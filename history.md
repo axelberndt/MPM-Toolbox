@@ -1,6 +1,10 @@
 ### Version History
 
 
+#### v0.1.36
+- Meico update to v0.11.9.
+
+
 #### v0.1.35
 - Meico update to v0.11.8.
 - Added new export option "Expressive MSM" and the corresponding new method `mpmToolbox.gui.syncPlayer.getPerformanceRenderingInExpressiveMsm()`.

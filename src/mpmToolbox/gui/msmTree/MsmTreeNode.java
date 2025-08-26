@@ -159,7 +159,7 @@ public class MsmTreeNode extends UniqueNode<MsmTreeNode, Node> implements TextBr
                 }
                 Element note = (Element) this.getUserObject();
 //                boolean hasMillisecondsDate = (note.getAttribute("milliseconds.date") != null);                             // this flag indicates if the note has a milliseconds date (is aligned with audio)
-                this.name = "<html><font size=\"+1\">" + Helper.decimalDuration2HtmlUnicode(Helper.pulseDuration2decimal(duration, ppq), false) + "</font> "    // print a note symbol according to the note's value
+                this.name = "<html><font size=\"+1\">" + Helper.decimalDuration2Utf16SurrogatePair(Helper.pulseDuration2decimal(duration, ppq), false) + "</font> "    // print a note symbol according to the note's value
                         + pitchString                                                                                       // print the note's name
                         + "&nbsp;&nbsp;&nbsp;"
 //                        + (hasMillisecondsDate ? "<font color=\"lime\">&#9679;</font>" : "")                                // indicate whether the note has a milliseconds date (is aligned with audio)
@@ -170,7 +170,7 @@ public class MsmTreeNode extends UniqueNode<MsmTreeNode, Node> implements TextBr
             case rest: {
                 int ppq = this.project.getMsm().getPPQ();
                 double duration = Double.parseDouble(((Element)this.getUserObject()).getAttributeValue("duration"));
-                this.name = "<html><font size=\"+1\">" + Helper.decimalDuration2HtmlUnicode(Helper.pulseDuration2decimal(duration, ppq), true)+"</font></html>";
+                this.name = "<html><font size=\"+1\">" + Helper.decimalDuration2Utf16SurrogatePair(Helper.pulseDuration2decimal(duration, ppq), true)+"</font></html>";
                 break;
             }
             case lyrics:
