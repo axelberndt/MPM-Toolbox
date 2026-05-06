@@ -152,6 +152,8 @@ public class SpectrogramImage extends BufferedImage {
         } else
             windowFunction = new WindowFunction.Hamming(windowLength);  // default
 
-        return new SpectrogramImage(image, windowFunction, hopSize, minFrequency, maxFrequency, binsPerSemitone, normalize);
+        SpectrogramImage specImg = new SpectrogramImage(image, windowFunction, hopSize, minFrequency, maxFrequency, binsPerSemitone, normalize);
+        specImg.setFile(imageFile);
+        return specImg;
     }
 }
