@@ -1,6 +1,10 @@
 ### Version History
 
 
+#### v0.1.42
+- Meico update to v0.11.14.
+
+
 #### v0.1.41
 - fixes saving project (*.mpr) if the project was loaded with an existing spectrogram
 
